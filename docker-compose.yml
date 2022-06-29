@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+    lis_db:
+        image: postgres
+        container_name: lis_db
+        expose:
+                - 5432
+        environment:
+                - POSTGRES_USER=maindb
+                - POSTGRES_PASSWORD=maindb
+                - POSTGRES_DB=maindb
+        volumes:
+                - ./dbs/postgres-data:/var/lib/postgresql
+
+    backend:
+        restart: always
+        container_name: lis_back
+        build: ./django_core
+        command: bash -c "
+                python3 manage.py makemigrations &&
+                python3 manage.py migrate &&
+                python manage.py collectstatic --noinput &&
+                gunicorn -w 3 django_core.wsgi:application --bind 0.0.0.0:8000 --reload"
+        volumes:
+                - ./django_core:/django_core
+        expose:
+                - 8000
+        depends_on:
+                - lis_db
+    
+    nginx:
+        container_name: lis_nginx
+        build: ./nginx
+        ports:
+            - 1337:80
+        depends_on:
+            - backend
+        volumes:
+            - ./django_core/static:/static
+            - ./django_core/media:/media
+            - ./nginx:/etc/nginx/conf.d
