@@ -5,13 +5,16 @@ services:
         image: postgres
         container_name: lis_db
         expose:
-                - 5432
+            - 5432
         environment:
-                - POSTGRES_USER=maindb
-                - POSTGRES_PASSWORD=maindb
-                - POSTGRES_DB=maindb
+            - POSTGRES_USER=maindb
+            - POSTGRES_PASSWORD=maindb
+            - POSTGRES_DB=maindb
         volumes:
-                - ./dbs/postgres-data:/var/lib/postgresql
+            - ./dbs/postgres-data:/var/lib/postgresql
+
+    redis:
+        image: redis:alpine
 
     backend:
         restart: always
@@ -23,11 +26,12 @@ services:
                 python manage.py collectstatic --noinput &&
                 gunicorn -w 3 django_core.wsgi:application --bind 0.0.0.0:8000 --reload"
         volumes:
-                - ./django_core:/django_core
+            - ./django_core:/django_core
         expose:
-                - 8000
+            - 8000
         depends_on:
-                - lis_db
+            - lis_db
+            - redis
     
     nginx:
         container_name: lis_nginx
@@ -40,3 +44,19 @@ services:
             - ./django_core/static:/static
             - ./django_core/media:/media
             - ./nginx:/etc/nginx/conf.d
+
+    celery:
+        build: ./django_core
+        command: celery -A django_core worker -l info
+        volumes:
+            - ./django_core/:/usr/src/app/
+        depends_on:
+            - redis
+
+    celery-beat:
+        build: ./django_core
+        command: celery -A django_core beat -l info
+        volumes:
+            - ./django_core/:/usr/src/app/
+        depends_on:
+            - redis

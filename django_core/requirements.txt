@@ -35,3 +35,5 @@ sqlparse==0.4.1
 uritemplate==3.0.1
 urllib3==1.26.3
 whitenoise==5.2.0
+celery==5.1.2
+redis==3.5.3
