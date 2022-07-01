@@ -19,7 +19,7 @@ jobs:
                 sudo apt-get update
                 sudo apt-get install rsync -y
                 mkdir "$HOME/.ssh"
-                echo "${{ secrets.VPS_PRIVATE_KEY }}" > "$HOME/.ssh/key"
+                echo "${{ secrets.vps_private_key }}" > "$HOME/.ssh/key"
                 chmod 600 "$HOME/.ssh/key"
             - name: Delivery
               run: |
