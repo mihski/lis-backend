@@ -6,7 +6,7 @@ on:
             - '*'
 
 jobs:
-    build:
+    deploying:
         runs-on: ubuntu-latest
 
         steps:
@@ -16,8 +16,8 @@ jobs:
                 node-version: 12.x
             - name: Setup
               run: |
-                apt-get update
-                apt-get install rsync -y
+                sudo apt-get update
+                sudo apt-get install rsync -y
                 mkdir "$HOME/.ssh"
                 echo "${{ secrets.VPS_PRIVATE_KEY }}" > "$HOME/.ssh/key"
                 chmod 600 "$HOME/.ssh/key"
