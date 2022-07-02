@@ -92,10 +92,10 @@ DATABASES = {
 }
 
 
-# Celery
+# Celery configurations
 
-CELERY_BROKER_URL = "redis://redis:6379"
-CELERY_RESULT_BACKEND = "redis://redis:6379"
+CELERY_BROKER_URL = "redis://redis:6379/0"
+CELERY_RESULT_BACKEND = "redis://redis:6379/0"
 
 
 # Django caches configurations
@@ -108,8 +108,19 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient"
         },
         "KEY_PREFIX": "lis_back",
+        "DB": 1
     }
 }
+
+
+# Constance configurations
+
+CONSTANCE_REDIS_CONNECTION = {
+    'host': 'redis',
+    'port': 6379,
+    'db': 2,
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
