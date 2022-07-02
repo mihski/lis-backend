@@ -19,5 +19,5 @@ class GetISUToken(ListAPIView):
         code = request.GET.get('code')
         isu_manager = ISUManager()
         refresh_token, access_token = isu_manager.authorize(code)
-
+ 
         return HttpResponseRedirect(f"https://list.itmo.ru/auth/isu/{refresh_token}/{access_token}/")
