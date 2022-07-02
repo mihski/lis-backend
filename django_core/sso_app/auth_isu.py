@@ -1,86 +1,67 @@
 import requests
-from django.conf import settings
+
 import jwt
-from rest_framework_simplejwt.tokens import RefreshToken
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 User = get_user_model()
 
-class ISUManager():
 
-  def __init__(self):
-
-    for param_name, param_value \
-        in settings.ISU_MANAGER_CONFIG.items():
+class ISUManager:
+    def __init__(self):
+        for param_name, param_value in settings.ISU_MANAGER_CONFIG.items():
             setattr(self, param_name, param_value)
-    
-    self.auth_url = f"{self.base_uri}auth?"
-    self.obtain_token_url = f"{self.base_uri}token?"
-  
-  def obtain_auth_url(self):
 
-    auth_url = ''.join(
-        [
+        self.auth_url = f"{self.base_uri}auth?"
+        self.obtain_token_url = f"{self.base_uri}token?"
+
+    def obtain_auth_url(self):
+        auth_url = ''.join([
             self.auth_url,
             f"response_type={self.response_type}&",
             f"scope={self.scope}&",
             f"client_id={self.client_id}&",
             f"redirect_uri={self.redirect_uri}"
-        ]
-    )
-    
-    return auth_url
-  
-  def authorize(self, code):
+        ])
 
-    payload = '&'.join(
-        [
+        return auth_url
+
+    def authorize(self, code):
+        payload = '&'.join([
             f"client_id={self.client_id}",
             f"client_secret={self.client_secret}",
             f"grant_type={self.grant_type}",
             f"redirect_uri={self.redirect_uri}",
             f"code={code}"
-        ]
-    )
-    
-    headers = {
-        "Content-Type": "application/x-www-form-urlencoded"
-    }
+        ])
 
-    response = requests.request(
-        "POST",
-        self.obtain_token_url,
-        headers=headers,
-        data=payload
-    )
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
 
-    return self.get_or_create_user(response.json()['id_token'])
+        response = requests.request(
+            "POST",
+            self.obtain_token_url,
+            headers=headers,
+            data=payload
+        )
 
-# TODO: вернуть, когда появится модель профиля
-#   @staticmethod
-#   def create_profile(user, middle_name=None):
-#     profile = Profile.objects.create(
-#       user=user,
-#       first_name=user.first_name,
-#       last_name=user.last_name,
-#       middle_name=middle_name,
-#     )
-  
-  def get_or_create_user(self, id_token):
+        jwt_token = response.json()['id_token']
 
-    user_data = jwt.decode(id_token, verify=False)
-    username = user_data.get('isu')
-    user_instance = User.objects.filter(username=username)
+        return self.get_or_create_user(jwt_token)
 
-    if not user_instance.exists():
-        email = user_data.get("corp_email") \
-            if user_data.get("corp_email") \
-            else user_data.get("email")
+    def create_user(self, user_data):
+        username = user_data.get('isu')
 
-        first_name, last_name, middle_name = \
-            user_data.get('given_name'), \
-            user_data.get('family_name'), \
+        email = user_data.get('corp_email', user_data.get('email'))
+
+        first_name, last_name, middle_name = (
+            user_data.get('given_name'),
+            user_data.get('family_name'),
             user_data.get('middle_name')
+        )
 
         user = User.objects.create(
             username=username,
@@ -92,11 +73,17 @@ class ISUManager():
 
         user.set_unusable_password()
 
-        self.create_profile(user, middle_name)
+        return user
 
-    else:
-        user = user_instance.first()
+    def get_or_create_user(self, id_token):
+        user_data = jwt.decode(id_token, verify=False)
+        user = User.objects.filter(
+            username=user_data.get('isu')
+        ).first()
 
-    refresh = RefreshToken.for_user(user)
+        if not user:
+            user = self.create_user(user_data)
 
-    return str(refresh), str(refresh.access_token)
+        refresh_token = RefreshToken.for_user(user)
+
+        return str(refresh_token), str(refresh_token.access_token)
