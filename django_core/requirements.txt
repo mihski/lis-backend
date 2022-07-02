@@ -38,3 +38,4 @@ whitenoise==5.2.0
 celery==5.1.2
 redis==3.5.3
 django-constance==2.9.0
+django-redis==5.2.0
