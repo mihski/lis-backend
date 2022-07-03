@@ -1,0 +1,29 @@
+name: Deploy
+
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/setup-node@v1
+              with:
+                node-version: 12.x
+            - name: Setup
+              run: |
+                sudo apt-get update
+                sudo apt-get install rsync -y
+                mkdir "$HOME/.ssh"
+                echo "${{ secrets.vps_private_key }}" > "$HOME/.ssh/key"
+                chmod 600 "$HOME/.ssh/key"
+            - name: Delivery
+              run: |
+                rsync -e "ssh -i $HOME/.ssh/key -o StrictHostKeyChecking=no" --archive --compress --delete . ${{ secrets.VPS_USER_NAME }}@${{ secrets.VPS_SERVER_NAME }}:~/lis-back/
+            - name: Building on server
+              run: |
+                ssh -i $HOME/.ssh/key ${{ secrets.VPS_USER_NAME }}@${{ secrets.VPS_SERVER_NAME }} 'cd lis-back && docker-compose up -d --build'
