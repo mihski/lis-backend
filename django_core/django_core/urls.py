@@ -19,5 +19,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('sso_auth/', include('sso_app.urls', namespace='sso_app'))
+    path('api/sso_auth/', include('sso_app.urls', namespace='sso_app'))
 ]
