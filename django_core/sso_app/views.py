@@ -1,4 +1,5 @@
 from rest_framework.generics import ListAPIView
+from rest_framework.response import Response
 from django.http import HttpResponseRedirect
 from sso_app.auth_isu import ISUManager
 
@@ -20,7 +21,7 @@ class GetISUToken(ListAPIView):
         isu_manager = ISUManager()
         refresh_token, access_token = isu_manager.authorize(code)
  
-        return {
+        return Response({
             'refresh_token': refresh_token,
             'access_token': access_token,
-        }
+        })
