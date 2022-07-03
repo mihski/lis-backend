@@ -164,7 +164,7 @@ ISU_MANAGER_CONFIG = {
     'response_type': 'code',
     'base_uri': "https://id.itmo.ru/auth/realms/itmo/protocol/openid-connect/",
     'redirect_uri': 'https://lis.itmo.ru/sso_auth/redirect/',
-    'scope': 'name email',
+    'scope': 'openid name email',
     'grant_type': 'authorization_code',
     'client_secret': 'uYLmexxjQa7YhNWrdENBoRUz9IpCDy6J'
 }
