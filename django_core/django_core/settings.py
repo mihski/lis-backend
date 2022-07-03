@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'constance',
+    'sso_app',
 ]
 
 MIDDLEWARE = [
@@ -159,13 +160,13 @@ STATIC_ROOT = '/static/'
 
 # ISO SSO
 ISU_MANAGER_CONFIG = {
-    'client_id': '',
+    'client_id': 'life-in-science',
     'response_type': 'code',
     'base_uri': "https://id.itmo.ru/auth/realms/itmo/protocol/openid-connect/",
-    'redirect_uri': '',
-    'scope': 'openid profile email',
+    'redirect_uri': 'https://lis.itmo.ru/sso_auth/redirect/',
+    'scope': 'openid name email',
     'grant_type': 'authorization_code',
-    'client_secret': ''
+    'client_secret': 'uYLmexxjQa7YhNWrdENBoRUz9IpCDy6J'
 }
 
 
