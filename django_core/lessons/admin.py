@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from resources import models
+from lessons import models
 
 
-admin.site.register(models.EmotionData)
-admin.site.register(models.Resources)
+admin.site.register(models.Question)
+admin.site.register(models.QuestionType)

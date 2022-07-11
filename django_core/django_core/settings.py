@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'constance',
     'sso_app',
+    'lessons',
 ]
 
 MIDDLEWARE = [
