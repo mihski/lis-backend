@@ -41,7 +41,9 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'constance',
+    'accounts',
     'sso_app',
+    'resources',
 ]
 
 MIDDLEWARE = [
@@ -97,6 +99,11 @@ DATABASES = {
 
 CELERY_BROKER_URL = "redis://redis:6379"
 CELERY_RESULT_BACKEND = "redis://redis:6379"
+
+
+# Authorizations configs
+
+AUTH_USER_MODEL = 'accounts.User'
 
 
 # Password validation
