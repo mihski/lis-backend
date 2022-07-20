@@ -20,6 +20,8 @@ services:
         restart: always
         container_name: lis_back
         build: ./django_core
+        env_file:
+            environments/app.env
         command: bash -c "
                 python3 manage.py makemigrations &&
                 python3 manage.py migrate &&
@@ -48,6 +50,8 @@ services:
     celery:
         build: ./django_core
         command: celery -A django_core worker -l info
+        env_file:
+            environments/app.env
         volumes:
             - ./django_core/:/usr/src/app/
         depends_on:
@@ -56,6 +60,8 @@ services:
     celery-beat:
         build: ./django_core
         command: celery -A django_core beat -l info
+        env_file:
+            environments/app.env
         volumes:
             - ./django_core/:/usr/src/app/
         depends_on:
