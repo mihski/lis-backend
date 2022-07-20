@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'sso_app',
     'lessons',
     'resources',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
