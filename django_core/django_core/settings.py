@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'j0f7cw-5ovgu7n3uh)#5uirhpb6yqflztw47_vv(2bpee=#98@'
+SECRET_KEY = os.getenv('DJANGO_SECRET')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -184,13 +184,13 @@ STATIC_ROOT = '/static/'
 
 # ISO SSO
 ISU_MANAGER_CONFIG = {
-    'client_id': 'life-in-science',
+    'client_id': os.getenv('ISU_CLIENT_ID'),
     'response_type': 'code',
     'base_uri': "https://id.itmo.ru/auth/realms/itmo/protocol/openid-connect/",
     'redirect_uri': 'https://lis.itmo.ru/api/sso_auth/redirect/',
-    'scope': 'openid name email',
+    'scope': os.getenv('ISU_SCOPE'),
     'grant_type': 'authorization_code',
-    'client_secret': 'uYLmexxjQa7YhNWrdENBoRUz9IpCDy6J'
+    'client_secret': os.getenv('ISU_CLIENT_SECRET')
 }
 
 
