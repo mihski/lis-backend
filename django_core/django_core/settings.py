@@ -41,7 +41,9 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'constance',
+    'accounts',
     'sso_app',
+    'resources',
 ]
 
 MIDDLEWARE = [
@@ -121,6 +123,11 @@ CONSTANCE_REDIS_CONNECTION = {
     'port': 6379,
     'db': 2,
 }
+
+
+# Authorizations configs
+
+AUTH_USER_MODEL = 'accounts.User'
 
 
 # Password validation
