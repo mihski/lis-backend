@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'constance',
     'accounts',
     'sso_app',
+    'lessons',
     'resources',
 ]
 
