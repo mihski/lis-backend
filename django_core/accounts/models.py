@@ -37,7 +37,7 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     role = models.ForeignKey(UserRole, on_delete=models.SET_NULL, null=True)
     
-    username = models.CharField(max_length=10)
+    username = models.CharField(max_length=10, unique=True)
     email = models.EmailField(max_length=255, unique=True)
     phone = models.CharField(max_length=255)
 
