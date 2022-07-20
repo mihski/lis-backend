@@ -1,0 +1,16 @@
+[
+    {
+        "model": "lesson.questiontype",
+        "pk": 1,
+        "fields": {
+            "name": "Тип 1"
+        }
+    },
+    {
+        "model": "lesson.questiontype",
+        "pk": 2,
+        "fields": {
+            "name": "Тип 2"
+        }
+    }
+]
