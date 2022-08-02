@@ -56,7 +56,7 @@ class LessonBlock(models.Model):
     markup = models.TextField()
 
     entry = models.ForeignKey('lessons.Unit', on_delete=models.SET_NULL, null=True)
-    next = models.ForeignKey('lessons.Unit', on_delete=models.SET_NULL, null=True, blank=True)
+    next = models.ForeignKey('lessons.Unit', on_delete=models.SET_NULL, null=True, blank=True, related_name='prev')
 
 
 class UnitType(models.Model):
@@ -70,4 +70,4 @@ class Unit(models.Model):
     name = models.CharField(max_length=127)
     content = models.JSONField(default=dict)
 
-    next = models.ManyToManyField('self', on_delete=models.SET_NULL, null=True, blank=True)
+    next = models.ManyToManyField('self', blank=True)
