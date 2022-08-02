@@ -41,11 +41,12 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'constance',
+    'drf_yasg',
     'accounts',
     'sso_app',
     'lessons',
     'resources',
-    'drf_yasg',
+    'editors',
 ]
 
 MIDDLEWARE = [
