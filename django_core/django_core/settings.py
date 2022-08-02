@@ -93,7 +93,10 @@ DATABASES = {
         'USER': 'maindb',
         'PASSWORD': 'maindb',
         'HOST': 'lis_db',
-        'PORT': '5432'
+        'PORT': '5432',
+        'TEST': {
+            'NAME': 'test_',
+        },
     }
 }
 

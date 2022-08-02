@@ -34,8 +34,16 @@ class Laboratory(models.Model):
     name = models.CharField(max_length=127)
 
 
+class LessonBlock(models.Model):
+    locale = models.JSONField()
+    markup = models.JSONField()
+
+    entry = models.IntegerField()
+    next = models.ForeignKey('lessons.Unit', on_delete=models.SET_NULL, null=True, blank=True, related_name='prev')
+
+
 class Lesson(models.Model):
-    quest = models.ForeignKey(Quest, on_delete=models.CASCADE)
+    quest = models.ForeignKey(Quest, null=True, on_delete=models.SET_NULL)
     laboratory = models.ForeignKey(Laboratory, on_delete=models.SET_NULL, null=True)
 
     name = models.CharField(max_length=127)
@@ -46,28 +54,19 @@ class Lesson(models.Model):
     money_cost = models.IntegerField()
     energy_cost = models.IntegerField()
 
-    bonuses = models.ForeignKey('resources.Bonuses', on_delete=models.CASCADE)
-
-
-class LessonBlock(models.Model):
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
-    name = models.CharField(max_length=127)
-    description = models.TextField()
-    markup = models.TextField()
-
-    entry = models.ForeignKey('lessons.Unit', on_delete=models.SET_NULL, null=True)
-    next = models.ForeignKey('lessons.Unit', on_delete=models.SET_NULL, null=True, blank=True, related_name='prev')
-
-
-class UnitType(models.Model):
-    name = models.CharField(max_length=60, unique=True)
+    bonuses = models.JSONField()
+    content = models.OneToOneField(LessonBlock, related_name='lesson', null=True, on_delete=models.CASCADE)
 
 
 class Unit(models.Model):
-    question_type = models.ForeignKey(UnitType, on_delete=models.SET_NULL, null=True)
-    lesson_block = models.ForeignKey(LessonBlock, on_delete=models.CASCADE)
+    lesson_block = models.ForeignKey(
+        LessonBlock,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='blocks'
+    )
 
-    name = models.CharField(max_length=127)
-    content = models.JSONField(default=dict)
-
-    next = models.ManyToManyField('self', blank=True)
+    type = models.IntegerField()
+    content = models.JSONField()
+    next = models.JSONField()
