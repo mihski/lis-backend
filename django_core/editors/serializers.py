@@ -17,6 +17,7 @@ from lessons.structures.lectures import (
     DocBlock,
     VideoBlock
 )
+from lessons.models import Lesson
 
 
 class TextBlockSerializer(serializers.ModelSerializer):
@@ -27,6 +28,12 @@ class TextBlockSerializer(serializers.ModelSerializer):
 class UrlBlockSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ['title', 'url', 'location']
+
+    def validate_url(self, url: str) -> str:
+        if not url.startswith('http'):
+            raise ValidationError('url should starts with http')
+
+        return url
 
 
 class ReplicaBlockSerializer(TextBlockSerializer):
@@ -73,13 +80,13 @@ class GalleryBlockSerializer(serializers.ModelSerializer):
     def validate_images(self, images: List[Dict[str, str]]):
         """ Check that images field has specified parameters """
         if not isinstance(images, list):
-            return False
+            raise ValidationError('images should be a list')
 
         for image in images:
             if len(image) != 2 or any(field not in image for field in ['title', 'url']):
                 raise ValidationError(f'You should specify both title and url: {image}')
 
-        return True
+        return images
 
 
 class EmailBlockSerializer(TextBlockSerializer):
