@@ -17,3 +17,7 @@ class Resources(models.Model):
     name = models.CharField(max_length=255)
     resource_type = models.CharField(max_length=10, choices=RESOURCE_TYPE)
     amount = models.IntegerField(default=0)
+
+
+class Bonuses(models.Model):
+    content = models.JSONField()

@@ -1,6 +1,4 @@
-from email.policy import default
 from django.db import models
-
 
 
 GENDERS = (
@@ -8,9 +6,22 @@ GENDERS = (
     ('female', 'Женский'),
 )
 
+
 class Course(models.Model):
     name = models.CharField(max_length=127)
     description = models.TextField()
+
+
+class Branching(models.Model):
+    BRANCH_TYPES = (
+        ('conditional', 'Условный бранчинг'),
+        ('selective', 'Выборочный бранчинг'),
+    )
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+
+    branch_type = models.CharField(max_length=32, choices=BRANCH_TYPES)
+    type = models.IntegerField()
+    content = models.JSONField()
 
 
 class Quest(models.Model):
@@ -30,22 +41,33 @@ class Lesson(models.Model):
     name = models.CharField(max_length=127)
     description = models.TextField()
     for_gender = models.CharField(max_length=6, choices=GENDERS)
-    # TODO: подумать как разбить на разные подвиды ресурсов
-    resources_amount = models.IntegerField()
+
+    time_cost = models.IntegerField()
+    money_cost = models.IntegerField()
+    energy_cost = models.IntegerField()
+
+    bonuses = models.ForeignKey('resources.Bonuses', on_delete=models.CASCADE)
 
 
 class LessonBlock(models.Model):
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
     name = models.CharField(max_length=127)
     description = models.TextField()
+    markup = models.TextField()
+
+    entry = models.ForeignKey('lessons.Unit', on_delete=models.SET_NULL, null=True)
+    next = models.ForeignKey('lessons.Unit', on_delete=models.SET_NULL, null=True, blank=True, related_name='prev')
 
 
-class QuestionType(models.Model):
+class UnitType(models.Model):
     name = models.CharField(max_length=60, unique=True)
 
 
-class Question(models.Model):
-    question_type = models.ForeignKey(QuestionType, on_delete=models.SET_NULL, null=True)
+class Unit(models.Model):
+    question_type = models.ForeignKey(UnitType, on_delete=models.SET_NULL, null=True)
     lesson_block = models.ForeignKey(LessonBlock, on_delete=models.CASCADE)
+
     name = models.CharField(max_length=127)
-    question_content = models.JSONField(default=dict)
+    content = models.JSONField(default=dict)
+
+    next = models.ManyToManyField('self', blank=True)
