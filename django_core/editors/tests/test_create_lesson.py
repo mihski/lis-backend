@@ -1,6 +1,6 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
-from lessons.models import Lesson
+from lessons.models import Lesson, LessonBlock
 
 
 def _create_lesson(content):
@@ -61,7 +61,7 @@ class TestLessonCreating(TestCase):
     def get_lessons(self):
         return Lesson.objects.all()
 
-    def test_create_simple_lesson(self):
+    def create_simple_lesson(self):
         self.assertEqual(len(self.get_lessons()), 0)
         response = self.client.post(
             '/api/editors/lessons/',
@@ -70,3 +70,13 @@ class TestLessonCreating(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(self.get_lessons()), 1)
+
+    def test_creating_and_retrieving_simple_lesson(self):
+        self.create_simple_lesson()
+        response = self.client.get(
+            '/api/editors/lessons/',
+            self.lesson,
+        )
+        body = response.json()[0]
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(body['content']['blocks']), 1)

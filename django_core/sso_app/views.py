@@ -1,10 +1,10 @@
-from rest_framework.generics import ListAPIView
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.http import HttpResponseRedirect
 from sso_app.auth_isu import ISUManager
 
 
-class RedirectISU(ListAPIView):
+class RedirectISU(APIView):
     """ Вьюшка для редиректа на CAS авторизацию.
     В случае успешной авторазции возвращает нам на redirect_url код авторизации.
     """
@@ -14,7 +14,7 @@ class RedirectISU(ListAPIView):
         return HttpResponseRedirect(isu_manager.obtain_auth_url())
 
 
-class GetISUToken(ListAPIView):
+class GetISUToken(APIView):
     """ Вьюшка для получения токенов пользователя по коду авторазции """
     def get(self, request):
         code = request.GET.get('code')

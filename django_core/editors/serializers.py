@@ -268,8 +268,8 @@ class LessonSerializer(serializers.ModelSerializer):
         content = content.save()
 
         instance = super(LessonSerializer, self).create(validated_data)
-        content.lesson = instance
-        content.save()
+        instance.content = content
+        instance.save()
 
         return instance
 
