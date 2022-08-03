@@ -1,10 +1,7 @@
 from django.db import models
-from lessons.models import Lesson
 
 
 class LessonBlock(models.Model):
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
-
     class Meta:
         abstract = True
 

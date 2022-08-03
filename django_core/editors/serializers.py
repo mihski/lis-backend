@@ -16,7 +16,7 @@ from lessons.structures.lectures import (
     BrowserBlock,
     TableBlock,
     DocBlock,
-    VideoBlock
+    VideoBlock,
 )
 from lessons.structures.tasks import (
     RadiosBlock,
@@ -29,7 +29,8 @@ from lessons.structures.tasks import (
     SortBlock,
     ComparisonBlock,
 )
-from lessons.models import Lesson, Unit, LessonBlock
+from lessons.models import Lesson, Unit, LessonBlock, Quest, Course, Branching
+from editors.models import Block
 
 
 class LessonBlockType(Enum):
@@ -63,6 +64,13 @@ class LessonBlockType(Enum):
         return value in cls._value2member_map_
 
 
+class BlockType(Enum):
+    lesson = 1
+    quest = 2
+    unit = 3
+    branching = 4
+
+
 def _check_missed_fields(data: Iterable[Dict], required_fields: set):
     for element in data:
         missed_fields = required_fields.difference(set(element.keys()))
@@ -74,6 +82,9 @@ def _check_missed_fields(data: Iterable[Dict], required_fields: set):
 class BaseLisBlockSerializer(serializers.ModelSerializer):
     """ Requires block_type property for lessons blocks in order to deserialize block object """
     block_type: LessonBlockType = None
+
+    class Meta:
+        model = None
 
     @staticmethod
     def get_all_subclasses() -> List['BaseLisBlockSerializer']:
@@ -92,12 +103,12 @@ class BaseLisBlockSerializer(serializers.ModelSerializer):
 
 class TextBlockSerializer(BaseLisBlockSerializer):
     class Meta:
-        fields = ['message', 'location']
+        fields = ['id', 'message', 'location']
 
 
 class UrlBlockSerializer(BaseLisBlockSerializer):
     class Meta:
-        fields = ['title', 'url', 'location']
+        fields = ['id', 'title', 'url', 'location']
 
     def validate_url(self, url: str) -> str:
         if not url.startswith('http'):
@@ -367,7 +378,7 @@ class ComparisonBlockSerializer(TaskBlockSerializer):
         return lists
 
     class Meta:
-        model = RadiosBlock
+        model = ComparisonBlock
         fields = ['lists', 'correct'] + TaskBlockSerializer.Meta.fields
 
 
@@ -404,15 +415,44 @@ class UnitSerializer(serializers.ModelSerializer):
     def validate(self, data):
         content_serializer = self.get_unit_content_serializer(data['type'])
         content_serializer(data=data['content']).is_valid(raise_exception=True)
+        # TODO: if len(next) > 1 check blocks are replicas
 
         return data
 
     def create(self, validated_data):
-        return Unit(**validated_data)
+        content_serializer = self.get_unit_content_serializer(validated_data['type'])
+        content = content_serializer(data=validated_data['content'])
+        content.is_valid()
+        content = content.save()
+
+        instance = Unit(**validated_data)
+        instance.content = content_serializer(content).data
+        instance.save()
+
+        return instance
+
+    def update(self, instance: Unit, validated_data):
+        content_serializer = self.get_unit_content_serializer(validated_data['type'])
+        instance.next = validated_data.get('next', instance.type)
+
+        if instance.type == validated_data['type']:
+            content_obj = content_serializer.Meta.model.objects.filter(id=instance.content_id)
+            content_serializer(content_obj, data=validated_data['content']).save()
+
+            return instance
+
+        content = content_serializer(data=validated_data['content'])
+        content.is_valid()
+        content = content.save()
+
+        instance.content_id = content.id
+        instance.type = validated_data.get('type', instance.type)
+
+        return instance
 
     class Meta:
         model = Unit
-        fields = '__all__'
+        fields = ['id', 'type', 'next', 'content']
 
 
 class LessonContentSerializer(serializers.ModelSerializer):
@@ -436,16 +476,13 @@ class LessonContentSerializer(serializers.ModelSerializer):
         return markup
 
     def create(self, validated_data):
-        blocks = UnitSerializer(
+        serialized_blocks = UnitSerializer(
             data=validated_data.pop('blocks'),
             many=True
         )
-        blocks.is_valid()
-        blocks = blocks.save()
+        serialized_blocks.is_valid()
+        blocks = serialized_blocks.save()
 
-        Unit.objects.bulk_create(blocks)
-
-        validated_data['entry'] = blocks[validated_data['entry']].id
         instance = super(LessonContentSerializer, self).create(validated_data)
 
         for block in blocks:
@@ -469,14 +506,14 @@ class LessonSerializer(serializers.ModelSerializer):
     content = LessonContentSerializer(required=False)
 
     def create(self, validated_data):
-        content = LessonContentSerializer(
+        serialized_content = LessonContentSerializer(
             data=validated_data.pop('content')
         )
-        content.is_valid()
-        content = content.save()
+        serialized_content.is_valid()
+        serialized_content = serialized_content.save()
 
         instance = super(LessonSerializer, self).create(validated_data)
-        instance.content = content
+        instance.content = serialized_content
         instance.save()
 
         return instance
@@ -484,6 +521,7 @@ class LessonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lesson
         fields = [
+            'id',
             'name',
             'timeCost',
             'moneyCost',
@@ -491,3 +529,60 @@ class LessonSerializer(serializers.ModelSerializer):
             'bonuses',
             'content',
         ]
+
+
+class QuestSerializer(serializers.ModelSerializer):
+    lessons = LessonSerializer(many=True)
+    description = serializers.CharField()
+    entry = serializers.IntegerField()
+    next = serializers.IntegerField()
+
+    class Meta:
+        model = Quest
+        fields = ['id', 'lessons', 'description', 'entry', 'next']
+
+
+class BranchingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Branching
+        fields = ['id', 'type', 'content']
+
+
+class BlockSerializer(serializers.ModelSerializer):
+    BLOCK_TYPE_TO_SERIALIZER = {
+        BlockType.lesson: LessonSerializer,
+        BlockType.quest: QuestSerializer,
+        BlockType.unit: UnitSerializer,
+        BlockType.branching: BranchingSerializer
+    }
+
+    x = serializers.FloatField()
+    y = serializers.FloatField()
+    type = serializers.IntegerField()
+    body = serializers.JSONField(read_only=True)
+
+    def _get_body_serializer(self, block_type: int):
+        type = BlockType(block_type)
+        return self.BLOCK_TYPE_TO_SERIALIZER[type]
+
+    def get_body(self, obj: Block):
+        body_serializer = self._get_body_serializer(obj.type)
+        body_model = body_serializer.Meta.model
+        body_obj = body_model.objects.filter(id=obj.body_id).only()
+        return body_serializer(body_obj).data
+
+    class Meta:
+        model = Block
+        fields = ['id', 'x', 'y', 'type', 'body']
+
+
+class CourseSerializer(serializers.ModelSerializer):
+    lessons = LessonSerializer(many=True)
+    quests = QuestSerializer(many=True)
+    branchings = BranchingSerializer(many=True)
+    entry = serializers.IntegerField()
+    locale = serializers.JSONField()
+
+    class Meta:
+        model = Course
+        fields = ['id', 'lessons', 'quests', 'branchings', 'entry', 'locale']
