@@ -382,9 +382,23 @@ class ComparisonBlockSerializer(TaskBlockSerializer):
         fields = ['lists', 'correct'] + TaskBlockSerializer.Meta.fields
 
 
+class UnitListSerializer(serializers.ListSerializer):
+    def update(self, instances: List[Unit], validated_datas):
+        ret = []
+
+        # FIXME: rewrite with less queires
+        for instance, validated_data in zip(instances, validated_datas):
+            obj_serializer = UnitSerializer(instance, data=validated_data)
+            obj_serializer.is_valid()
+            ret.append(obj_serializer.save())
+
+        return ret
+
+
 class UnitSerializer(serializers.ModelSerializer):
     LESSON_BLOCK_SERIALIZERS: Dict[LessonBlockType, BaseLisBlockSerializer] = dict()
 
+    id = serializers.IntegerField(required=False)
     type = serializers.IntegerField()
     next = serializers.JSONField()
     content = serializers.JSONField()
@@ -431,28 +445,32 @@ class UnitSerializer(serializers.ModelSerializer):
 
         return instance
 
-    def update(self, instance: Unit, validated_data):
+    def update(self, instance, validated_data):
         content_serializer = self.get_unit_content_serializer(validated_data['type'])
         instance.next = validated_data.get('next', instance.type)
 
         if instance.type == validated_data['type']:
-            content_obj = content_serializer.Meta.model.objects.filter(id=instance.content_id)
-            content_serializer(content_obj, data=validated_data['content']).save()
+            content_obj = content_serializer.Meta.model.objects.filter(
+                id=validated_data['content']['id']
+            ).only().first()
+            obj = content_serializer(content_obj, data=validated_data['content'], partial=True)
+            obj.is_valid()
+            obj.save()
 
-            return instance
+            validated_data['content'] = obj.data
 
         content = content_serializer(data=validated_data['content'])
-        content.is_valid()
-        content = content.save()
-
-        instance.content_id = content.id
         instance.type = validated_data.get('type', instance.type)
+        instance.content = validated_data['content']
+        instance.save()
 
         return instance
 
     class Meta:
         model = Unit
         fields = ['id', 'type', 'next', 'content']
+
+        list_serializer_class = UnitListSerializer
 
 
 class LessonContentSerializer(serializers.ModelSerializer):
@@ -481,6 +499,7 @@ class LessonContentSerializer(serializers.ModelSerializer):
             many=True
         )
         serialized_blocks.is_valid()
+
         blocks = serialized_blocks.save()
 
         instance = super(LessonContentSerializer, self).create(validated_data)
@@ -489,12 +508,33 @@ class LessonContentSerializer(serializers.ModelSerializer):
             block.lesson_block = instance
 
         Unit.objects.bulk_update(blocks, fields=['lesson_block'])
+        instance.save()
+
+        return instance
+
+    def update(self, instance, validated_data):
+        serialized_blocks = UnitSerializer(
+            list(instance.blocks.all()),
+            data=validated_data.pop('blocks'),
+            many=True
+        )
+        serialized_blocks.is_valid()
+        serialized_blocks.save()
+
+        instance = super().update(instance, validated_data)
+        instance.save()
 
         return instance
 
     class Meta:
         model = LessonBlock
-        fields = '__all__'
+        fields = [
+            'id',
+            'blocks',
+            'entry',
+            'locale',
+            'markup'
+        ]
 
 
 class LessonSerializer(serializers.ModelSerializer):
@@ -514,6 +554,21 @@ class LessonSerializer(serializers.ModelSerializer):
 
         instance = super(LessonSerializer, self).create(validated_data)
         instance.content = serialized_content
+        instance.save()
+
+        return instance
+
+    def update(self, instance, validated_data):
+        serialized_content = LessonContentSerializer(
+            instance.content,
+            data=validated_data.pop('content')
+        )
+        serialized_content.is_valid()
+
+        instance.content = serialized_content.save()
+        instance.save()
+
+        instance = super().update(instance, validated_data)
         instance.save()
 
         return instance

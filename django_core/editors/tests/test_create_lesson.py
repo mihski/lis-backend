@@ -22,9 +22,7 @@ def _create_simple_lesson(unit):
         'energyCost': 3,
         'bonuses': {1: {'energy': 1, 'money': 2}},
         'content': {
-            'blocks': [
-                unit
-            ],
+            'blocks': [unit],
             'entry': 0,
             'locale': {
                 'ru': {
@@ -62,7 +60,6 @@ class TestLessonCreating(TestCase):
             'emotion': 2
         }
         self.replica_unit = _create_unit(self.replica_block, LessonBlockType.replica)
-        self.lesson = _create_simple_lesson(self.replica_unit)
         self.client = APIClient()
 
     def get_lessons(self):
@@ -96,9 +93,12 @@ class TestLessonCreating(TestCase):
         )
 
     def create_simple_lesson(self):
+        unit_data = self.create_replica_unit()
+        lesson = _create_simple_lesson(unit_data)
+
         response = self.client.post(
             '/api/editors/lessons/',
-            self.lesson,
+            lesson,
             format='json'
         )
         self.assertEqual(response.status_code, 201)
@@ -110,11 +110,60 @@ class TestLessonCreating(TestCase):
 
         lesson_data = self.create_simple_lesson()
 
-        response = self.client.get(
-            f'/api/editors/lessons/{lesson_data["id"]}/',
-            self.lesson,
-        )
+        response = self.client.get(f'/api/editors/lessons/{lesson_data["id"]}/')
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['id'], lesson_data['id'])
         self.assertEqual(len(response.json()['content']['blocks']), 1)
+        self.assertEqual(len(self.get_units()), 1)
+
+    def test_patching_lesson(self):
+        lesson_data = self.create_simple_lesson()
+        lesson_data['content']['blocks'][0]['next'] = [1]
+        lesson_data['timeCost'] = 3
+        lesson_data['content']['blocks'][0]['content']['emotion'] = 3
+
+        response = self.client.patch(
+            f'/api/editors/lessons/{lesson_data["id"]}/',
+            lesson_data,
+            format='json'
+        )
+        new_lesson_data = response.json()
+        self.assertEqual(response.status_code, 200)
+
+        # check that we didn't change ids
+        self.assertEqual(lesson_data['id'], new_lesson_data['id'])
+        self.assertEqual(
+            new_lesson_data['content']['id'],
+            lesson_data['content']['id'],
+        )
+        self.assertEqual(
+            sorted([b['id'] for b in new_lesson_data['content']['blocks']]),
+            sorted([b['id'] for b in lesson_data['content']['blocks']]),
+        )
+        self.assertTrue(all(
+            nb['content']['id'] == b['content']['id']
+            for nb, b in zip(
+                sorted(lesson_data['content']['blocks'], key=lambda x: x['id']),
+                sorted(new_lesson_data['content']['blocks'], key=lambda x: x['id']),
+            )
+        ))
+
+        # check we changed exact properties
+        self.assertEqual(
+            new_lesson_data['content']['blocks'][0].pop('next'),
+            [1]
+        )
+        self.assertEqual(
+            new_lesson_data.pop('timeCost'),
+            3,
+        )
+        self.assertEqual(
+            new_lesson_data['content']['blocks'][0]['content'].pop('emotion'),
+            3,
+        )
+        lesson_data['content']['blocks'][0].pop('next')
+        lesson_data.pop('timeCost')
+        lesson_data['content']['blocks'][0]['content'].pop('emotion')
+
+        self.assertEqual(new_lesson_data, lesson_data)
