@@ -19,7 +19,9 @@ class Branching(models.Model):
 
 
 class Quest(models.Model):
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='quests')
+    course = models.ForeignKey(Course, null=True, on_delete=models.SET_NULL, related_name='quests')
+
+    lessons = models.JSONField()
     name = models.CharField(max_length=127)
     description = models.TextField()
 
@@ -39,7 +41,7 @@ class LessonBlock(models.Model):
 
 
 class Lesson(models.Model):
-    quest = models.ForeignKey(Quest, null=True, on_delete=models.SET_NULL, related_name='lessons')
+    quest = models.ForeignKey(Quest, null=True, on_delete=models.SET_NULL)
     laboratory = models.ForeignKey(Laboratory, on_delete=models.SET_NULL, null=True)
 
     name = models.CharField(max_length=127)

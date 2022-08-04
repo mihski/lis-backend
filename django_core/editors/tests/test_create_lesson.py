@@ -1,6 +1,6 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
-from lessons.models import Lesson, Unit
+from lessons.models import Lesson, Unit, Course, Quest
 from lessons.structures.lectures import ReplicaBlock
 from editors.serializers import LessonBlockType
 
@@ -45,6 +45,15 @@ def _create_simple_lesson(unit):
     }
 
     return lesson
+
+
+def _create_quests(lessons_ids):
+    return {
+        'lessons': lessons_ids,
+        'description': 'quest 1',
+        'entry': 0,
+        'next': 0,
+    }
 
 
 class TestLessonCreating(TestCase):
@@ -167,3 +176,25 @@ class TestLessonCreating(TestCase):
         lesson_data['content']['blocks'][0]['content'].pop('emotion')
 
         self.assertEqual(new_lesson_data, lesson_data)
+
+    def create_simple_quest(self, lesson_ids):
+        response = self.client.post(
+            '/api/editors/quests/',
+            _create_quests(lesson_ids),
+            format='json'
+        )
+        self.assertEqual(response.status_code, 201)
+        return response.json()
+
+    def test_patching_quest(self):
+        quest = self.create_simple_quest([])
+        quest['lessons'] = [1, 2]
+
+        response = self.client.patch(
+            f'/api/editors/quests/{quest["id"]}/',
+            quest,
+            format='json'
+        )
+        new_quest = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(new_quest['lessons'], [1, 2])

@@ -459,7 +459,6 @@ class UnitSerializer(serializers.ModelSerializer):
 
             validated_data['content'] = obj.data
 
-        content = content_serializer(data=validated_data['content'])
         instance.type = validated_data.get('type', instance.type)
         instance.content = validated_data['content']
         instance.save()
@@ -587,7 +586,7 @@ class LessonSerializer(serializers.ModelSerializer):
 
 
 class QuestSerializer(serializers.ModelSerializer):
-    lessons = LessonSerializer(many=True)
+    lessons = serializers.JSONField()
     description = serializers.CharField()
     entry = serializers.IntegerField()
     next = serializers.IntegerField()
@@ -632,11 +631,20 @@ class BlockSerializer(serializers.ModelSerializer):
 
 
 class CourseSerializer(serializers.ModelSerializer):
-    lessons = LessonSerializer(many=True)
-    quests = QuestSerializer(many=True)
-    branchings = BranchingSerializer(many=True)
+    lessons = serializers.SerializerMethodField(read_only=True)
+    quests = QuestSerializer(read_only=True, many=True)
+    branchings = BranchingSerializer(read_only=True, many=True)
     entry = serializers.IntegerField()
     locale = serializers.JSONField()
+
+    def get_lessons(self, obj):
+        return LessonSerializer(obj.lessons, many=True)
+
+    def get_quests(self, obj):
+        return QuestSerializer(obj.lessons, many=True)
+
+    def get_branchings(self, obj):
+        return BranchingSerializer(obj.lessons, many=True)
 
     class Meta:
         model = Course
