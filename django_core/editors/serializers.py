@@ -1,3 +1,5 @@
+import logging
+
 from enum import Enum
 from typing import List, Dict, Iterable
 
@@ -31,6 +33,9 @@ from lessons.structures.tasks import (
 )
 from lessons.models import Lesson, Unit, LessonBlock, Quest, Course, Branching
 from editors.models import Block
+
+
+logger = logging.Logger(__file__)
 
 
 class LessonBlockType(Enum):
@@ -395,8 +400,97 @@ class UnitListSerializer(serializers.ListSerializer):
         return ret
 
 
-class UnitSerializer(serializers.ModelSerializer):
+class EditorBlockMixin:
+    """ Provide create editor block interface """
+    CLASS_TO_TYPE_MAPPING = {
+        Lesson: BlockType.lesson,
+        Branching: BlockType.branching,
+        Unit: BlockType.unit,
+        Quest: BlockType.quest,
+    }
+
+    def block_provided(self, validated_data):
+        return validated_data.get('x') and validated_data.get('y')
+
+    def check_exist_block(self, instance):
+        block = Block.objects.filter(id=instance.block_id).first()
+
+        return block
+
+    def create_block(self, instance, validated_data):
+        if not self.block_provided(validated_data):
+            return
+
+        block = self.check_exist_block(instance)
+        x, y = validated_data['x'], validated_data['y']
+
+        if block:
+            logger.warning("Tried to create duplication block. Updating exists one.")
+            return self.update_block(instance, x, y, block=block)
+
+        body_type = self.CLASS_TO_TYPE_MAPPING[instance.__class__].value
+        block = Block.objects.create(x=x, y=y, type=body_type, body_id=instance.id)
+        instance.block_id = block.id
+        instance.save()
+
+        return block
+
+    def update_block(self, instance, validated_data, block=None):
+        if not self.block_provided(validated_data):
+            return
+
+        x, y = validated_data['x'], validated_data['y']
+
+        if not block:
+            block = self.check_exist_block(instance)
+
+        if not block:
+            logger.error(f"There is no block for {instance.__class__}: {instance.id}")
+            raise ValueError(f"Update unexistance block for {instance.__class__}: {instance.id}")
+
+        block.x = x
+        block.y = y
+        instance.block_id = block.id
+
+        block.save()
+        instance.save()
+
+        return block
+
+
+class LisEditorModelSerializer(serializers.ModelSerializer, EditorBlockMixin):
+    def create(self, validated_data):
+        block_data = {
+            'x': validated_data.pop('x', None),
+            'y': validated_data.pop('y', None)
+        }
+
+        instance = super(LisEditorModelSerializer, self).create(validated_data)
+        instance.save()
+
+        self.create_block(instance, block_data)
+
+        return instance
+
+    def update(self, instance, validated_data):
+        block_data = {
+            'x': validated_data.pop('x', None),
+            'y': validated_data.pop('y', None)
+        }
+
+        instance = super(LisEditorModelSerializer, self).update(instance, validated_data)
+        instance.save()
+
+        self.update_block(instance, block_data)
+
+        return instance
+
+
+class UnitSerializer(LisEditorModelSerializer):
     LESSON_BLOCK_SERIALIZERS: Dict[LessonBlockType, BaseLisBlockSerializer] = dict()
+
+    x = serializers.FloatField(write_only=True, required=False)
+    y = serializers.FloatField(write_only=True, required=False)
 
     id = serializers.IntegerField(required=False)
     type = serializers.IntegerField()
@@ -428,7 +522,7 @@ class UnitSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         content_serializer = self.get_unit_content_serializer(data['type'])
-        content_serializer(data=data['content']).is_valid(raise_exception=True)
+        content_serializer(data=data['content']).is_valid()
         # TODO: if len(next) > 1 check blocks are replicas
 
         return data
@@ -439,7 +533,7 @@ class UnitSerializer(serializers.ModelSerializer):
         content.is_valid()
         content = content.save()
 
-        instance = Unit(**validated_data)
+        instance = super().create(validated_data)
         instance.content = content_serializer(content).data
         instance.save()
 
@@ -467,7 +561,7 @@ class UnitSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Unit
-        fields = ['id', 'type', 'next', 'content']
+        fields = ['id', 'type', 'next', 'content', 'x', 'y']
 
         list_serializer_class = UnitListSerializer
 
@@ -493,15 +587,17 @@ class LessonContentSerializer(serializers.ModelSerializer):
         return markup
 
     def create(self, validated_data):
+        blocks_data = validated_data.pop('blocks')
+        instance = super(LessonContentSerializer, self).create(validated_data)
+        print(instance.blocks.all())
+
         serialized_blocks = UnitSerializer(
-            data=validated_data.pop('blocks'),
+            list(instance.blocks.all()),
+            data=blocks_data,
             many=True
         )
         serialized_blocks.is_valid()
-
         blocks = serialized_blocks.save()
-
-        instance = super(LessonContentSerializer, self).create(validated_data)
 
         for block in blocks:
             block.lesson_block = instance
@@ -536,7 +632,7 @@ class LessonContentSerializer(serializers.ModelSerializer):
         ]
 
 
-class LessonSerializer(serializers.ModelSerializer):
+class LessonSerializer(LisEditorModelSerializer):
     name = serializers.CharField()
     timeCost = serializers.IntegerField(source='time_cost')
     moneyCost = serializers.IntegerField(source='money_cost')
@@ -585,7 +681,7 @@ class LessonSerializer(serializers.ModelSerializer):
         ]
 
 
-class QuestSerializer(serializers.ModelSerializer):
+class QuestSerializer(LisEditorModelSerializer):
     lessons = serializers.JSONField()
     description = serializers.CharField()
     entry = serializers.IntegerField()
@@ -596,7 +692,7 @@ class QuestSerializer(serializers.ModelSerializer):
         fields = ['id', 'lessons', 'description', 'entry', 'next']
 
 
-class BranchingSerializer(serializers.ModelSerializer):
+class BranchingSerializer(LisEditorModelSerializer):
     class Meta:
         model = Branching
         fields = ['id', 'type', 'content']
@@ -605,9 +701,9 @@ class BranchingSerializer(serializers.ModelSerializer):
 class BlockSerializer(serializers.ModelSerializer):
     BLOCK_TYPE_TO_SERIALIZER = {
         BlockType.lesson: LessonSerializer,
-        BlockType.quest: QuestSerializer,
         BlockType.unit: UnitSerializer,
-        BlockType.branching: BranchingSerializer
+        BlockType.branching: BranchingSerializer,
+        BlockType.quest: QuestSerializer
     }
 
     x = serializers.FloatField()
@@ -632,8 +728,8 @@ class BlockSerializer(serializers.ModelSerializer):
 
 class CourseSerializer(serializers.ModelSerializer):
     lessons = serializers.SerializerMethodField(read_only=True)
-    quests = QuestSerializer(read_only=True, many=True)
-    branchings = BranchingSerializer(read_only=True, many=True)
+    quests = serializers.SerializerMethodField(read_only=True)
+    branchings = serializers.SerializerMethodField(read_only=True)
     entry = serializers.IntegerField()
     locale = serializers.JSONField()
 
@@ -641,10 +737,10 @@ class CourseSerializer(serializers.ModelSerializer):
         return LessonSerializer(obj.lessons, many=True)
 
     def get_quests(self, obj):
-        return QuestSerializer(obj.lessons, many=True)
+        return QuestSerializer(obj.quests, many=True)
 
     def get_branchings(self, obj):
-        return BranchingSerializer(obj.lessons, many=True)
+        return BranchingSerializer(obj.branchings, many=True)
 
     class Meta:
         model = Course

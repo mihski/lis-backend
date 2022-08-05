@@ -7,18 +7,25 @@ GENDERS = (
 )
 
 
+class EditorBlockModel(models.Model):
+    block_id = models.IntegerField(default=None, null=True, blank=True)
+
+    class Meta:
+        abstract = True
+
+
 class Course(models.Model):
     name = models.CharField(max_length=127)
     description = models.TextField()
 
 
-class Branching(models.Model):
+class Branching(EditorBlockModel):
     course = models.ForeignKey(Course, null=True, on_delete=models.SET_NULL)
     type = models.IntegerField()
     content = models.JSONField()
 
 
-class Quest(models.Model):
+class Quest(EditorBlockModel):
     course = models.ForeignKey(Course, null=True, on_delete=models.SET_NULL, related_name='quests')
 
     lessons = models.JSONField()
@@ -40,7 +47,7 @@ class LessonBlock(models.Model):
     entry = models.IntegerField()
 
 
-class Lesson(models.Model):
+class Lesson(EditorBlockModel):
     quest = models.ForeignKey(Quest, null=True, on_delete=models.SET_NULL)
     laboratory = models.ForeignKey(Laboratory, on_delete=models.SET_NULL, null=True)
 
@@ -56,7 +63,7 @@ class Lesson(models.Model):
     content = models.OneToOneField(LessonBlock, related_name='lesson', null=True, on_delete=models.CASCADE)
 
 
-class Unit(models.Model):
+class Unit(EditorBlockModel):
     lesson_block = models.ForeignKey(
         LessonBlock,
         on_delete=models.SET_NULL,

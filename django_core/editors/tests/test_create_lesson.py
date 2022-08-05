@@ -1,8 +1,9 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
-from lessons.models import Lesson, Unit, Course, Quest
+from lessons.models import Lesson, Unit
 from lessons.structures.lectures import ReplicaBlock
 from editors.serializers import LessonBlockType
+from editors.models import Block
 
 
 def _create_unit(content, lesson_type: LessonBlockType):
@@ -63,12 +64,11 @@ class TestLessonCreating(TestCase):
             'location': 1,
             'emotion': 2,
         }
-        self.invalid_replica_block = {
-            'message': 'replica block message 2',
-            'location': 'asd',
-            'emotion': 2
-        }
         self.replica_unit = _create_unit(self.replica_block, LessonBlockType.replica)
+        self.replica_unit_with_coords = self.replica_unit | {
+            'x': 21.2,
+            'y': 54.4
+        }
         self.client = APIClient()
 
     def get_lessons(self):
@@ -78,12 +78,18 @@ class TestLessonCreating(TestCase):
         return Unit.objects.all()
 
     def create_replica_unit(self):
+        blocks_count = Block.objects.all().count()
+
         response = self.client.post(
             '/api/editors/units/',
-            self.replica_unit,
+            self.replica_unit_with_coords,
             format='json'
         )
         self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            Block.objects.all().count(),
+            blocks_count + 1
+        )
 
         return response.json()
 
