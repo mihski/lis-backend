@@ -3,6 +3,7 @@ from rest_framework.test import APIClient
 from lessons.models import Lesson, Unit, Course
 from lessons.structures.lectures import ReplicaBlock
 from editors.serializers import LessonBlockType, LessonBlock
+from editors.models import Block
 
 
 def _create_unit(lesson_id, content, lesson_type: LessonBlockType):
@@ -92,6 +93,9 @@ class TestLessonCreating(TestCase):
 
     def create_simple_lesson(self, units=None):
         lesson = _create_simple_lesson(self.course.id, units)
+        lesson['x'] = 12.3
+        lesson['y'] = 42
+
         response = self.client.post(
             '/api/editors/lessons/',
             lesson,
@@ -109,6 +113,7 @@ class TestLessonCreating(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['id'], lesson_data['id'])
         self.assertEqual(len(self.course.lesson_set.all()), 2)
+        self.assertEqual(Block.objects.count(), 1)
 
     def create_replica_unit(self, lesson_id):
         replica_unit = _create_unit(
@@ -220,6 +225,8 @@ class TestLessonCreating(TestCase):
     def test_patching_quest(self):
         quest = self.create_simple_quest(self.course.id, [])
         quest['lesson_ids'] = [self.lesson.id]
+        quest['x'] = 12.4
+        quest['y'] = 42
 
         response = self.client.patch(
             f'/api/editors/quests/{quest["id"]}/',
@@ -231,3 +238,4 @@ class TestLessonCreating(TestCase):
         new_quest = response.json()
         self.assertEqual(len(new_quest['lessons']), 1)
         self.assertEqual(new_quest['lessons'][0]['id'], self.lesson.id)
+        self.assertEqual(Block.objects.count(), 1)

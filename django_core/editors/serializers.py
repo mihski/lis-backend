@@ -445,8 +445,8 @@ class EditorBlockMixin:
             block = self.check_exist_block(instance)
 
         if not block:
-            logger.error(f"There is no block for {instance.__class__}: {instance.id}")
-            raise ValueError(f"Update unexistance block for {instance.__class__}: {instance.id}")
+            logger.error(f"There is no block for {instance.__class__}: {instance.id}. Creating...")
+            return self.create_block(instance, validated_data)
 
         block.x = x
         block.y = y
@@ -639,6 +639,9 @@ class LessonContentSerializer(serializers.ModelSerializer):
 
 
 class LessonSerializer(LisEditorModelSerializer):
+    x = serializers.FloatField(write_only=True, required=False)
+    y = serializers.FloatField(write_only=True, required=False)
+
     name = serializers.CharField()
     course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
     timeCost = serializers.IntegerField(source='time_cost')
@@ -693,10 +696,15 @@ class LessonSerializer(LisEditorModelSerializer):
             'energyCost',
             'bonuses',
             'content',
+            'x',
+            'y',
         ]
 
 
 class QuestSerializer(LisEditorModelSerializer):
+    x = serializers.FloatField(write_only=True, required=False)
+    y = serializers.FloatField(write_only=True, required=False)
+
     course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
     lesson_ids = serializers.PrimaryKeyRelatedField(
         many=True,
@@ -714,7 +722,17 @@ class QuestSerializer(LisEditorModelSerializer):
 
     class Meta:
         model = Quest
-        fields = ['id', 'course', 'lesson_ids', 'lessons', 'description', 'entry', 'next']
+        fields = [
+            'id',
+            'course',
+            'lesson_ids',
+            'lessons',
+            'description',
+            'entry',
+            'next',
+            'x',
+            'y'
+        ]
         depth = 0
 
 
@@ -753,20 +771,11 @@ class BlockSerializer(serializers.ModelSerializer):
 
 
 class CourseSerializer(serializers.ModelSerializer):
-    lessons = serializers.SerializerMethodField(read_only=True)
-    quests = serializers.SerializerMethodField(read_only=True)
-    branchings = serializers.SerializerMethodField(read_only=True)
+    lessons = LessonSerializer(many=True, read_only=True)
+    quests = QuestSerializer(many=True, read_only=True)
+    branchings = BranchingSerializer(many=True)
     entry = serializers.IntegerField()
     locale = serializers.JSONField()
-
-    def get_lessons(self, obj):
-        return LessonSerializer(obj.lessons, many=True)
-
-    def get_quests(self, obj):
-        return QuestSerializer(obj.quests, many=True)
-
-    def get_branchings(self, obj):
-        return BranchingSerializer(obj.branchings, many=True)
 
     class Meta:
         model = Course
