@@ -2,6 +2,7 @@ from django.db import models
 
 
 GENDERS = (
+    ('any', 'Любой'),
     ('male', 'Мужской'),
     ('female', 'Женский'),
 )
@@ -28,7 +29,6 @@ class Branching(EditorBlockModel):
 class Quest(EditorBlockModel):
     course = models.ForeignKey(Course, null=True, on_delete=models.SET_NULL, related_name='quests')
 
-    lessons = models.JSONField()
     name = models.CharField(max_length=127)
     description = models.TextField()
 
@@ -41,37 +41,31 @@ class Laboratory(models.Model):
 
 
 class LessonBlock(models.Model):
-    locale = models.JSONField()
-    markup = models.JSONField()
-
-    entry = models.IntegerField()
+    locale = models.JSONField(default=dict)
+    markup = models.JSONField(default=dict)
+    entry = models.IntegerField(default=-1)
 
 
 class Lesson(EditorBlockModel):
-    quest = models.ForeignKey(Quest, null=True, on_delete=models.SET_NULL)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    quest = models.ForeignKey(Quest, null=True, on_delete=models.SET_NULL, related_name='lessons')
     laboratory = models.ForeignKey(Laboratory, on_delete=models.SET_NULL, null=True)
 
     name = models.CharField(max_length=127)
     description = models.TextField()
-    for_gender = models.CharField(max_length=6, choices=GENDERS)
+    for_gender = models.CharField(default='any', max_length=6, choices=GENDERS)
 
     time_cost = models.IntegerField()
     money_cost = models.IntegerField()
     energy_cost = models.IntegerField()
 
-    bonuses = models.JSONField()
-    content = models.OneToOneField(LessonBlock, related_name='lesson', null=True, on_delete=models.CASCADE)
+    bonuses = models.JSONField(default=dict)
+    content = models.OneToOneField(LessonBlock, related_name='lesson', on_delete=models.CASCADE)
 
 
 class Unit(EditorBlockModel):
-    lesson_block = models.ForeignKey(
-        LessonBlock,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='blocks'
-    )
-
+    lesson = models.ForeignKey(Lesson, on_delete=models.SET_NULL, null=True)
+    lesson_block = models.ForeignKey(LessonBlock, on_delete=models.SET_NULL, null=True, related_name='blocks')
     type = models.IntegerField()
     content = models.JSONField()
     next = models.JSONField()

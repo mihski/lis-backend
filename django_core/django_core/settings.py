@@ -95,7 +95,7 @@ DATABASES = {
         'HOST': 'lis_db',
         'PORT': '5432',
         'TEST': {
-            'NAME': 'test_vivas',
+            'NAME': 'a_test_v',
         },
     }
 }

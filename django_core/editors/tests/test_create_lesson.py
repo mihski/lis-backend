@@ -1,29 +1,26 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
-from lessons.models import Lesson, Unit
+from lessons.models import Lesson, Unit, Course
 from lessons.structures.lectures import ReplicaBlock
-from editors.serializers import LessonBlockType
-from editors.models import Block
+from editors.serializers import LessonBlockType, LessonBlock
 
 
-def _create_unit(content, lesson_type: LessonBlockType):
+def _create_unit(lesson_id, content, lesson_type: LessonBlockType):
     return {
+        'lesson': lesson_id,
         'type': lesson_type.value,
         'next': [1, 2],
         'content': content
     }
 
 
-def _create_simple_lesson(unit):
+def _create_simple_lesson(course_id, units=None):
     # TODO: bonuses validations
-    lesson = {
-        'name': 't_key1',
-        'timeCost': 1,
-        'moneyCost': 2,
-        'energyCost': 3,
-        'bonuses': {1: {'energy': 1, 'money': 2}},
-        'content': {
-            'blocks': [unit],
+    content = {}
+
+    if units:
+        content = {
+            'blocks': units,
             'entry': 0,
             'locale': {
                 'ru': {
@@ -41,15 +38,24 @@ def _create_simple_lesson(unit):
                     1: '###en'
                 }
             }
-        },
+        }
+
+    lesson = {
+        'name': 't_key1',
+        'course': course_id,
+        'timeCost': 1,
+        'moneyCost': 2,
+        'energyCost': 3,
+        'bonuses': {1: {'energy': 1, 'money': 2}},
         'next': 0
     }
 
-    return lesson
+    return lesson | content
 
 
-def _create_quests(lessons_ids):
+def _create_quests(course_id, lessons_ids):
     return {
+        'course': course_id,
         'lessons': lessons_ids,
         'description': 'quest 1',
         'entry': 0,
@@ -59,15 +65,22 @@ def _create_quests(lessons_ids):
 
 class TestLessonCreating(TestCase):
     def setUp(self) -> None:
+        self.course = Course.objects.create(name='course 1', description='course 2')
+        self.lesson_block = LessonBlock.objects.create()
+        self.lesson = Lesson.objects.create(
+            course=self.course,
+            name='lesson 1',
+            description='lesson 2',
+            for_gender='any',
+            time_cost=0,
+            money_cost=0,
+            energy_cost=0,
+            content=self.lesson_block,
+        )
         self.replica_block = {
             'message': 'replica block message 1',
             'location': 1,
             'emotion': 2,
-        }
-        self.replica_unit = _create_unit(self.replica_block, LessonBlockType.replica)
-        self.replica_unit_with_coords = self.replica_unit | {
-            'x': 21.2,
-            'y': 54.4
         }
         self.client = APIClient()
 
@@ -77,24 +90,43 @@ class TestLessonCreating(TestCase):
     def get_units(self):
         return Unit.objects.all()
 
-    def create_replica_unit(self):
-        blocks_count = Block.objects.all().count()
-
+    def create_simple_lesson(self, units=None):
+        lesson = _create_simple_lesson(self.course.id, units)
         response = self.client.post(
-            '/api/editors/units/',
-            self.replica_unit_with_coords,
+            '/api/editors/lessons/',
+            lesson,
             format='json'
         )
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(
-            Block.objects.all().count(),
-            blocks_count + 1
+
+        return response.json()
+
+    def test_creating_and_retrieving_simple_lesson(self):
+        lesson_data = self.create_simple_lesson()
+
+        response = self.client.get(f'/api/editors/lessons/{lesson_data["id"]}/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['id'], lesson_data['id'])
+        self.assertEqual(len(self.course.lesson_set.all()), 2)
+
+    def create_replica_unit(self, lesson_id):
+        replica_unit = _create_unit(
+            lesson_id,
+            self.replica_block,
+            LessonBlockType.replica,
         )
+        response = self.client.post(
+            '/api/editors/units/',
+            replica_unit,
+            format='json'
+        )
+        self.assertEqual(response.status_code, 201)
 
         return response.json()
 
     def test_creating_and_retrieving_replica_unit(self):
-        unit_data = self.create_replica_unit()
+        unit_data = self.create_replica_unit(self.lesson.id)
 
         response = self.client.get(f'/api/editors/units/{unit_data["id"]}/')
         self.assertEqual(response.status_code, 200)
@@ -107,30 +139,15 @@ class TestLessonCreating(TestCase):
             replica_blocks[0].id
         )
 
-    def create_simple_lesson(self):
-        unit_data = self.create_replica_unit()
-        lesson = _create_simple_lesson(unit_data)
-
-        response = self.client.post(
-            '/api/editors/lessons/',
-            lesson,
-            format='json'
-        )
-        self.assertEqual(response.status_code, 201)
-
-        return response.json()
-
-    def test_creating_and_retrieving_simple_lesson(self):
-        self.assertEqual(len(self.get_lessons()), 0)
-
-        lesson_data = self.create_simple_lesson()
-
-        response = self.client.get(f'/api/editors/lessons/{lesson_data["id"]}/')
-
+    def test_retrieving_lesson_with_units(self):
+        self.create_replica_unit(self.lesson.id)
+        response = self.client.get(f'/api/editors/lessons/{self.lesson.id}/')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['id'], lesson_data['id'])
-        self.assertEqual(len(response.json()['content']['blocks']), 1)
-        self.assertEqual(len(self.get_units()), 1)
+
+        lesson_data = response.json()
+
+        self.assertEqual(lesson_data['id'], self.lesson.id)
+        self.assertEqual(len(lesson_data['content']['blocks']), 1)
 
     def test_patching_lesson(self):
         lesson_data = self.create_simple_lesson()
@@ -183,17 +200,25 @@ class TestLessonCreating(TestCase):
 
         self.assertEqual(new_lesson_data, lesson_data)
 
-    def create_simple_quest(self, lesson_ids):
+    def create_simple_quest(self, course_id, lesson_ids):
         response = self.client.post(
             '/api/editors/quests/',
-            _create_quests(lesson_ids),
+            _create_quests(course_id, lesson_ids),
             format='json'
         )
         self.assertEqual(response.status_code, 201)
         return response.json()
 
+    def test_retrieving_quest(self):
+        quest_data = self.create_simple_quest(self.course.id, [])
+        response = self.client.get(
+            f'/api/editors/quests/{quest_data["id"]}/',
+            format='json'
+        )
+        self.assertEqual(response.status_code, 200)
+
     def test_patching_quest(self):
-        quest = self.create_simple_quest([])
+        quest = self.create_simple_quest(self.course.id, [])
         quest['lessons'] = [1, 2]
 
         response = self.client.patch(

@@ -493,6 +493,7 @@ class UnitSerializer(LisEditorModelSerializer):
     y = serializers.FloatField(write_only=True, required=False)
 
     id = serializers.IntegerField(required=False)
+    lesson = serializers.PrimaryKeyRelatedField(queryset=Lesson.objects.all())
     type = serializers.IntegerField()
     next = serializers.JSONField()
     content = serializers.JSONField()
@@ -528,13 +529,19 @@ class UnitSerializer(LisEditorModelSerializer):
         return data
 
     def create(self, validated_data):
+        # creating content
         content_serializer = self.get_unit_content_serializer(validated_data['type'])
         content = content_serializer(data=validated_data['content'])
         content.is_valid()
         content = content.save()
 
-        instance = super().create(validated_data)
+        # creating unit
+        instance: Unit = super().create(validated_data)
         instance.content = content_serializer(content).data
+
+        # binding lesson block
+        instance.lesson_block = instance.lesson.content
+
         instance.save()
 
         return instance
@@ -561,7 +568,7 @@ class UnitSerializer(LisEditorModelSerializer):
 
     class Meta:
         model = Unit
-        fields = ['id', 'type', 'next', 'content', 'x', 'y']
+        fields = ['id', 'lesson', 'type', 'next', 'content', 'x', 'y']
 
         list_serializer_class = UnitListSerializer
 
@@ -589,7 +596,6 @@ class LessonContentSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         blocks_data = validated_data.pop('blocks')
         instance = super(LessonContentSerializer, self).create(validated_data)
-        print(instance.blocks.all())
 
         serialized_blocks = UnitSerializer(
             list(instance.blocks.all()),
@@ -625,6 +631,7 @@ class LessonContentSerializer(serializers.ModelSerializer):
         model = LessonBlock
         fields = [
             'id',
+            'lesson',
             'blocks',
             'entry',
             'locale',
@@ -634,6 +641,7 @@ class LessonContentSerializer(serializers.ModelSerializer):
 
 class LessonSerializer(LisEditorModelSerializer):
     name = serializers.CharField()
+    course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
     timeCost = serializers.IntegerField(source='time_cost')
     moneyCost = serializers.IntegerField(source='money_cost')
     energyCost = serializers.IntegerField(source='energy_cost')
@@ -641,14 +649,21 @@ class LessonSerializer(LisEditorModelSerializer):
     content = LessonContentSerializer(required=False)
 
     def create(self, validated_data):
-        serialized_content = LessonContentSerializer(
-            data=validated_data.pop('content')
-        )
-        serialized_content.is_valid()
-        serialized_content = serialized_content.save()
-
+        lesson_block_content = validated_data.pop('content', None)
         instance = super(LessonSerializer, self).create(validated_data)
-        instance.content = serialized_content
+
+        lesson_block = LessonBlock()
+
+        if lesson_block_content:
+            serialized_lesson_block = LessonContentSerializer(
+                data=lesson_block_content
+            )
+            serialized_lesson_block.is_valid()
+            lesson_block = serialized_lesson_block.save()
+
+        lesson_block.save()
+        instance.content = lesson_block
+
         instance.save()
 
         return instance
@@ -672,6 +687,7 @@ class LessonSerializer(LisEditorModelSerializer):
         model = Lesson
         fields = [
             'id',
+            'course',
             'name',
             'timeCost',
             'moneyCost',
@@ -682,14 +698,15 @@ class LessonSerializer(LisEditorModelSerializer):
 
 
 class QuestSerializer(LisEditorModelSerializer):
-    lessons = serializers.JSONField()
+    course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
+    lessons = serializers.PrimaryKeyRelatedField(many=True, queryset=Lesson.objects.all())
     description = serializers.CharField()
     entry = serializers.IntegerField()
     next = serializers.IntegerField()
 
     class Meta:
         model = Quest
-        fields = ['id', 'lessons', 'description', 'entry', 'next']
+        fields = ['id', 'course', 'lessons', 'description', 'entry', 'next']
 
 
 class BranchingSerializer(LisEditorModelSerializer):
