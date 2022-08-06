@@ -19,9 +19,12 @@ class Course(models.Model):
     name = models.CharField(max_length=127)
     description = models.TextField()
 
+    entry = models.IntegerField(default=-1)
+    locale = models.JSONField(default=dict)
+
 
 class Branching(EditorBlockModel):
-    course = models.ForeignKey(Course, null=True, on_delete=models.SET_NULL)
+    course = models.ForeignKey(Course, null=True, on_delete=models.SET_NULL, related_name='branchings')
     type = models.IntegerField()
     content = models.JSONField()
 
@@ -47,7 +50,7 @@ class LessonBlock(models.Model):
 
 
 class Lesson(EditorBlockModel):
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='lessons')
     quest = models.ForeignKey(Quest, null=True, on_delete=models.SET_NULL, related_name='lessons')
     laboratory = models.ForeignKey(Laboratory, on_delete=models.SET_NULL, null=True)
 

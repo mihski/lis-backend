@@ -239,3 +239,10 @@ class TestLessonCreating(TestCase):
         self.assertEqual(len(new_quest['lessons']), 1)
         self.assertEqual(new_quest['lessons'][0]['id'], self.lesson.id)
         self.assertEqual(Block.objects.count(), 1)
+
+    def test_retrieving_course(self):
+        response = self.client.get(
+            f'/api/editors/courses/{self.course.id}/',
+            format='json'
+        )
+        print(response.json())

@@ -773,7 +773,7 @@ class BlockSerializer(serializers.ModelSerializer):
 class CourseSerializer(serializers.ModelSerializer):
     lessons = LessonSerializer(many=True, read_only=True)
     quests = QuestSerializer(many=True, read_only=True)
-    branchings = BranchingSerializer(many=True)
+    branchings = BranchingSerializer(many=True, read_only=True)
     entry = serializers.IntegerField()
     locale = serializers.JSONField()
 
