@@ -56,7 +56,7 @@ def _create_simple_lesson(course_id, units=None):
 def _create_quests(course_id, lessons_ids):
     return {
         'course': course_id,
-        'lessons': lessons_ids,
+        'lesson_ids': lessons_ids,
         'description': 'quest 1',
         'entry': 0,
         'next': 0,
@@ -210,7 +210,7 @@ class TestLessonCreating(TestCase):
         return response.json()
 
     def test_retrieving_quest(self):
-        quest_data = self.create_simple_quest(self.course.id, [])
+        quest_data = self.create_simple_quest(self.course.id, [self.lesson.id])
         response = self.client.get(
             f'/api/editors/quests/{quest_data["id"]}/',
             format='json'
@@ -219,13 +219,15 @@ class TestLessonCreating(TestCase):
 
     def test_patching_quest(self):
         quest = self.create_simple_quest(self.course.id, [])
-        quest['lessons'] = [1, 2]
+        quest['lesson_ids'] = [self.lesson.id]
 
         response = self.client.patch(
             f'/api/editors/quests/{quest["id"]}/',
             quest,
             format='json'
         )
-        new_quest = response.json()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(new_quest['lessons'], [1, 2])
+
+        new_quest = response.json()
+        self.assertEqual(len(new_quest['lessons']), 1)
+        self.assertEqual(new_quest['lessons'][0]['id'], self.lesson.id)

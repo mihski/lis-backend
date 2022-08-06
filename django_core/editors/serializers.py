@@ -464,7 +464,6 @@ class LisEditorModelSerializer(serializers.ModelSerializer, EditorBlockMixin):
             'x': validated_data.pop('x', None),
             'y': validated_data.pop('y', None)
         }
-
         instance = super(LisEditorModelSerializer, self).create(validated_data)
         instance.save()
 
@@ -699,14 +698,24 @@ class LessonSerializer(LisEditorModelSerializer):
 
 class QuestSerializer(LisEditorModelSerializer):
     course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
-    lessons = serializers.PrimaryKeyRelatedField(many=True, queryset=Lesson.objects.all())
+    lesson_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Lesson.objects.all(),
+        source='lessons',
+        write_only=True,
+    )
+    lessons = LessonSerializer(many=True, read_only=True)
     description = serializers.CharField()
     entry = serializers.IntegerField()
     next = serializers.IntegerField()
 
+    def validate_lessons(self, lessons):
+        return lessons
+
     class Meta:
         model = Quest
-        fields = ['id', 'course', 'lessons', 'description', 'entry', 'next']
+        fields = ['id', 'course', 'lesson_ids', 'lessons', 'description', 'entry', 'next']
+        depth = 0
 
 
 class BranchingSerializer(LisEditorModelSerializer):
