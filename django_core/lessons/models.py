@@ -45,7 +45,7 @@ class Laboratory(models.Model):
 
 class LessonBlock(models.Model):
     locale = models.JSONField(default=dict)
-    markup = models.JSONField(default=dict)
+    markup = models.JSONField(default={'ru': [], 'en': []})
     entry = models.IntegerField(default=-1)
 
 

@@ -64,6 +64,13 @@ def _create_quests(course_id, lessons_ids):
     }
 
 
+def _create_course():
+    return {
+        'name': 'course 1',
+        'description': 'course description 1',
+    }
+
+
 class TestLessonCreating(TestCase):
     def setUp(self) -> None:
         self.course = Course.objects.create(name='course 1', description='course 2')
@@ -112,7 +119,7 @@ class TestLessonCreating(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['id'], lesson_data['id'])
-        self.assertEqual(len(self.course.lesson_set.all()), 2)
+        self.assertEqual(len(self.course.lessons.all()), 2)
         self.assertEqual(Block.objects.count(), 1)
 
     def create_replica_unit(self, lesson_id):
@@ -156,6 +163,9 @@ class TestLessonCreating(TestCase):
 
     def test_patching_lesson(self):
         lesson_data = self.create_simple_lesson()
+        unit = self.create_replica_unit(lesson_data['id'])
+        lesson_data['content']['blocks'].append(unit)
+
         lesson_data['content']['blocks'][0]['next'] = [1]
         lesson_data['timeCost'] = 3
         lesson_data['content']['blocks'][0]['content']['emotion'] = 3
@@ -165,8 +175,9 @@ class TestLessonCreating(TestCase):
             lesson_data,
             format='json'
         )
-        new_lesson_data = response.json()
         self.assertEqual(response.status_code, 200)
+
+        new_lesson_data = response.json()
 
         # check that we didn't change ids
         self.assertEqual(lesson_data['id'], new_lesson_data['id'])
@@ -240,9 +251,18 @@ class TestLessonCreating(TestCase):
         self.assertEqual(new_quest['lessons'][0]['id'], self.lesson.id)
         self.assertEqual(Block.objects.count(), 1)
 
+    def test_create_simple_course(self):
+        response = self.client.post(
+            '/api/editors/courses/',
+            _create_course(),
+            format='json'
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Course.objects.count(), 2)
+
     def test_retrieving_course(self):
         response = self.client.get(
             f'/api/editors/courses/{self.course.id}/',
             format='json'
         )
-        print(response.json())
+        self.assertEqual(response.status_code, 200)

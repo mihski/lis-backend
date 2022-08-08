@@ -393,8 +393,11 @@ class UnitListSerializer(serializers.ListSerializer):
 
         # FIXME: rewrite with less queires
         for instance, validated_data in zip(instances, validated_datas):
+            # TODO: почему то приходят десериализованные данные
+            validated_data['lesson'] = validated_data['lesson'].id
             obj_serializer = UnitSerializer(instance, data=validated_data)
             obj_serializer.is_valid()
+            obj_serializer.save()
             ret.append(obj_serializer.save())
 
         return ret
@@ -459,6 +462,7 @@ class EditorBlockMixin:
 
 
 class LisEditorModelSerializer(serializers.ModelSerializer, EditorBlockMixin):
+    """ Отнаследованные сериализаторы будут создавать блок """
     def create(self, validated_data):
         block_data = {
             'x': validated_data.pop('x', None),
@@ -524,7 +528,6 @@ class UnitSerializer(LisEditorModelSerializer):
         content_serializer = self.get_unit_content_serializer(data['type'])
         content_serializer(data=data['content']).is_valid()
         # TODO: if len(next) > 1 check blocks are replicas
-
         return data
 
     def create(self, validated_data):
@@ -613,13 +616,19 @@ class LessonContentSerializer(serializers.ModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
-        serialized_blocks = UnitSerializer(
-            list(instance.blocks.all()),
-            data=validated_data.pop('blocks'),
-            many=True
-        )
-        serialized_blocks.is_valid()
-        serialized_blocks.save()
+        # если нам передали блоки, то обновляем
+        if 'blocks' in validated_data:
+            # TODO: почему то приходят десериализованные данные
+            for block in validated_data['blocks']:
+                block['lesson'] = block['lesson'].id
+
+            serialized_blocks = UnitSerializer(
+                list(instance.blocks.all()),
+                data=validated_data.pop('blocks'),
+                many=True
+            )
+            serialized_blocks.is_valid(raise_exception=True)
+            serialized_blocks.save()
 
         instance = super().update(instance, validated_data)
         instance.save()
@@ -652,10 +661,10 @@ class LessonSerializer(LisEditorModelSerializer):
 
     def create(self, validated_data):
         lesson_block_content = validated_data.pop('content', None)
-        instance = super(LessonSerializer, self).create(validated_data)
-
         lesson_block = LessonBlock()
 
+        # если нам передали content, то сериализуем его,
+        # если нет, то привязываем дефолтный блок к уроку
         if lesson_block_content:
             serialized_lesson_block = LessonContentSerializer(
                 data=lesson_block_content
@@ -664,21 +673,27 @@ class LessonSerializer(LisEditorModelSerializer):
             lesson_block = serialized_lesson_block.save()
 
         lesson_block.save()
-        instance.content = lesson_block
 
+        validated_data['content'] = lesson_block
+        instance = super(LessonSerializer, self).create(validated_data)
         instance.save()
 
         return instance
 
     def update(self, instance, validated_data):
-        serialized_content = LessonContentSerializer(
-            instance.content,
-            data=validated_data.pop('content')
-        )
-        serialized_content.is_valid()
+        if 'content' in validated_data:
+            # FIXME: почему то здесь передаются сериализованные данные, исправил окольным путем
+            validated_data['content']['lesson'] = validated_data['content']['lesson'].id
 
-        instance.content = serialized_content.save()
-        instance.save()
+            for block in validated_data['content']['blocks']:
+                block['lesson'] = block['lesson'].id
+
+            serialized_content = LessonContentSerializer(
+                instance.content,
+                data=validated_data.pop('content')
+            )
+            serialized_content.is_valid(raise_exception=True)
+            instance.content = serialized_content.save()
 
         instance = super().update(instance, validated_data)
         instance.save()
@@ -717,9 +732,6 @@ class QuestSerializer(LisEditorModelSerializer):
     entry = serializers.IntegerField()
     next = serializers.IntegerField()
 
-    def validate_lessons(self, lessons):
-        return lessons
-
     class Meta:
         model = Quest
         fields = [
@@ -733,10 +745,10 @@ class QuestSerializer(LisEditorModelSerializer):
             'x',
             'y'
         ]
-        depth = 0
 
 
 class BranchingSerializer(LisEditorModelSerializer):
+    # TODO: добавить два типа бранчей
     class Meta:
         model = Branching
         fields = ['id', 'type', 'content']
@@ -760,6 +772,8 @@ class BlockSerializer(serializers.ModelSerializer):
         return self.BLOCK_TYPE_TO_SERIALIZER[type]
 
     def get_body(self, obj: Block):
+        # TODO: проверить скорость, если нужно, оптимизировать
+        # получаем нужную модель данных из поля type, сериализуем body_id элемент
         body_serializer = self._get_body_serializer(obj.type)
         body_model = body_serializer.Meta.model
         body_obj = body_model.objects.filter(id=obj.body_id).only()
@@ -774,9 +788,11 @@ class CourseSerializer(serializers.ModelSerializer):
     lessons = LessonSerializer(many=True, read_only=True)
     quests = QuestSerializer(many=True, read_only=True)
     branchings = BranchingSerializer(many=True, read_only=True)
-    entry = serializers.IntegerField()
-    locale = serializers.JSONField()
+    name = serializers.CharField()
+    description = serializers.CharField()
+    entry = serializers.IntegerField(required=False)
+    locale = serializers.JSONField(required=False)
 
     class Meta:
         model = Course
-        fields = ['id', 'lessons', 'quests', 'branchings', 'entry', 'locale']
+        fields = ['id', 'lessons', 'quests', 'branchings', 'name', 'description', 'entry', 'locale']
