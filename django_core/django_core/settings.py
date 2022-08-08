@@ -67,7 +67,7 @@ ROOT_URLCONF = 'django_core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -195,6 +195,15 @@ CONN_MAX_AGE = None
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
+
+# Jazzmin configuration
+
+JAZZMIN_SETTINGS = {
+    "topmenu_links": [
+        {"name": "Редактор курсов",  "url": "/editor/"},
+    ]
+}
+
 STATIC_URL = '/static/'
 STATIC_ROOT = '/static/'
 
@@ -208,7 +217,6 @@ ISU_MANAGER_CONFIG = {
     'grant_type': 'authorization_code',
     'client_secret': os.getenv('ISU_CLIENT_SECRET')
 }
-
 
 ENVIRONMENT = os.getenv('ENV', 'DEV')
 
