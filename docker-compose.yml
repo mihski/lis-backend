@@ -46,6 +46,7 @@ services:
             - ./django_core/static:/static
             - ./django_core/media:/media
             - ./nginx:/etc/nginx/conf.d
+            - ../lis-front/editor/build:/var/www/html
 
     celery:
         build: ./django_core
