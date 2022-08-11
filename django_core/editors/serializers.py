@@ -390,12 +390,27 @@ class ComparisonBlockSerializer(TaskBlockSerializer):
 class UnitListSerializer(serializers.ListSerializer):
     def update(self, instances: List[Unit], validated_datas):
         ret = []
+        local2instance = {
+            instance.local_id: instance
+            for instance in instances
+        }
+        local2data = {
+            data['local_id']: data
+            for data in validated_datas
+        }
 
         # FIXME: rewrite with less queires
-        for instance, validated_data in zip(instances, validated_datas):
+        for local_id in local2data.keys():
             # TODO: почему то приходят десериализованные данные
+            instance = local2instance.get(local_id, None)
+            validated_data = local2data[local_id]
             validated_data['lesson'] = validated_data['lesson'].id
-            obj_serializer = UnitSerializer(instance, data=validated_data)
+
+            obj_serializer = UnitSerializer(data=validated_data)
+
+            if instance:
+                obj_serializer = UnitSerializer(instance, data=validated_data)
+
             obj_serializer.is_valid()
             obj_serializer.save()
             ret.append(obj_serializer.save())
@@ -496,6 +511,7 @@ class UnitSerializer(LisEditorModelSerializer):
     y = serializers.FloatField(write_only=True, required=False)
 
     id = serializers.IntegerField(required=False)
+    local_id = serializers.CharField()
     lesson = serializers.PrimaryKeyRelatedField(queryset=Lesson.objects.all())
     type = serializers.IntegerField()
     next = serializers.JSONField()
@@ -550,7 +566,7 @@ class UnitSerializer(LisEditorModelSerializer):
 
     def update(self, instance, validated_data):
         content_serializer = self.get_unit_content_serializer(validated_data['type'])
-        instance.next = validated_data.get('next', instance.type)
+        instance.next = validated_data.get('next', instance.next)
 
         if instance.type == validated_data['type']:
             content_obj = content_serializer.Meta.model.objects.filter(
@@ -570,14 +586,14 @@ class UnitSerializer(LisEditorModelSerializer):
 
     class Meta:
         model = Unit
-        fields = ['id', 'lesson', 'type', 'next', 'content', 'x', 'y']
+        fields = ['id', 'local_id', 'lesson', 'type', 'next', 'content', 'x', 'y']
 
         list_serializer_class = UnitListSerializer
 
 
 class LessonContentSerializer(serializers.ModelSerializer):
     blocks = UnitSerializer(many=True)
-    entry = serializers.IntegerField()
+    entry = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     locale = serializers.JSONField()
     markup = serializers.JSONField()
 
@@ -600,7 +616,6 @@ class LessonContentSerializer(serializers.ModelSerializer):
         instance = super(LessonContentSerializer, self).create(validated_data)
 
         serialized_blocks = UnitSerializer(
-            list(instance.blocks.all()),
             data=blocks_data,
             many=True
         )
@@ -650,6 +665,8 @@ class LessonContentSerializer(serializers.ModelSerializer):
 class LessonSerializer(LisEditorModelSerializer):
     x = serializers.FloatField(write_only=True, required=False)
     y = serializers.FloatField(write_only=True, required=False)
+
+    local_id = serializers.CharField()
 
     name = serializers.CharField()
     course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
@@ -704,6 +721,7 @@ class LessonSerializer(LisEditorModelSerializer):
         model = Lesson
         fields = [
             'id',
+            'local_id',
             'course',
             'name',
             'timeCost',
@@ -720,6 +738,8 @@ class QuestSerializer(LisEditorModelSerializer):
     x = serializers.FloatField(write_only=True, required=False)
     y = serializers.FloatField(write_only=True, required=False)
 
+    local_id = serializers.CharField()
+
     course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
     lesson_ids = serializers.PrimaryKeyRelatedField(
         many=True,
@@ -729,13 +749,14 @@ class QuestSerializer(LisEditorModelSerializer):
     )
     lessons = LessonSerializer(many=True, read_only=True)
     description = serializers.CharField()
-    entry = serializers.IntegerField()
-    next = serializers.IntegerField()
+    entry = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    next = serializers.CharField()
 
     class Meta:
         model = Quest
         fields = [
             'id',
+            'local_id',
             'course',
             'lesson_ids',
             'lessons',
@@ -748,10 +769,15 @@ class QuestSerializer(LisEditorModelSerializer):
 
 
 class BranchingSerializer(LisEditorModelSerializer):
+    local_id = serializers.CharField()
+
+    x = serializers.FloatField(write_only=True, required=False)
+    y = serializers.FloatField(write_only=True, required=False)
+
     # TODO: добавить два типа бранчей
     class Meta:
         model = Branching
-        fields = ['id', 'type', 'content']
+        fields = ['id', 'local_id', 'x', 'y', 'type', 'content']
 
 
 class BlockSerializer(serializers.ModelSerializer):
@@ -790,7 +816,7 @@ class CourseSerializer(serializers.ModelSerializer):
     branchings = BranchingSerializer(many=True, read_only=True)
     name = serializers.CharField()
     description = serializers.CharField()
-    entry = serializers.IntegerField(required=False)
+    entry = serializers.CharField(required=False, allow_blank=True)
     locale = serializers.JSONField(required=False)
 
     class Meta:

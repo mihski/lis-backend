@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'accounts',
     'sso_app',
-    'lessons',
+    'lessons.apps.LessonConfig',
     'resources',
     'editors',
 ]

@@ -8,6 +8,7 @@ from editors.models import Block
 
 def _create_unit(lesson_id, content, lesson_type: LessonBlockType):
     return {
+        'local_id': 'asdasd',
         'lesson': lesson_id,
         'type': lesson_type.value,
         'next': [1, 2],
@@ -22,7 +23,6 @@ def _create_simple_lesson(course_id, units=None):
     if units:
         content = {
             'blocks': units,
-            'entry': 0,
             'locale': {
                 'ru': {
                     't_key1': 'v_key1'
@@ -42,6 +42,7 @@ def _create_simple_lesson(course_id, units=None):
         }
 
     lesson = {
+        'local_id': 'asdasd',
         'name': 't_key1',
         'course': course_id,
         'timeCost': 1,
@@ -56,10 +57,10 @@ def _create_simple_lesson(course_id, units=None):
 
 def _create_quests(course_id, lessons_ids):
     return {
+        'local_id': 'asdasd',
         'course': course_id,
         'lesson_ids': lessons_ids,
         'description': 'quest 1',
-        'entry': 0,
         'next': 0,
     }
 
@@ -175,8 +176,9 @@ class TestLessonCreating(TestCase):
             lesson_data,
             format='json'
         )
-        self.assertEqual(response.status_code, 200)
+        print(response.json())
 
+        self.assertEqual(response.status_code, 200)
         new_lesson_data = response.json()
 
         # check that we didn't change ids
@@ -244,6 +246,7 @@ class TestLessonCreating(TestCase):
             quest,
             format='json'
         )
+        print(response.json())
         self.assertEqual(response.status_code, 200)
 
         new_quest = response.json()

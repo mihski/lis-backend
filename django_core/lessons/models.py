@@ -10,6 +10,7 @@ GENDERS = (
 
 class EditorBlockModel(models.Model):
     block_id = models.IntegerField(default=None, null=True, blank=True)
+    local_id = models.CharField(unique=True, max_length=255, default=None, null=True, blank=True)
 
     class Meta:
         abstract = True
@@ -19,7 +20,7 @@ class Course(models.Model):
     name = models.CharField(max_length=127)
     description = models.TextField()
 
-    entry = models.IntegerField(default=-1)
+    entry = models.CharField(default=None, max_length=120, blank=True, null=True)
     locale = models.JSONField(default=dict)
 
 
@@ -35,8 +36,8 @@ class Quest(EditorBlockModel):
     name = models.CharField(max_length=127)
     description = models.TextField()
 
-    entry = models.IntegerField()
-    next = models.IntegerField()
+    entry = models.CharField(default=None, max_length=120, blank=True, null=True)
+    next = models.CharField(default=None, max_length=120, blank=True, null=True)
 
 
 class Laboratory(models.Model):
@@ -46,7 +47,7 @@ class Laboratory(models.Model):
 class LessonBlock(models.Model):
     locale = models.JSONField(default=dict)
     markup = models.JSONField(default={'ru': [], 'en': []})
-    entry = models.IntegerField(default=-1)
+    entry = models.CharField(default=None, max_length=120, blank=True, null=True)
 
 
 class Lesson(EditorBlockModel):
