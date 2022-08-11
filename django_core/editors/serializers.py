@@ -793,6 +793,8 @@ class QuestSerializer(LisEditorModelSerializer):
     def _update_lessons(self, instance, actual_lessons, lessons_data):
         for lesson in lessons_data:
             LessonSerializer.reverse_validated_data(lesson)
+            # in order to skip content updating
+            lesson.pop('content', None)
 
         lessons_serializer = LessonSerializer(actual_lessons, data=lessons_data, many=True)
         lessons_serializer.is_valid(raise_exception=True)
