@@ -678,7 +678,7 @@ class LessonListSerializer(serializers.ListSerializer):
             instance = local2instance.get(local_id, None)
             validated_data = local2data[local_id]
 
-            validated_data = LessonSerializer.reverse_validated_data(validated_data)
+            LessonSerializer.reverse_validated_data(validated_data)
             obj_serializer = LessonSerializer(data=validated_data)
 
             if instance:
@@ -706,16 +706,18 @@ class LessonSerializer(LisEditorModelSerializer):
     content = LessonContentSerializer(required=False)
 
     @staticmethod
-    def reverse_validated_data(lesson):
-        lesson['course'] = lesson['course'].id
-        lesson['timeCost'] = lesson.pop('time_cost')
-        lesson['energyCost'] = lesson.pop('energy_cost')
-        lesson['moneyCost'] = lesson.pop('money_cost')
+    def reverse_validated_data(lessons):
+        if not isinstance(lessons, list):
+            lessons = [lessons]
 
-        if 'content' in lesson:
-            lesson['content']['lesson'] = lesson['content']['lesson'].id
+        for lesson in lessons:
+            lesson['course'] = lesson['course'].id
+            lesson['timeCost'] = lesson.pop('time_cost')
+            lesson['energyCost'] = lesson.pop('energy_cost')
+            lesson['moneyCost'] = lesson.pop('money_cost')
 
-        return lesson
+            if 'content' in lesson:
+                lesson['content']['lesson'] = lesson['content']['lesson'].id
 
     def create(self, validated_data):
         lesson_block_content = validated_data.pop('content', None)
@@ -778,6 +780,32 @@ class LessonSerializer(LisEditorModelSerializer):
         list_serializer_class = LessonListSerializer
 
 
+class QuestListSerializer(serializers.ListSerializer):
+    def update(self, instances: List[Quest], validated_datas):
+        ret = []
+
+        local2instance = {
+            instance.local_id: instance
+            for instance in instances
+        }
+        local2data = {
+            data['local_id']: data
+            for data in validated_datas
+        }
+
+        for local_id in local2data.keys():
+            instance = local2instance.get(local_id, None)
+            validated_data = local2data[local_id]
+
+            QuestSerializer.reverse_validated_data(validated_data)
+
+            obj_serializer = QuestSerializer(instance, data=validated_data)
+            obj_serializer.is_valid(raise_exception=True)
+            ret.append(obj_serializer.save())
+
+        return ret
+
+
 class QuestSerializer(LisEditorModelSerializer):
     x = serializers.FloatField(write_only=True, required=False)
     y = serializers.FloatField(write_only=True, required=False)
@@ -789,6 +817,17 @@ class QuestSerializer(LisEditorModelSerializer):
     description = serializers.CharField()
     entry = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     next = serializers.CharField()
+
+    @staticmethod
+    def reverse_validated_data(quests):
+        if not isinstance(quests, list):
+            quests = [quests]
+
+        for quest in quests:
+            quest['course'] = quest['course'].id
+
+            if 'lessons' in quest:
+                LessonSerializer.reverse_validated_data(quest['lessons'])
 
     def _update_lessons(self, instance, actual_lessons, lessons_data):
         for lesson in lessons_data:
@@ -838,6 +877,32 @@ class QuestSerializer(LisEditorModelSerializer):
             'y'
         ]
 
+        list_serializer_class = QuestListSerializer
+
+
+class BranchingListSerializer(serializers.ListSerializer):
+    def update(self, instances: List[Branching], validated_datas):
+        ret = []
+
+        local2instance = {
+            instance.local_id: instance
+            for instance in instances
+        }
+        local2data = {
+            data['local_id']: data
+            for data in validated_datas
+        }
+
+        for local_id in local2data.keys():
+            instance = local2instance.get(local_id, None)
+            validated_data = local2data[local_id]
+
+            obj_serializer = BranchingSerializer(instance, data=validated_data)
+            obj_serializer.is_valid()
+            ret.append(obj_serializer.save())
+
+        return ret
+
 
 class BranchingSerializer(LisEditorModelSerializer):
     local_id = serializers.CharField()
@@ -849,6 +914,8 @@ class BranchingSerializer(LisEditorModelSerializer):
     class Meta:
         model = Branching
         fields = ['id', 'local_id', 'x', 'y', 'type', 'content']
+
+        list_serializer_class = BranchingListSerializer
 
 
 class BlockSerializer(serializers.ModelSerializer):
@@ -882,9 +949,10 @@ class BlockSerializer(serializers.ModelSerializer):
 
 
 class CourseSerializer(serializers.ModelSerializer):
-    lessons = LessonSerializer(many=True, read_only=True)
-    quests = QuestSerializer(many=True, read_only=True)
-    branchings = BranchingSerializer(many=True, read_only=True)
+    lessons = LessonSerializer(required=False, many=True)
+    quests = QuestSerializer(required=False, many=True)
+    branchings = BranchingSerializer(required=False, many=True)
+
     name = serializers.CharField()
     description = serializers.CharField()
     entry = serializers.CharField(required=False, allow_blank=True)
@@ -894,4 +962,79 @@ class CourseSerializer(serializers.ModelSerializer):
         model = Course
         fields = ['id', 'lessons', 'quests', 'branchings', 'name', 'description', 'entry', 'locale']
 
-    # TODO: saving lessons
+    def validate(self, data):
+        lessons = data.get('lessons', [])
+        quests = data.get('quests', [])
+        branchings = data.get('branchings', [])
+
+        local_ids = {
+            lesson['local_id']
+            for lesson in lessons
+        } | {
+            quest['local_id']
+            for quest in quests
+        } | {
+            branch['local_id']
+            for branch in branchings
+        }
+
+        if len(local_ids) != len(lessons) + len(quests) + len(branchings):
+            raise ValidationError(f"lesson ids through course should be unique: {local_ids}")
+
+        return data
+
+    def _update_courses_entities(
+        self,
+        course,
+        list_serializer,
+        actual_instances,
+        new_instances_data
+    ):
+        obj_serialized = list_serializer(actual_instances, data=new_instances_data, many=True)
+        obj_serialized.is_valid(raise_exception=True)
+        objs = obj_serialized.save()
+
+        for obj in objs:
+            obj.course = course
+
+        list_serializer.Meta.model.objects.bulk_update(objs, fields=['course'])
+
+    def create(self, validated_data):
+        validated_data.pop('lessons', [])
+        validated_data.pop('quests', [])
+        validated_data.pop('branchings', [])
+
+        instance = super().create(validated_data)
+
+        return instance
+
+    def update(self, instance, validated_data):
+        lessons_data = validated_data.pop('lessons', [])
+        quests_data = validated_data.pop('quests', [])
+        branchings_data = validated_data.pop('branchings', [])
+
+        instance = super().update(instance, validated_data)
+
+        LessonSerializer.reverse_validated_data(lessons_data)
+        QuestSerializer.reverse_validated_data(quests_data)
+
+        self._update_courses_entities(
+            instance,
+            LessonSerializer,
+            instance.lessons.all(),
+            lessons_data,
+        )
+        self._update_courses_entities(
+            instance,
+            QuestSerializer,
+            instance.quests.all(),
+            quests_data,
+        )
+        # self._update_courses_entities(
+        #     instance,
+        #     BranchingSerializer,
+        #     instance.branchings.all(),
+        #     branchings_data,
+        # )
+
+        return instance
