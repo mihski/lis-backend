@@ -16,7 +16,7 @@ def _create_unit(lesson_id, content, lesson_type: LessonBlockType):
     }
 
 
-def _create_simple_lesson(course_id, units=None):
+def _create_simple_lesson(course_id, units=None, local_id='lesson_1'):
     # TODO: bonuses validations
     content = {}
 
@@ -42,25 +42,27 @@ def _create_simple_lesson(course_id, units=None):
         }
 
     lesson = {
-        'local_id': 'asdasd',
+        'local_id': local_id,
         'name': 't_key1',
         'course': course_id,
         'timeCost': 1,
         'moneyCost': 2,
         'energyCost': 3,
         'bonuses': {1: {'energy': 1, 'money': 2}},
-        'next': 0
+        'next': 0,
+        'x': 10,
+        'y': 20,
     }
 
     return lesson | content
 
 
-def _create_quests(course_id, lessons_ids):
+def _create_quests(course_id, lessons):
     return {
         'local_id': 'asdasd',
         'course': course_id,
-        'lesson_ids': lessons_ids,
         'description': 'quest 1',
+        'lessons': lessons,
         'next': 0,
     }
 
@@ -176,8 +178,6 @@ class TestLessonCreating(TestCase):
             lesson_data,
             format='json'
         )
-        print(response.json())
-
         self.assertEqual(response.status_code, 200)
         new_lesson_data = response.json()
 
@@ -218,26 +218,32 @@ class TestLessonCreating(TestCase):
 
         self.assertEqual(new_lesson_data, lesson_data)
 
-    def create_simple_quest(self, course_id, lesson_ids):
+    def create_simple_quest(self, course_id, lessons):
         response = self.client.post(
             '/api/editors/quests/',
-            _create_quests(course_id, lesson_ids),
+            _create_quests(course_id, lessons),
             format='json'
         )
         self.assertEqual(response.status_code, 201)
         return response.json()
 
     def test_retrieving_quest(self):
-        quest_data = self.create_simple_quest(self.course.id, [self.lesson.id])
+        lesson = _create_simple_lesson(self.course.id)
+        quest_data = self.create_simple_quest(self.course.id, [lesson])
         response = self.client.get(
             f'/api/editors/quests/{quest_data["id"]}/',
             format='json'
         )
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(Lesson.objects.filter(quest_id=quest_data['id']).count(), 1)
 
     def test_patching_quest(self):
-        quest = self.create_simple_quest(self.course.id, [])
-        quest['lesson_ids'] = [self.lesson.id]
+        Lesson.objects.all().delete()
+
+        lesson = self.create_simple_lesson()
+        lesson2 = _create_simple_lesson(self.course.id, local_id='lesson_2')
+
+        quest = self.create_simple_quest(self.course.id, [lesson, lesson2])
         quest['x'] = 12.4
         quest['y'] = 42
 
@@ -246,13 +252,13 @@ class TestLessonCreating(TestCase):
             quest,
             format='json'
         )
-        print(response.json())
         self.assertEqual(response.status_code, 200)
 
         new_quest = response.json()
-        self.assertEqual(len(new_quest['lessons']), 1)
-        self.assertEqual(new_quest['lessons'][0]['id'], self.lesson.id)
-        self.assertEqual(Block.objects.count(), 1)
+
+        self.assertEqual(len(new_quest['lessons']), 2)
+        self.assertTrue(lesson['id'] in {new_quest['lessons'][i]['id'] for i in range(2)})
+        self.assertEqual(Block.objects.count(), 3)
 
     def test_create_simple_course(self):
         response = self.client.post(

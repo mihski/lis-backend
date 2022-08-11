@@ -10,7 +10,7 @@ GENDERS = (
 
 class EditorBlockModel(models.Model):
     block_id = models.IntegerField(default=None, null=True, blank=True)
-    local_id = models.CharField(unique=True, max_length=255, default=None, null=True, blank=True)
+    local_id = models.CharField(max_length=255, default=None, null=True, blank=True)
 
     class Meta:
         abstract = True

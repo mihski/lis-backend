@@ -662,6 +662,35 @@ class LessonContentSerializer(serializers.ModelSerializer):
         ]
 
 
+class LessonListSerializer(serializers.ListSerializer):
+    def update(self, instances: List[Lesson], validated_datas):
+        ret = []
+        local2instance = {
+            instance.local_id: instance
+            for instance in instances
+        }
+        local2data = {
+            data['local_id']: data
+            for data in validated_datas
+        }
+
+        for local_id in local2data.keys():
+            instance = local2instance.get(local_id, None)
+            validated_data = local2data[local_id]
+
+            validated_data = LessonSerializer.reverse_validated_data(validated_data)
+            obj_serializer = LessonSerializer(data=validated_data)
+
+            if instance:
+                obj_serializer = LessonSerializer(instance, data=validated_data)
+
+            obj_serializer.is_valid(raise_exception=True)
+            obj_serializer.save()
+            ret.append(obj_serializer.save())
+
+        return ret
+
+
 class LessonSerializer(LisEditorModelSerializer):
     x = serializers.FloatField(write_only=True, required=False)
     y = serializers.FloatField(write_only=True, required=False)
@@ -676,6 +705,18 @@ class LessonSerializer(LisEditorModelSerializer):
     bonuses = serializers.JSONField()
     content = LessonContentSerializer(required=False)
 
+    @staticmethod
+    def reverse_validated_data(lesson):
+        lesson['course'] = lesson['course'].id
+        lesson['timeCost'] = lesson.pop('time_cost')
+        lesson['energyCost'] = lesson.pop('energy_cost')
+        lesson['moneyCost'] = lesson.pop('money_cost')
+
+        if 'content' in lesson:
+            lesson['content']['lesson'] = lesson['content']['lesson'].id
+
+        return lesson
+
     def create(self, validated_data):
         lesson_block_content = validated_data.pop('content', None)
         lesson_block = LessonBlock()
@@ -683,6 +724,7 @@ class LessonSerializer(LisEditorModelSerializer):
         # если нам передали content, то сериализуем его,
         # если нет, то привязываем дефолтный блок к уроку
         if lesson_block_content:
+            lesson_block_content['lesson'] = lesson_block_content['lesson'].id
             serialized_lesson_block = LessonContentSerializer(
                 data=lesson_block_content
             )
@@ -699,8 +741,8 @@ class LessonSerializer(LisEditorModelSerializer):
 
     def update(self, instance, validated_data):
         if 'content' in validated_data:
-            # FIXME: почему то здесь передаются сериализованные данные, исправил окольным путем
-            validated_data['content']['lesson'] = validated_data['content']['lesson'].id
+            if not isinstance(validated_data['content']['lesson'], int):
+                validated_data['content']['lesson'] = validated_data['content']['lesson'].id
 
             for block in validated_data['content']['blocks']:
                 block['lesson'] = block['lesson'].id
@@ -733,6 +775,8 @@ class LessonSerializer(LisEditorModelSerializer):
             'y',
         ]
 
+        list_serializer_class = LessonListSerializer
+
 
 class QuestSerializer(LisEditorModelSerializer):
     x = serializers.FloatField(write_only=True, required=False)
@@ -741,16 +785,42 @@ class QuestSerializer(LisEditorModelSerializer):
     local_id = serializers.CharField()
 
     course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
-    lesson_ids = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=Lesson.objects.all(),
-        source='lessons',
-        write_only=True,
-    )
-    lessons = LessonSerializer(many=True, read_only=True)
+    lessons = LessonSerializer(many=True)
     description = serializers.CharField()
     entry = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     next = serializers.CharField()
+
+    def _update_lessons(self, instance, actual_lessons, lessons_data):
+        for lesson in lessons_data:
+            LessonSerializer.reverse_validated_data(lesson)
+
+        lessons_serializer = LessonSerializer(actual_lessons, data=lessons_data, many=True)
+        lessons_serializer.is_valid(raise_exception=True)
+        lessons = lessons_serializer.save()
+
+        for lesson in lessons:
+            lesson.quest = instance
+
+        Lesson.objects.bulk_update(lessons, fields=['quest'])
+
+        return lessons
+
+    def create(self, validated_data):
+        lessons_data = validated_data.pop('lessons')
+        instance = super().create(validated_data)
+
+        course_lessons = Lesson.objects.filter(course_id=validated_data['course'].id)
+        self._update_lessons(instance, course_lessons, lessons_data)
+
+        return instance
+
+    def update(self, instance, validated_data):
+        lessons_data = validated_data.pop('lessons')
+        instance = super().update(instance, validated_data)
+
+        self._update_lessons(instance, instance.lessons.all(), lessons_data)
+
+        return instance
 
     class Meta:
         model = Quest
@@ -758,7 +828,6 @@ class QuestSerializer(LisEditorModelSerializer):
             'id',
             'local_id',
             'course',
-            'lesson_ids',
             'lessons',
             'description',
             'entry',
@@ -822,3 +891,5 @@ class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = ['id', 'lessons', 'quests', 'branchings', 'name', 'description', 'entry', 'locale']
+
+    # TODO: saving lessons
