@@ -1,7 +1,12 @@
 from django.db import models
 
 
-class TextBlock(models.Model):
+class LessonBlock(models.Model):
+    class Meta:
+        abstract = True
+
+
+class TextBlock(LessonBlock):
     message = models.CharField(max_length=127)
     location = models.IntegerField()
 
@@ -9,9 +14,9 @@ class TextBlock(models.Model):
         abstract = True
 
 
-class URLBlock(models.Model):
+class URLBlock(LessonBlock):
     title = models.CharField(max_length=127)
-    url = models.CharField()
+    url = models.CharField(max_length=127)
     location = models.IntegerField()
 
     class Meta:
@@ -43,7 +48,7 @@ class ImageBlock(URLBlock):
     pass
 
 
-class GalleryBlock(models.Model):
+class GalleryBlock(LessonBlock):
     location = models.IntegerField()
     images = models.JSONField()
 
@@ -51,7 +56,7 @@ class GalleryBlock(models.Model):
 class EmailBlock(TextBlock):
     npc = models.IntegerField()
     subject = models.TextField()
-    from_ = models.TextField()
+    f_from = models.TextField()
     to = models.TextField()
 
 
@@ -65,7 +70,6 @@ class TableBlock(URLBlock):
 
 class DocBlock(TextBlock):
     title = models.TextField()
-
 
 
 class VideoBlock(URLBlock):

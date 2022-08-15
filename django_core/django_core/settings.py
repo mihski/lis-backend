@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'accounts',
     'sso_app',
-    'lessons',
+    'lessons.apps.LessonConfig',
     'resources',
     'editors',
 ]
@@ -93,7 +93,10 @@ DATABASES = {
         'USER': 'maindb',
         'PASSWORD': 'maindb',
         'HOST': 'lis_db',
-        'PORT': '5432'
+        'PORT': '5432',
+        'TEST': {
+            'NAME': 'c_test_',
+        },
     }
 }
 

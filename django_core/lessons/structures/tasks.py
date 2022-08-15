@@ -11,20 +11,13 @@ class TaskBlock(models.Model):
         abstract = True
 
 
-class Variant(models.Model):
-    index = models.IntegerField()
-    variant = models.TextField()
-    if_correct = models.CharField(max_length=1027)
-    if_incorrect = models.CharField(max_length=1027)
-
-
 class RadiosBlock(TaskBlock):
-    variants = models.ManyToManyField(Variant)
+    variants = models.JSONField()
     correct = models.IntegerField()
 
 
 class CheckboxesBlock(TaskBlock):
-    variants = models.ManyToManyField(Variant)
+    variants = models.JSONField()
     correct = models.JSONField()
 
 
