@@ -24,12 +24,6 @@ class Course(models.Model):
     locale = models.JSONField(default=dict)
 
 
-class Branching(EditorBlockModel):
-    course = models.ForeignKey(Course, null=True, on_delete=models.SET_NULL, related_name='branchings')
-    type = models.IntegerField()
-    content = models.JSONField()
-
-
 class Quest(EditorBlockModel):
     course = models.ForeignKey(Course, null=True, on_delete=models.SET_NULL, related_name='quests')
 
@@ -38,6 +32,13 @@ class Quest(EditorBlockModel):
 
     entry = models.CharField(default=None, max_length=120, blank=True, null=True)
     next = models.CharField(default=None, max_length=120, blank=True, null=True)
+
+
+class Branching(EditorBlockModel):
+    course = models.ForeignKey(Course, null=True, on_delete=models.SET_NULL, related_name='branchings')
+    quest = models.ForeignKey(Quest, default=None, null=True, blank=True, on_delete=models.SET_NULL, related_name='branchings')
+    type = models.IntegerField()
+    content = models.JSONField()
 
 
 class Laboratory(models.Model):
