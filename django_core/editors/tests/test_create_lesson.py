@@ -2,7 +2,7 @@ from uuid import uuid4
 
 from django.test import TestCase
 from rest_framework.test import APIClient
-from lessons.models import Lesson, Unit, Course, Quest
+from lessons.models import Lesson, Unit, Course, Quest, Branching
 from lessons.structures.lectures import ReplicaBlock
 from editors.serializers import LessonBlockType, LessonBlock
 from editors.models import Block
@@ -73,6 +73,28 @@ def _create_course():
     return {
         'name': 'course 1',
         'description': 'course description 1',
+    }
+
+
+def _create_conditional_branching():
+    return {
+        '1': '123',
+        '2': '321',
+    }
+
+
+def _create_selective_branching():
+    return {
+        'min': 2,
+        'list': ['123', '321']
+    }
+
+
+def _create_branching(br_type: int, local_id=None):
+    return {
+        'local_id': local_id or str(uuid4()),
+        'type': br_type,
+        'content': _create_conditional_branching() if br_type == 1 else _create_selective_branching()
     }
 
 
@@ -303,6 +325,10 @@ class TestLessonCreating(TestCase):
             self.create_simple_quest(course_data['id'], []),
             _create_quests(course_data['id'], [])
         ]
+        course_data['branchings'] = [
+            _create_branching(1),
+            _create_branching(2)
+        ]
 
         response = self.client.patch(
             f'/api/editors/courses/{course_data["id"]}/',
@@ -310,7 +336,11 @@ class TestLessonCreating(TestCase):
             format='json'
         )
 
+        from pprint import pprint
+        pprint(response.json())
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(course_data['name'], 'course 1 patched')
         self.assertEqual(Lesson.objects.filter(course__id=course_data['id']).count(), 2)
         self.assertEqual(Quest.objects.filter(course__id=course_data['id']).count(), 2)
+        self.assertEqual(Branching.objects.filter(course__id=course_data['id']).count(), 2)

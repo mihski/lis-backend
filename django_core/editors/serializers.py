@@ -1030,11 +1030,11 @@ class CourseSerializer(serializers.ModelSerializer):
             instance.quests.all(),
             quests_data,
         )
-        # self._update_courses_entities(
-        #     instance,
-        #     BranchingSerializer,
-        #     instance.branchings.all(),
-        #     branchings_data,
-        # )
+        self._update_courses_entities(
+            instance,
+            BranchingSerializer,
+            instance.branchings.all(),
+            branchings_data,
+        )
 
         return instance
