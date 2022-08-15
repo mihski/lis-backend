@@ -415,6 +415,10 @@ class UnitListSerializer(serializers.ListSerializer):
             obj_serializer.save()
             ret.append(obj_serializer.save())
 
+        lids_to_delete = set(local2instance.keys()) - set(local2data.keys())
+        # TODO: как то сохранять или создавать новые версии (ревизии)
+        Unit.objects.filter(local_id__in=lids_to_delete).delete()
+
         return ret
 
 
@@ -688,6 +692,10 @@ class LessonListSerializer(serializers.ListSerializer):
             obj_serializer.save()
             ret.append(obj_serializer.save())
 
+        lids_to_delete = set(local2instance.keys()) - set(local2data.keys())
+        # TODO: как то сохранять или создавать новые версии (ревизии)
+        Lesson.objects.filter(local_id__in=lids_to_delete).delete()
+
         return ret
 
 
@@ -803,6 +811,10 @@ class QuestListSerializer(serializers.ListSerializer):
             obj_serializer.is_valid(raise_exception=True)
             ret.append(obj_serializer.save())
 
+        lids_to_delete = set(local2instance.keys()) - set(local2data.keys())
+        # TODO: как то сохранять или создавать новые версии (ревизии)
+        Quest.objects.filter(local_id__in=lids_to_delete).delete()
+
         return ret
 
 
@@ -900,6 +912,10 @@ class BranchingListSerializer(serializers.ListSerializer):
             obj_serializer = BranchingSerializer(instance, data=validated_data)
             obj_serializer.is_valid()
             ret.append(obj_serializer.save())
+
+        lids_to_delete = set(local2instance.keys()) - set(local2data.keys())
+        # TODO: как то сохранять или создавать новые версии (ревизии)
+        Branching.objects.filter(local_id__in=lids_to_delete).delete()
 
         return ret
 
