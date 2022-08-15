@@ -1,5 +1,4 @@
-from rest_framework import generics
-from rest_framework import mixins
+from rest_framework import mixins, viewsets
 
 from lessons.models import Lesson, Unit, Quest, Course
 from editors.serializers import LessonSerializer, UnitSerializer, QuestSerializer, CourseSerializer
@@ -8,7 +7,7 @@ from editors.serializers import LessonSerializer, UnitSerializer, QuestSerialize
 class CourseViewSet(
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
-    generics.GenericAPIView,
+    viewsets.GenericViewSet,
 ):
     """ Создание, реадктивание и получение курсов
     """
@@ -19,7 +18,7 @@ class CourseViewSet(
 class QuestViewSet(
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
-    generics.GenericAPIView,
+    viewsets.GenericViewSet,
 ):
     """ Создание, редактирование, получение квестов
     Если передать x, y - будет отредактирован блок для квеста
@@ -33,7 +32,7 @@ class QuestViewSet(
 class LessonEditorViewSet(
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
-    generics.GenericAPIView
+    viewsets.GenericViewSet,
 ):
     """ Создание, редактирование, получение уроков
     Если передать x, y - будет отредактирован блок для урока
@@ -46,7 +45,7 @@ class LessonEditorViewSet(
 
 class UnitEditorViewSet(
     mixins.RetrieveModelMixin,
-    generics.GenericAPIView
+    viewsets.GenericViewSet,
 ):
     """ Создание, редактирование, получение юнитов
     Если передать x, y - будет отредактирован блок для юнита
