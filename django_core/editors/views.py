@@ -1,28 +1,26 @@
-from rest_framework import viewsets
+from rest_framework import generics
+from rest_framework import mixins
 
 from lessons.models import Lesson, Unit, Quest, Course
 from editors.serializers import LessonSerializer, UnitSerializer, QuestSerializer, CourseSerializer
 
 
-class LessonEditorViewSet(viewsets.ModelViewSet):
-    """ Создание, редактирование, получение уроков
-    Если передать x, y - будет отредактирован блок для урока
-    Если при редактировании передать blocks, то контент юнитов соответственно будет обновлен.
+class CourseViewSet(
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    generics.GenericAPIView,
+):
+    """ Создание, реадктивание и получение курсов
     """
-    # TODO: add filter by course_id
-    queryset = Lesson.objects.all()
-    serializer_class = LessonSerializer
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
 
 
-class UnitEditorViewSet(viewsets.ModelViewSet):
-    """ Создание, редактирование, получение юнитов
-    Если передать x, y - будет отредактирован блок для юнита
-    """
-    queryset = Unit.objects.all()
-    serializer_class = UnitSerializer
-
-
-class QuestViewSet(viewsets.ModelViewSet):
+class QuestViewSet(
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    generics.GenericAPIView,
+):
     """ Создание, редактирование, получение квестов
     Если передать x, y - будет отредактирован блок для квеста
     При создании нужно передать список id уроков, при получении вернутся сериализованные уроки.
@@ -32,8 +30,26 @@ class QuestViewSet(viewsets.ModelViewSet):
     serializer_class = QuestSerializer
 
 
-class CourseViewSet(viewsets.ModelViewSet):
-    """ Создание, реадктивание и получение курсов
+class LessonEditorViewSet(
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    generics.GenericAPIView
+):
+    """ Создание, редактирование, получение уроков
+    Если передать x, y - будет отредактирован блок для урока
+    Если при редактировании передать blocks, то контент юнитов соответственно будет обновлен.
     """
-    queryset = Course.objects.all()
-    serializer_class = CourseSerializer
+    # TODO: add filter by course_id
+    queryset = Lesson.objects.all()
+    serializer_class = LessonSerializer
+
+
+class UnitEditorViewSet(
+    mixins.RetrieveModelMixin,
+    generics.GenericAPIView
+):
+    """ Создание, редактирование, получение юнитов
+    Если передать x, y - будет отредактирован блок для юнита
+    """
+    queryset = Unit.objects.all()
+    serializer_class = UnitSerializer
