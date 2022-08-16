@@ -782,6 +782,7 @@ class LessonSerializer(LisEditorModelSerializer):
             'energyCost',
             'bonuses',
             'content',
+            'has_bonuses',
             'x',
             'y',
         ]
