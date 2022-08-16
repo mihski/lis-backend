@@ -64,6 +64,8 @@ class Lesson(EditorBlockModel):
     money_cost = models.IntegerField()
     energy_cost = models.IntegerField()
 
+    has_bonuses = models.BooleanField(default=False)
+
     bonuses = models.JSONField(default=dict)
     content = models.OneToOneField(LessonBlock, related_name='lesson', on_delete=models.CASCADE)
 

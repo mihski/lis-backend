@@ -710,6 +710,7 @@ class LessonSerializer(LisEditorModelSerializer):
     timeCost = serializers.IntegerField(source='time_cost')
     moneyCost = serializers.IntegerField(source='money_cost')
     energyCost = serializers.IntegerField(source='energy_cost')
+    has_bonuses = serializers.BooleanField()
     bonuses = serializers.JSONField()
     content = LessonContentSerializer(required=False)
 
