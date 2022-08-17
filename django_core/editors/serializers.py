@@ -713,6 +713,7 @@ class LessonSerializer(LisEditorModelSerializer):
     has_bonuses = serializers.BooleanField()
     bonuses = serializers.JSONField()
     content = LessonContentSerializer(required=False)
+    next = serializers.CharField()
 
     @staticmethod
     def reverse_validated_data(lessons):
@@ -782,6 +783,7 @@ class LessonSerializer(LisEditorModelSerializer):
             'energyCost',
             'bonuses',
             'content',
+            'next',
             'has_bonuses',
             'x',
             'y',
@@ -945,6 +947,7 @@ class QuestSerializer(LisEditorModelSerializer):
         fields = [
             'id',
             'local_id',
+            'name',
             'course',
             'lessons',
             'branchings',
