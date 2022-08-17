@@ -483,14 +483,14 @@ class EditorBlockMixin:
 class LisEditorModelSerializer(serializers.ModelSerializer, EditorBlockMixin):
     """ Отнаследованные сериализаторы будут создавать блок """
     def create(self, validated_data):
-        block_data = {
-            'x': validated_data.pop('x', None),
-            'y': validated_data.pop('y', None)
-        }
+        # block_data = {
+        #     'x': validated_data.pop('x', None),
+        #     'y': validated_data.pop('y', None)
+        # }
         instance = super(LisEditorModelSerializer, self).create(validated_data)
         instance.save()
 
-        self.create_block(instance, block_data)
+        # self.create_block(instance, block_data)
 
         return instance
 
@@ -510,9 +510,6 @@ class LisEditorModelSerializer(serializers.ModelSerializer, EditorBlockMixin):
 
 class UnitSerializer(LisEditorModelSerializer):
     LESSON_BLOCK_SERIALIZERS: Dict[LessonBlockType, BaseLisBlockSerializer] = dict()
-
-    x = serializers.FloatField(write_only=True, required=False)
-    y = serializers.FloatField(write_only=True, required=False)
 
     id = serializers.IntegerField(required=False)
     local_id = serializers.CharField()
@@ -693,6 +690,7 @@ class LessonListSerializer(serializers.ListSerializer):
             ret.append(obj_serializer.save())
 
         lids_to_delete = set(local2instance.keys()) - set(local2data.keys())
+        print(3, lids_to_delete, Lesson.objects.filter(local_id__in=lids_to_delete).count())
         # TODO: как то сохранять или создавать новые версии (ревизии)
         Lesson.objects.filter(local_id__in=lids_to_delete).delete()
 
@@ -700,9 +698,6 @@ class LessonListSerializer(serializers.ListSerializer):
 
 
 class LessonSerializer(LisEditorModelSerializer):
-    x = serializers.FloatField(write_only=True, required=False)
-    y = serializers.FloatField(write_only=True, required=False)
-
     local_id = serializers.CharField()
 
     name = serializers.CharField()
@@ -710,7 +705,7 @@ class LessonSerializer(LisEditorModelSerializer):
     timeCost = serializers.IntegerField(source='time_cost')
     moneyCost = serializers.IntegerField(source='money_cost')
     energyCost = serializers.IntegerField(source='energy_cost')
-    has_bonuses = serializers.BooleanField()
+    has_bonuses = serializers.BooleanField(default=False)
     bonuses = serializers.JSONField()
     content = LessonContentSerializer(required=False)
     next = serializers.CharField()
@@ -853,9 +848,6 @@ class BranchingListSerializer(serializers.ListSerializer):
 class BranchingSerializer(LisEditorModelSerializer):
     local_id = serializers.CharField()
 
-    x = serializers.FloatField(write_only=True, required=False)
-    y = serializers.FloatField(write_only=True, required=False)
-
     # TODO: добавить два типа бранчей
     class Meta:
         model = Branching
@@ -865,15 +857,12 @@ class BranchingSerializer(LisEditorModelSerializer):
 
 
 class QuestSerializer(LisEditorModelSerializer):
-    x = serializers.FloatField(write_only=True, required=False)
-    y = serializers.FloatField(write_only=True, required=False)
-
     local_id = serializers.CharField()
 
     course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
 
     lessons = LessonSerializer(many=True)
-    branchings = BranchingSerializer(many=True)
+    branchings = BranchingSerializer(required=False, many=True)
 
     description = serializers.CharField()
     entry = serializers.CharField(required=False, allow_blank=True, allow_null=True)
@@ -921,8 +910,8 @@ class QuestSerializer(LisEditorModelSerializer):
         return branchings
 
     def create(self, validated_data):
-        lessons_data = validated_data.pop('lessons')
-        branchings_data = validated_data.pop('branchings')
+        lessons_data = validated_data.pop('lessons', [])
+        branchings_data = validated_data.pop('branchings', [])
 
         instance = super().create(validated_data)
 
@@ -932,8 +921,8 @@ class QuestSerializer(LisEditorModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
-        lessons_data = validated_data.pop('lessons')
-        branchings_data = validated_data.pop('branchings')
+        lessons_data = validated_data.pop('lessons', [])
+        branchings_data = validated_data.pop('branchings', [])
 
         instance = super().update(instance, validated_data)
 
@@ -955,7 +944,7 @@ class QuestSerializer(LisEditorModelSerializer):
             'entry',
             'next',
             'x',
-            'y'
+            'y',
         ]
 
         list_serializer_class = QuestListSerializer

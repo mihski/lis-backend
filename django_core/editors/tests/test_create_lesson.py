@@ -61,6 +61,7 @@ def _create_simple_lesson(course_id, units=None, local_id='lesson_1'):
 
 def _create_quests(course_id, lessons, local_id=None):
     return {
+        'name': 'Quest',
         'local_id': local_id or str(uuid4()),
         'course': course_id,
         'description': 'quest 1',
@@ -313,16 +314,17 @@ class TestLessonCreating(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_patching_course(self):
-        course_data = self.create_simple_course()
+        from editors.serializers import CourseSerializer
+        course_data = CourseSerializer(self.course).data
 
         course_data['entry'] = 'asd'
         course_data['name'] = 'course 1 patched'
         course_data['lessons'] = [
-            self.create_simple_lesson(course_id=course_data['id']),
+            # self.create_simple_lesson(course_id=course_data['id']),
             _create_simple_lesson(course_data['id'], local_id='lesson 3'),
         ]
         course_data['quests'] = [
-            self.create_simple_quest(course_data['id'], []),
+            # self.create_simple_quest(course_data['id'], []),
             _create_quests(course_data['id'], [])
         ]
         course_data['branchings'] = [
@@ -341,6 +343,6 @@ class TestLessonCreating(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(course_data['name'], 'course 1 patched')
-        self.assertEqual(Lesson.objects.filter(course__id=course_data['id']).count(), 2)
-        self.assertEqual(Quest.objects.filter(course__id=course_data['id']).count(), 2)
+        self.assertEqual(Lesson.objects.filter(course__id=course_data['id']).count(), 1)
+        self.assertEqual(Quest.objects.filter(course__id=course_data['id']).count(), 1)
         self.assertEqual(Branching.objects.filter(course__id=course_data['id']).count(), 2)
