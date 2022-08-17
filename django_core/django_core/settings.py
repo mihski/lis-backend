@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_filters',
     'corsheaders',
     'rest_framework',
     'constance',
@@ -81,6 +82,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'django_core.wsgi.application'
+
+
+# Rest Framework configurations
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+}
 
 
 # Database
