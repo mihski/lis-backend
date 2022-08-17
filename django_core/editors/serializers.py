@@ -4,8 +4,9 @@ from enum import Enum
 from typing import List, Dict, Iterable
 
 from rest_framework import serializers
-from rest_framework.validators import ValidationError
+from rest_framework.validators import ValidationError, UniqueTogetherValidator
 
+from accounts.models import User
 from lessons.structures.lectures import (
     ReplicaBlock,
     ReplicaNPCBlock,
@@ -32,7 +33,7 @@ from lessons.structures.tasks import (
     ComparisonBlock,
 )
 from lessons.models import Lesson, Unit, LessonBlock, Quest, Course, Branching
-from editors.models import Block
+from editors.models import Block, EditorSession
 
 
 logger = logging.Logger(__file__)
@@ -91,10 +92,10 @@ class BaseLisBlockSerializer(serializers.ModelSerializer):
     class Meta:
         model = None
 
-    @staticmethod
-    def get_all_subclasses() -> List['BaseLisBlockSerializer']:
+    @classmethod
+    def get_all_subclasses(cls):
         subclasses = set()
-        work = [BaseLisBlockSerializer]
+        work = [cls]
 
         while work:
             parent = work.pop()
@@ -1082,3 +1083,13 @@ class CourseSerializer(serializers.ModelSerializer):
         )
 
         return instance
+
+
+class EditorSessionSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), default=serializers.CurrentUserDefault())
+    course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
+    local_id = serializers.CharField(default='')
+
+    class Meta:
+        model = EditorSession
+        fields = ["user", "course", "local_id"]

@@ -25,6 +25,9 @@ class Course(models.Model):
     entry = models.CharField(default=None, max_length=120, blank=True, null=True)
     locale = models.JSONField(default=dict)
 
+    def __str__(self):
+        return self.name
+
 
 class Quest(EditorBlockModel):
     course = models.ForeignKey(Course, null=True, on_delete=models.SET_NULL, related_name='quests')
@@ -34,6 +37,9 @@ class Quest(EditorBlockModel):
 
     entry = models.CharField(default=None, max_length=120, blank=True, null=True)
     next = models.CharField(default=None, max_length=120, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
 
 
 class Branching(EditorBlockModel):
@@ -72,6 +78,9 @@ class Lesson(EditorBlockModel):
     content = models.OneToOneField(LessonBlock, related_name='lesson', on_delete=models.CASCADE)
 
     next = models.CharField(max_length=255, default='', blank=True)
+
+    def __str__(self):
+        return self.name
 
 
 class Unit(EditorBlockModel):

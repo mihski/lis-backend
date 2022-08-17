@@ -1,7 +1,14 @@
-from rest_framework import mixins, viewsets
+from rest_framework import mixins, viewsets, authentication, permissions, decorators, response
 
 from lessons.models import Lesson, Unit, Quest, Course
-from editors.serializers import LessonSerializer, UnitSerializer, QuestSerializer, CourseSerializer
+from editors.serializers import (
+    LessonSerializer,
+    UnitSerializer,
+    QuestSerializer,
+    CourseSerializer,
+    EditorSessionSerializer
+)
+from editors.models import EditorSession
 
 
 class CourseViewSet(
@@ -11,6 +18,9 @@ class CourseViewSet(
 ):
     """ Создание, реадктивание и получение курсов
     """
+    authentication_classes = [authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAdminUser]
+
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
 
@@ -25,6 +35,9 @@ class QuestViewSet(
     При создании нужно передать список id уроков, при получении вернутся сериализованные уроки.
     Нельзя изменить контент внутренних уроков.
     """
+    authentication_classes = [authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAdminUser]
+
     queryset = Quest.objects.all()
     serializer_class = QuestSerializer
 
@@ -38,7 +51,9 @@ class LessonEditorViewSet(
     Если передать x, y - будет отредактирован блок для урока
     Если при редактировании передать blocks, то контент юнитов соответственно будет обновлен.
     """
-    # TODO: add filter by course_id
+    authentication_classes = [authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAdminUser]
+
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
 
@@ -50,5 +65,49 @@ class UnitEditorViewSet(
     """ Создание, редактирование, получение юнитов
     Если передать x, y - будет отредактирован блок для юнита
     """
+    authentication_classes = [authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAdminUser]
+
     queryset = Unit.objects.all()
     serializer_class = UnitSerializer
+
+
+class EditorSessionViewSet(
+    mixins.CreateModelMixin,
+    viewsets.GenericViewSet
+):
+    authentication_classes = [authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAdminUser]
+
+    queryset = EditorSession.objects.all()
+    serializer_class = EditorSessionSerializer
+
+    def get_user_session_query(self, request):
+        user_editor_session_query = EditorSession.objects.filter(
+            user=request.user,
+            course__id=request.data["course"],
+        )
+
+        if "local_id" in request.data:
+            user_editor_session_query = user_editor_session_query.filter(local_id=request.data["local_id"])
+
+        return user_editor_session_query.first()
+
+    def create(self, request, *args, **kwargs):
+        user_editor_session_query = self.get_user_session_query(request)
+
+        if user_editor_session_query:
+            user_editor_session_query.delete()
+
+        return super().create(request, *args, **kwargs)
+
+    @decorators.action(methods=["POST"], detail=False, url_path="end_session")
+    def end_session(self, request, *args, **kwargs):
+        user_editor_session_query = self.get_user_session_query(request)
+
+        if not user_editor_session_query:
+            return response.Response({"detail": {"user": "there is no session for user"}}, status=400)
+
+        user_editor_session_query.delete()
+
+        return response.Response({"status": "ok"})
