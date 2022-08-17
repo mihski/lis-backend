@@ -249,7 +249,6 @@ class TestLessonCreating(TestCase):
             _create_quests(course_id, lessons, local_id),
             format='json'
         )
-        print(response.json())
         self.assertEqual(response.status_code, 201)
         return response.json()
 
@@ -325,7 +324,10 @@ class TestLessonCreating(TestCase):
         ]
         course_data['quests'] = [
             # self.create_simple_quest(course_data['id'], []),
-            _create_quests(course_data['id'], [])
+            _create_quests(
+                course_data['id'],
+                [_create_simple_lesson(course_data['id'], local_id='lesson 4')]
+            )
         ]
         course_data['branchings'] = [
             _create_branching(1),
@@ -343,6 +345,7 @@ class TestLessonCreating(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(course_data['name'], 'course 1 patched')
-        self.assertEqual(Lesson.objects.filter(course__id=course_data['id']).count(), 1)
+        self.assertEqual(Lesson.objects.filter(course__id=course_data['id']).count(), 2)
+        self.assertEqual(len(response.json()['lessons']), 1)
         self.assertEqual(Quest.objects.filter(course__id=course_data['id']).count(), 1)
         self.assertEqual(Branching.objects.filter(course__id=course_data['id']).count(), 2)

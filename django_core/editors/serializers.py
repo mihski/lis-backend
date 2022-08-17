@@ -772,6 +772,7 @@ class LessonSerializer(LisEditorModelSerializer):
             'id',
             'local_id',
             'course',
+            'quest',
             'name',
             'timeCost',
             'moneyCost',
@@ -851,7 +852,7 @@ class BranchingSerializer(LisEditorModelSerializer):
     # TODO: добавить два типа бранчей
     class Meta:
         model = Branching
-        fields = ['id', 'local_id', 'x', 'y', 'type', 'content']
+        fields = ['id', 'local_id', 'course', 'quest', 'x', 'y', 'type', 'content']
 
         list_serializer_class = BranchingListSerializer
 
@@ -993,6 +994,15 @@ class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = ['id', 'lessons', 'quests', 'branchings', 'name', 'description', 'entry', 'locale']
+
+    def to_representation(self, instance):
+        """ Filter lessons and branchings inside quests """
+        representation = super().to_representation(instance)
+
+        representation['lessons'] = [x for x in representation['lessons'] if x['quest'] is not None]
+        representation['branchings'] = [x for x in representation['branchings'] if x['quest'] is not None]
+
+        return representation
 
     def validate(self, data):
         lessons = data.get('lessons', [])
