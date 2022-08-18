@@ -708,7 +708,7 @@ class LessonSerializer(LisEditorModelSerializer):
     has_bonuses = serializers.BooleanField(default=False)
     bonuses = serializers.JSONField()
     content = LessonContentSerializer(required=False)
-    next = serializers.CharField()
+    next = serializers.CharField(allow_blank=True)
 
     @staticmethod
     def reverse_validated_data(lessons):
@@ -867,7 +867,7 @@ class QuestSerializer(LisEditorModelSerializer):
 
     description = serializers.CharField()
     entry = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    next = serializers.CharField()
+    next = serializers.CharField(allow_blank=True)
 
     @staticmethod
     def reverse_validated_data(quests):
@@ -1005,6 +1005,8 @@ class CourseSerializer(serializers.ModelSerializer):
         return representation
 
     def validate(self, data):
+        super().validate(data)
+        
         lessons = data.get('lessons', [])
         quests = data.get('quests', [])
         branchings = data.get('branchings', [])

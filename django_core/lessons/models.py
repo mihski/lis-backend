@@ -71,7 +71,7 @@ class Lesson(EditorBlockModel):
     bonuses = models.JSONField(default=dict)
     content = models.OneToOneField(LessonBlock, related_name='lesson', on_delete=models.CASCADE)
 
-    next = models.CharField(max_length=255, default='')
+    next = models.CharField(max_length=255, default='', blank=True)
 
 
 class Unit(EditorBlockModel):
