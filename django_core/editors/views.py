@@ -1,6 +1,8 @@
 from rest_framework import mixins, viewsets, authentication, permissions, decorators, response
+from django_filters import rest_framework as filters
 
 from lessons.models import Lesson, Unit, Quest, Course
+from editors.filters import EditorSessionFilter
 from editors.serializers import (
     LessonSerializer,
     UnitSerializer,
@@ -82,7 +84,9 @@ class EditorSessionViewSet(
 
     queryset = EditorSession.objects.all()
     serializer_class = EditorSessionSerializer
-    filterset_fields = ('local_id', )
+
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = EditorSessionFilter
 
     def get_user_session_query(self, request):
         user_editor_session_query = EditorSession.objects.filter(
@@ -102,3 +106,17 @@ class EditorSessionViewSet(
             user_editor_session_query.delete()
 
         return super().create(request, *args, **kwargs)
+
+    @decorators.action(methods=["POST"], detail=False, url_path='end_session')
+    def end_session(self, request, *args, **kwargs):
+        user_editor_session_query = self.get_user_session_query(request)
+
+        if not user_editor_session_query:
+            return response.Response(
+                {"detail": {"user": "there is no session for user"}},
+                status=400
+            )
+
+        user_editor_session_query.delete()
+
+        return response.Response({"status": "ok"})

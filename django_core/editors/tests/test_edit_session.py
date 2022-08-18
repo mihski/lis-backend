@@ -32,6 +32,12 @@ class TestEditorSession(TestCase):
         )
         return response
 
+    def filter_sessions(self, course_id: int, local_ids: str = ''):
+        response = self.client.get(
+            f"/api/editors/sessions/?course={course_id}&local_ids={local_ids}",
+        )
+        return response
+
     def test_start_session(self):
         self.client.login(username=self.super_user.username, password="password")
         response = self.start_session(course=self.course.id)
@@ -85,3 +91,15 @@ class TestEditorSession(TestCase):
         response = self.end_session(course=self.course.id)
         self.assertEqual(response.json()["detail"]["user"], "there is no session for user")
         self.assertEqual(response.status_code, 400)
+
+    def test_check_filter_course(self):
+        self.client.login(username=self.super_user.username, password="password")
+        self.start_session(course=self.course.id)
+        self.start_session(course=self.course.id, local_id=self.quest.local_id)
+        response = self.filter_sessions(course_id=self.course.id, local_ids='')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 1)
+
+        response = self.filter_sessions(course_id=self.course.id, local_ids=','.join([self.quest.local_id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 1)
