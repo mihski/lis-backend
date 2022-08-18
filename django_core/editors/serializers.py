@@ -999,8 +999,8 @@ class CourseSerializer(serializers.ModelSerializer):
         """ Filter lessons and branchings inside quests """
         representation = super().to_representation(instance)
 
-        representation['lessons'] = [x for x in representation['lessons'] if x['quest'] is not None]
-        representation['branchings'] = [x for x in representation['branchings'] if x['quest'] is not None]
+        representation['lessons'] = [x for x in representation['lessons'] if x['quest'] is None]
+        representation['branchings'] = [x for x in representation['branchings'] if x['quest'] is None]
 
         return representation
 
