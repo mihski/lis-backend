@@ -1089,7 +1089,6 @@ class CourseSerializer(serializers.ModelSerializer):
 
 class EditorSessionSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(
-        write_only=True,
         queryset=User.objects.all(),
         default=serializers.CurrentUserDefault()
     )
@@ -1098,7 +1097,7 @@ class EditorSessionSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-
+        representation['user'] = User.objects.get(id=representation['user']).username
         return representation
 
     class Meta:
