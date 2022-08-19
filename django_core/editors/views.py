@@ -105,10 +105,8 @@ class EditorSessionViewSet(
         user_editor_session = self.get_user_session(request)
 
         if already_exists_session_query.exists() and not user_editor_session:
-            return response.Response({
-                "detail": {
-                    f"Уже занято {EditorSessionSerializer(already_exists_session_query.first()).data['user_name']}"
-                }},
+            return response.Response(
+                EditorSessionSerializer(already_exists_session_query.first()).data,
                 status=400,
             )
 
