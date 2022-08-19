@@ -88,35 +88,45 @@ class EditorSessionViewSet(
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = EditorSessionFilter
 
-    def get_user_session_query(self, request):
-        user_editor_session_query = EditorSession.objects.filter(
-            user=request.user,
-            course__id=request.data["course"],
-        )
+    def get_session_query(self, request):
+        user_editor_session_query = EditorSession.objects.filter(course__id=request.data["course"])
 
         if "local_id" in request.data:
             user_editor_session_query = user_editor_session_query.filter(local_id=request.data["local_id"])
 
-        return user_editor_session_query.first()
+        return user_editor_session_query
+
+    def get_user_session(self, request):
+        qs = self.get_session_query(request)
+        return qs.filter(user=request.user).first()
 
     def create(self, request, *args, **kwargs):
-        user_editor_session_query = self.get_user_session_query(request)
+        already_exists_session_query = self.get_session_query(request)
+        user_editor_session = self.get_user_session(request)
 
-        if user_editor_session_query:
-            user_editor_session_query.delete()
+        if already_exists_session_query.exists() and not user_editor_session:
+            return response.Response({
+                "detail": {
+                    f"Уже занято {EditorSessionSerializer(already_exists_session_query.first()).data['user_name']}"
+                }},
+                status=400,
+            )
+
+        if user_editor_session:
+            user_editor_session.delete()
 
         return super().create(request, *args, **kwargs)
 
     @decorators.action(methods=["POST"], detail=False, url_path='end_session')
     def end_session(self, request, *args, **kwargs):
-        user_editor_session_query = self.get_user_session_query(request)
+        user_editor_session = self.get_user_session(request)
 
-        if not user_editor_session_query:
+        if not user_editor_session:
             return response.Response(
                 {"detail": {"user": "there is no session for user"}},
                 status=400
             )
 
-        user_editor_session_query.delete()
+        user_editor_session.delete()
 
         return response.Response({"status": "ok"})

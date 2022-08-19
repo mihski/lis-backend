@@ -66,6 +66,7 @@ class TestEditorSession(TestCase):
 
         self.client.login(username=self.super_user2, password="password")
         response = self.start_session(course=self.course.id)
+        print(response.json())
         self.assertEqual(response.status_code, 400)
         self.client.logout()
 

@@ -496,15 +496,15 @@ class LisEditorModelSerializer(serializers.ModelSerializer, EditorBlockMixin):
         return instance
 
     def update(self, instance, validated_data):
-        block_data = {
-            'x': validated_data.pop('x', None),
-            'y': validated_data.pop('y', None)
-        }
+        # block_data = {
+        #     'x': validated_data.pop('x', None),
+        #     'y': validated_data.pop('y', None)
+        # }
 
         instance = super(LisEditorModelSerializer, self).update(instance, validated_data)
         instance.save()
 
-        self.update_block(instance, block_data)
+        # self.update_block(instance, block_data)
 
         return instance
 
@@ -1066,7 +1066,7 @@ class CourseSerializer(serializers.ModelSerializer):
         self._update_courses_entities(
             instance,
             LessonSerializer,
-            instance.lessons.all(),
+            instance.lessons.filter(quest__isnull=True).all(),
             lessons_data,
         )
         self._update_courses_entities(
@@ -1078,17 +1078,29 @@ class CourseSerializer(serializers.ModelSerializer):
         self._update_courses_entities(
             instance,
             BranchingSerializer,
-            instance.branchings.all(),
+            instance.branchings.filter(quest__isnull=True).all(),
             branchings_data,
         )
+
+        instance.refresh_from_db()
 
         return instance
 
 
 class EditorSessionSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), default=serializers.CurrentUserDefault())
+    user = serializers.PrimaryKeyRelatedField(
+        write_only=True,
+        queryset=User.objects.all(),
+        default=serializers.CurrentUserDefault()
+    )
     course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
     local_id = serializers.CharField(default='')
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = User.objects.get(id=representation['user']).username
+
+        return representation
 
     class Meta:
         model = EditorSession
