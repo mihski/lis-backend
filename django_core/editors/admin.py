@@ -8,5 +8,8 @@ class EditorSessionAdmin(admin.ModelAdmin):
     def get_content(self, obj):
         return obj.get_content()
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 admin.site.register(models.EditorSession, EditorSessionAdmin)
