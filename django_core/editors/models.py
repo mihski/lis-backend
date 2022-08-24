@@ -15,6 +15,7 @@ class EditorSession(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     local_id = models.CharField(max_length=255, null=True, blank=True, editable=False)
     created_at = models.DateTimeField(auto_now=True)
+    is_closed = models.BooleanField(default=False)
 
     def get_content(self):
         if not self.local_id:
@@ -31,6 +32,3 @@ class EditorSession(models.Model):
         prefix = '' if not self.local_id else '- ' + str(self.get_content())
 
         return f"EditorSession[{self.id}] {self.user} - {self.course} {prefix}"
-
-    class Meta:
-        unique_together = ['course', 'local_id']

@@ -1094,6 +1094,7 @@ class EditorSessionSerializer(serializers.ModelSerializer):
     )
     course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
     local_id = serializers.CharField(default='')
+    is_closed = serializers.ReadOnlyField()
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -1102,4 +1103,4 @@ class EditorSessionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EditorSession
-        fields = ["user", "course", "local_id"]
+        fields = ["user", "course", "local_id", "is_closed"]

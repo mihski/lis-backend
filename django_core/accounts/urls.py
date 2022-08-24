@@ -23,7 +23,7 @@ class UniqueAccountAuthForm(AuthenticationForm):
         super().confirm_login_allowed(user)
 
         # TODO: add is_closed
-        if EditorSession.objects.filter(user=user).exists():
+        if EditorSession.objects.filter(user=user, is_closed=False).exists():
             raise ValidationError(
                 "Пользователь еще не закончил сессию в редакторе. Во избежание проблем, мы не можем вас авторизовать."
             )

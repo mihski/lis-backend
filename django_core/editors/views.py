@@ -89,7 +89,7 @@ class EditorSessionViewSet(
     filterset_class = EditorSessionFilter
 
     def get_session_query(self, request):
-        user_editor_session_query = EditorSession.objects.filter(course__id=request.data["course"])
+        user_editor_session_query = EditorSession.objects.filter(course__id=request.data["course"], is_closed=False)
 
         if "local_id" in request.data:
             user_editor_session_query = user_editor_session_query.filter(local_id=request.data["local_id"])
@@ -98,7 +98,7 @@ class EditorSessionViewSet(
 
     def get_user_session(self, request):
         qs = self.get_session_query(request)
-        return qs.filter(user=request.user).first()
+        return qs.filter(user=request.user, is_closed=False).first()
 
     def create(self, request, *args, **kwargs):
         already_exists_session_query = self.get_session_query(request)
@@ -111,7 +111,8 @@ class EditorSessionViewSet(
             )
 
         if user_editor_session:
-            user_editor_session.delete()
+            user_editor_session.is_closed = True
+            user_editor_session.save()
 
         return super().create(request, *args, **kwargs)
 
@@ -125,6 +126,7 @@ class EditorSessionViewSet(
                 status=400
             )
 
-        user_editor_session.delete()
+        user_editor_session.is_closed = True
+        user_editor_session.save()
 
         return response.Response({"status": "ok"})
