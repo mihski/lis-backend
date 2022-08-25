@@ -1,6 +1,6 @@
-from rest_framework import viewsets, mixins, permissions, authentication, decorators, response, validators
+from rest_framework import viewsets, permissions, authentication, decorators, response, validators
 from resources.models import Resources
-from resources.serializers import ResourcesSerializer
+from resources.serializers import ResourcesSerializer, ResourcesUpdateSerializer
 
 
 class ResourceViewSet(viewsets.GenericViewSet):
@@ -9,6 +9,12 @@ class ResourceViewSet(viewsets.GenericViewSet):
 
     permission_classes = (permissions.IsAuthenticated, )
     authentication_classes = (authentication.TokenAuthentication, )
+
+    def get_serializer_class(self):
+        if self.request.method == "PATCH":
+            return ResourcesUpdateSerializer
+
+        return ResourcesSerializer
 
     @decorators.action(methods=["GET"], detail=False, url_path='')
     def retrieve_resources(self, request, *args, **kwargs):
@@ -29,13 +35,6 @@ class ResourceViewSet(viewsets.GenericViewSet):
 
     @decorators.action(methods=["PATCH"], detail=False, url_path='update')
     def update_resources(self, request, *args, **kwargs):
-        """ Нужно передать следующие данные:
-        - timeDelta
-        - energyDelta
-        - moneyDelta
-
-        Если какое нибудь из этих данных не будет предоставлено, то будет считаться, что изменений нет.
-        """
         user_resources, _ = Resources.objects.get_or_create(user=request.user)
 
         time_delta = int(request.data.get('timeDelta', 0))

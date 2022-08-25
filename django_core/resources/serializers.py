@@ -10,3 +10,15 @@ class ResourcesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resources
         fields = ["id", "timeAmount", "moneyAmount", "energyAmount"]
+
+
+class ResourcesUpdateSerializer(serializers.Serializer):
+    timeDelta = serializers.IntegerField(default=0)
+    moneyDelta = serializers.IntegerField(default=0)
+    energyDelta = serializers.IntegerField(default=0)
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass

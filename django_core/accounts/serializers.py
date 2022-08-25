@@ -7,3 +7,4 @@ class UserSerializer(ModelSerializer):
         model = User
         fields = ['id', 'username', 'email', 'phone', 'first_name', 'last_name', 'middle_name']
         read_only_fields = ['id', 'username', 'email', 'phone']
+        ref_name = 'lis_user'
