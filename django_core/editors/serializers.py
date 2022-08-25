@@ -31,6 +31,10 @@ from lessons.structures.tasks import (
     ImageAnchorsBlock,
     SortBlock,
     ComparisonBlock,
+    MessengerStartBlock,
+    MessengerEndBlock,
+    DownloadingBlock,
+    ButtonBlock
 )
 from lessons.models import Lesson, Unit, LessonBlock, Quest, Course, Branching
 from editors.models import Block, EditorSession
@@ -51,9 +55,12 @@ class LessonBlockType(Enum):
     email = 207
     browser = 208
     table = 209
-    doc = 210
-    messenger = 211
-    video = 212
+    a10_doc = 210
+    a12_1_messenger_start = 211
+    a12_2_messenger_end = 212
+    a13_downloading = 213
+    a15_video = 215
+    a16_button = 216
 
     radios = 301
     checkboxes = 302
@@ -218,15 +225,47 @@ class TableBlockSerializer(UrlBlockSerializer):
 
 
 class DocBlockSerializer(TextBlockSerializer):
-    block_type = LessonBlockType.doc
+    block_type = LessonBlockType.a10_doc
 
     class Meta:
         model = DocBlock
         fields = ['title'] + TextBlockSerializer.Meta.fields
 
 
+class MessengerStartBlockSerializer(BaseLisBlockSerializer):
+    block_type = LessonBlockType.a12_1_messenger_start
+
+    class Meta:
+        model = MessengerStartBlock
+        fields = ['id']
+
+
+class MessengerStartBlockSerializer(BaseLisBlockSerializer):
+    block_type = LessonBlockType.a12_2_messenger_end
+
+    class Meta:
+        model = MessengerEndBlock
+        fields = ['id']
+
+
+class DownloadingBlockSerializer(BaseLisBlockSerializer):
+    block_type = LessonBlockType.a13_downloading
+
+    class Meta:
+        model = DownloadingBlock
+        fields = ['id', 'title', 'url', 'location']
+
+
+class ButtonBlockSerializer(BaseLisBlockSerializer):
+    block_type = LessonBlockType.a16_button
+
+    class Meta:
+        model = ButtonBlock
+        fields = ['id', 'value']
+
+
 class VideoBlockSerializer(UrlBlockSerializer):
-    block_type = LessonBlockType.video
+    block_type = LessonBlockType.a15_video
 
     class Meta:
         model = VideoBlock
