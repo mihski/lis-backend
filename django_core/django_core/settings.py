@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'django_filters',
     'corsheaders',
     'rest_framework',
+    'rest_framework.authtoken',
+    'djoser',
     'constance',
     'drf_yasg',
     'accounts',
@@ -103,7 +105,7 @@ DATABASES = {
         'HOST': 'lis_db',
         'PORT': '5432',
         'TEST': {
-            'NAME': 'c_test_vivek',
+            'NAME': 'd_test_',
         },
     }
 }

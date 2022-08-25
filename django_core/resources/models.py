@@ -9,15 +9,10 @@ class EmotionData(models.Model):
 
 
 class Resources(models.Model):
-    RESOURCE_TYPE = (
-        ('energy', 'Энергия'),
-    )
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    time_amount = models.PositiveIntegerField(default=0)
+    money_amount = models.PositiveIntegerField(default=0)
+    energy_amount = models.PositiveIntegerField(default=0)
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    name = models.CharField(max_length=255)
-    resource_type = models.CharField(max_length=10, choices=RESOURCE_TYPE)
-    amount = models.IntegerField(default=0)
-
-
-class Bonuses(models.Model):
-    content = models.JSONField()
+    def __str__(self):
+        return f"Resource - {self.user.username}"
