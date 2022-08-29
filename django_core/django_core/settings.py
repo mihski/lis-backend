@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'django_filters',
     'corsheaders',
     'rest_framework',
-    'rest_framework.authtoken',
     'djoser',
     'constance',
     'drf_yasg',
@@ -89,9 +88,15 @@ WSGI_APPLICATION = 'django_core.wsgi.application'
 # Rest Framework configurations
 
 REST_FRAMEWORK = {
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
 }
 
+SIMPLE_JWT = {
+   'AUTH_HEADER_TYPES': ('JWT',),
+}
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases

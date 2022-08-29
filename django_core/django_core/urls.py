@@ -39,5 +39,5 @@ urlpatterns = [
     path('api/editors/', include('editors.urls', namespace='editors')),
     path('api/swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('api/auth/', include('djoser.urls')),
-    path('api/auth/', include('djoser.urls.authtoken')),
+    path('api/auth/', include('djoser.urls.jwt')),
 ]
