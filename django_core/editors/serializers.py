@@ -609,9 +609,9 @@ class UnitSerializer(LisEditorModelSerializer):
         content_serializer = self.get_unit_content_serializer(validated_data['type'])
         instance.next = validated_data.get('next', instance.next)
 
-        if instance.type == validated_data['type']:
+        if instance.type == validated_data['type'] and instance.content:
             content_obj = content_serializer.Meta.model.objects.filter(
-                id=validated_data['content']['id']
+                id=instance.content['id']
             ).only().first()
             obj = content_serializer(content_obj, data=validated_data['content'], partial=True)
             obj.is_valid()
@@ -738,17 +738,17 @@ class LessonListSerializer(serializers.ListSerializer):
 
 
 class LessonSerializer(LisEditorModelSerializer):
-    local_id = serializers.CharField()
+    local_id = serializers.CharField(read_only=True)
 
-    name = serializers.CharField()
-    course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
-    timeCost = serializers.IntegerField(source='time_cost')
-    moneyCost = serializers.IntegerField(source='money_cost')
-    energyCost = serializers.IntegerField(source='energy_cost')
-    has_bonuses = serializers.BooleanField(default=False)
-    bonuses = serializers.JSONField()
+    name = serializers.CharField(read_only=True)
+    course = serializers.PrimaryKeyRelatedField(read_only=True)
+    timeCost = serializers.IntegerField(read_only=True, source='time_cost')
+    moneyCost = serializers.IntegerField(read_only=True, source='money_cost')
+    energyCost = serializers.IntegerField(read_only=True, source='energy_cost')
+    has_bonuses = serializers.BooleanField(read_only=True, default=False)
+    bonuses = serializers.JSONField(read_only=True)
     content = LessonContentSerializer(required=False)
-    next = serializers.CharField(allow_blank=True)
+    next = serializers.CharField(read_only=True, allow_blank=True)
 
     @staticmethod
     def reverse_validated_data(lessons):
@@ -824,6 +824,7 @@ class LessonSerializer(LisEditorModelSerializer):
             'x',
             'y',
         ]
+        read_only_fields = list(set(fields).difference(['content']))
 
         list_serializer_class = LessonListSerializer
 
