@@ -26,6 +26,11 @@ class CourseViewSet(
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
 
+    @decorators.action(methods=["GET"], detail=True, url_path='locale')
+    def get_locale(self, request, pk, *args, **kwargs):
+        course = Course.objects.get(pk=pk)
+        return response.Response(course.locale)
+
 
 class QuestViewSet(
     mixins.RetrieveModelMixin,
@@ -73,7 +78,7 @@ class UnitEditorViewSet(
     queryset = Unit.objects.all()
     serializer_class = UnitSerializer
 
-
+    
 class EditorSessionViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
