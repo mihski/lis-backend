@@ -202,10 +202,7 @@ class EmailBlockSerializer(TextBlockSerializer):
 
     class Meta:
         model = EmailBlock
-        fields = ['npc', 'subject', 'from', 'to'] + TextBlockSerializer.Meta.fields
-
-    def get_from(self, obj: EmailBlock):
-        return obj.f_from
+        fields = ['npc', 'subject', 'f_from', 'to'] + TextBlockSerializer.Meta.fields
 
 
 class BrowserBlockSerializer(TextBlockSerializer):
@@ -787,6 +784,8 @@ class LessonSerializer(LisEditorModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
+        print('content' in validated_data)
+
         if 'content' in validated_data:
             if not isinstance(validated_data['content']['lesson'], int):
                 validated_data['content']['lesson'] = validated_data['content']['lesson'].id
