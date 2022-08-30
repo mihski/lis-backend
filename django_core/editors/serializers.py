@@ -20,6 +20,10 @@ from lessons.structures.lectures import (
     TableBlock,
     DocBlock,
     VideoBlock,
+    MessengerStartBlock,
+    MessengerEndBlock,
+    DownloadingBlock,
+    ButtonBlock
 )
 from lessons.structures.tasks import (
     RadiosBlock,
@@ -31,10 +35,6 @@ from lessons.structures.tasks import (
     ImageAnchorsBlock,
     SortBlock,
     ComparisonBlock,
-    MessengerStartBlock,
-    MessengerEndBlock,
-    DownloadingBlock,
-    ButtonBlock
 )
 from lessons.models import Lesson, Unit, LessonBlock, Quest, Course, Branching
 from editors.models import Block, EditorSession
