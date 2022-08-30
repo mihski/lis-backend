@@ -56,7 +56,7 @@ class GalleryBlock(LessonBlock):
 class EmailBlock(TextBlock):
     npc = models.IntegerField()
     subject = models.TextField()
-    f_from = models.TextField()
+    sender = models.TextField()
     to = models.TextField()
 
 

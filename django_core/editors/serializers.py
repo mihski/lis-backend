@@ -4,7 +4,7 @@ from enum import Enum
 from typing import List, Dict, Iterable
 
 from rest_framework import serializers
-from rest_framework.validators import ValidationError, UniqueTogetherValidator
+from rest_framework.validators import ValidationError
 
 from accounts.models import User
 from lessons.structures.lectures import (
@@ -123,12 +123,6 @@ class UrlBlockSerializer(BaseLisBlockSerializer):
     class Meta:
         fields = ['id', 'title', 'url', 'location']
 
-    def validate_url(self, url: str) -> str:
-        if not url.startswith('http'):
-            raise ValidationError('url should starts with http')
-
-        return url
-
 
 class ReplicaBlockSerializer(TextBlockSerializer):
     block_type = LessonBlockType.replica
@@ -202,7 +196,7 @@ class EmailBlockSerializer(TextBlockSerializer):
 
     class Meta:
         model = EmailBlock
-        fields = ['npc', 'subject', 'f_from', 'to'] + TextBlockSerializer.Meta.fields
+        fields = ['npc', 'subject', 'sender', 'to'] + TextBlockSerializer.Meta.fields
 
 
 class BrowserBlockSerializer(TextBlockSerializer):
@@ -588,7 +582,7 @@ class UnitSerializer(LisEditorModelSerializer):
         # creating content
         content_serializer = self.get_unit_content_serializer(validated_data['type'])
         content = content_serializer(data=validated_data['content'])
-        content.is_valid()
+        content.is_valid(raise_exception=True)
         content = content.save()
 
         # creating unit
@@ -617,7 +611,9 @@ class UnitSerializer(LisEditorModelSerializer):
             validated_data['content'] = obj.data
 
         instance.type = validated_data.get('type', instance.type)
-        instance.content = validated_data['content']
+        instance.content = validated_data.get('content', instance.content)
+        instance.x = validated_data.get('x', instance.x)
+        instance.y = validated_data.get('y', instance.x)
         instance.save()
 
         return instance
@@ -735,17 +731,17 @@ class LessonListSerializer(serializers.ListSerializer):
 
 
 class LessonSerializer(LisEditorModelSerializer):
-    local_id = serializers.CharField(read_only=True)
+    local_id = serializers.CharField()
 
-    name = serializers.CharField(read_only=True)
-    course = serializers.PrimaryKeyRelatedField(read_only=True)
-    timeCost = serializers.IntegerField(read_only=True, source='time_cost')
-    moneyCost = serializers.IntegerField(read_only=True, source='money_cost')
-    energyCost = serializers.IntegerField(read_only=True, source='energy_cost')
-    has_bonuses = serializers.BooleanField(read_only=True, default=False)
-    bonuses = serializers.JSONField(read_only=True)
+    name = serializers.CharField()
+    course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
+    timeCost = serializers.IntegerField(source='time_cost')
+    moneyCost = serializers.IntegerField(source='money_cost')
+    energyCost = serializers.IntegerField(source='energy_cost')
+    has_bonuses = serializers.BooleanField(default=False)
+    bonuses = serializers.JSONField()
     content = LessonContentSerializer(required=False)
-    next = serializers.CharField(read_only=True, allow_blank=True)
+    next = serializers.CharField(allow_blank=True)
 
     @staticmethod
     def reverse_validated_data(lessons):
@@ -823,7 +819,6 @@ class LessonSerializer(LisEditorModelSerializer):
             'x',
             'y',
         ]
-        read_only_fields = list(set(fields).difference(['content']))
 
         list_serializer_class = LessonListSerializer
 
