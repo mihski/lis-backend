@@ -4,7 +4,7 @@ from enum import Enum
 from typing import List, Dict, Iterable
 
 from rest_framework import serializers
-from rest_framework.validators import ValidationError, UniqueTogetherValidator
+from rest_framework.validators import ValidationError
 
 from accounts.models import User
 from lessons.structures.lectures import (
@@ -123,12 +123,6 @@ class UrlBlockSerializer(BaseLisBlockSerializer):
     class Meta:
         fields = ['id', 'title', 'url', 'location']
 
-    def validate_url(self, url: str) -> str:
-        if not url.startswith('http'):
-            raise ValidationError('url should starts with http')
-
-        return url
-
 
 class ReplicaBlockSerializer(TextBlockSerializer):
     block_type = LessonBlockType.replica
@@ -202,10 +196,7 @@ class EmailBlockSerializer(TextBlockSerializer):
 
     class Meta:
         model = EmailBlock
-        fields = ['npc', 'subject', 'from', 'to'] + TextBlockSerializer.Meta.fields
-
-    def get_from(self, obj: EmailBlock):
-        return obj.f_from
+        fields = ['npc', 'subject', 'sender', 'to'] + TextBlockSerializer.Meta.fields
 
 
 class BrowserBlockSerializer(TextBlockSerializer):
@@ -591,7 +582,7 @@ class UnitSerializer(LisEditorModelSerializer):
         # creating content
         content_serializer = self.get_unit_content_serializer(validated_data['type'])
         content = content_serializer(data=validated_data['content'])
-        content.is_valid()
+        content.is_valid(raise_exception=True)
         content = content.save()
 
         # creating unit
@@ -609,9 +600,9 @@ class UnitSerializer(LisEditorModelSerializer):
         content_serializer = self.get_unit_content_serializer(validated_data['type'])
         instance.next = validated_data.get('next', instance.next)
 
-        if instance.type == validated_data['type']:
+        if instance.type == validated_data['type'] and instance.content:
             content_obj = content_serializer.Meta.model.objects.filter(
-                id=validated_data['content']['id']
+                id=instance.content['id']
             ).only().first()
             obj = content_serializer(content_obj, data=validated_data['content'], partial=True)
             obj.is_valid()
@@ -620,7 +611,9 @@ class UnitSerializer(LisEditorModelSerializer):
             validated_data['content'] = obj.data
 
         instance.type = validated_data.get('type', instance.type)
-        instance.content = validated_data['content']
+        instance.content = validated_data.get('content', instance.content)
+        instance.x = validated_data.get('x', instance.x)
+        instance.y = validated_data.get('y', instance.x)
         instance.save()
 
         return instance
@@ -787,6 +780,8 @@ class LessonSerializer(LisEditorModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
+        print('content' in validated_data)
+
         if 'content' in validated_data:
             if not isinstance(validated_data['content']['lesson'], int):
                 validated_data['content']['lesson'] = validated_data['content']['lesson'].id
