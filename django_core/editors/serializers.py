@@ -1,6 +1,5 @@
 import logging
 
-from enum import Enum
 from typing import List, Dict, Iterable
 
 from rest_framework import serializers
@@ -36,52 +35,20 @@ from lessons.structures.tasks import (
     SortBlock,
     ComparisonBlock,
 )
-from lessons.models import Lesson, Unit, LessonBlock, Quest, Course, Branching
+from lessons.models import (
+    Lesson,
+    Unit,
+    LessonBlock,
+    Quest,
+    Course,
+    Branching,
+)
+from lessons.structures import LessonBlockType, BlockType
 from editors.models import Block, EditorSession
+from helpers.mixins import ChildAccessMixin
 
 
 logger = logging.Logger(__file__)
-
-
-class LessonBlockType(Enum):
-    replica = 100
-    replicaNPC = 101
-
-    theory = 202
-    important = 203
-    quote = 204
-    image = 205
-    gallery = 206
-    email = 207
-    browser = 208
-    table = 209
-    a10_doc = 210
-    a12_1_messenger_start = 211
-    a12_2_messenger_end = 212
-    a13_downloading = 213
-    a15_video = 215
-    a16_button = 216
-
-    radios = 301
-    checkboxes = 302
-    selects = 303
-    input = 304
-    number = 305
-    radiosTable = 306
-    imageAnchors = 307
-    sort = 308
-    comparison = 309
-
-    @classmethod
-    def has_value(cls, value):
-        return value in cls._value2member_map_
-
-
-class BlockType(Enum):
-    lesson = 1
-    quest = 2
-    unit = 3
-    branching = 4
 
 
 def _check_missed_fields(data: Iterable[Dict], required_fields: set):
@@ -92,26 +59,12 @@ def _check_missed_fields(data: Iterable[Dict], required_fields: set):
             raise ValidationError(f'{element} missed {missed_fields} fields')
 
 
-class BaseLisBlockSerializer(serializers.ModelSerializer):
+class BaseLisBlockSerializer(serializers.ModelSerializer, ChildAccessMixin):
     """ Requires block_type property for lessons blocks in order to deserialize block object """
     block_type: LessonBlockType = None
 
     class Meta:
         model = None
-
-    @classmethod
-    def get_all_subclasses(cls):
-        subclasses = set()
-        work = [cls]
-
-        while work:
-            parent = work.pop()
-            for child in parent.__subclasses__():
-                if child not in subclasses:
-                    subclasses.add(child)
-                    work.append(child)
-
-        return list(subclasses)
 
 
 class TextBlockSerializer(BaseLisBlockSerializer):
@@ -231,7 +184,7 @@ class MessengerStartBlockSerializer(BaseLisBlockSerializer):
         fields = ['id']
 
 
-class MessengerStartBlockSerializer(BaseLisBlockSerializer):
+class MessengerEndBlockSerializer(BaseLisBlockSerializer):
     block_type = LessonBlockType.a12_2_messenger_end
 
     class Meta:
