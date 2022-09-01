@@ -39,8 +39,6 @@ class TaskCheckingTest(TestCase):
     def create_unit(self, type: LessonBlockType, content):
         local_id = str(uuid4())
 
-        print(local_id)
-
         response = self.admin_client.patch(
             f'/api/editors/lessons/{self.lesson.id}/',
             json={
@@ -61,12 +59,14 @@ class TaskCheckingTest(TestCase):
             },
             format='json'
         )
-        print(Unit.objects.count())
         print(response.json())
 
-        self.assertEqual(response.status_code, 200)
+        blocks = response.json()['content']['blocks']
 
-        return response.json()['content']['blocks'][0]
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(blocks), 1)
+
+        return blocks[0]
 
     def test_checking_radio(self):
         unit_data = self.create_unit(LessonBlockType.radios, self.radio)
