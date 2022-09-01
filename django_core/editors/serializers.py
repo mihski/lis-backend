@@ -177,7 +177,7 @@ class GalleryBlockSerializer(BaseLisBlockSerializer):
 
     class Meta:
         model = GalleryBlock
-        fields = ['location', 'images']
+        fields = ['id', 'location', 'images']
 
     def validate_images(self, images: List[Dict[str, str]]):
         """ Check that images field has specified parameters """
@@ -667,7 +667,6 @@ class LessonContentSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         # если нам передали блоки, то обновляем
         if 'blocks' in validated_data:
-            # TODO: почему то приходят десериализованные данные
             for block in validated_data['blocks']:
                 block['lesson'] = block['lesson'].id
 
@@ -723,7 +722,6 @@ class LessonListSerializer(serializers.ListSerializer):
             ret.append(obj_serializer.save())
 
         lids_to_delete = set(local2instance.keys()) - set(local2data.keys())
-        print(3, lids_to_delete, Lesson.objects.filter(local_id__in=lids_to_delete).count())
         # TODO: как то сохранять или создавать новые версии (ревизии)
         Lesson.objects.filter(local_id__in=lids_to_delete).delete()
 
@@ -780,8 +778,6 @@ class LessonSerializer(LisEditorModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
-        print('content' in validated_data)
-
         if 'content' in validated_data:
             if not isinstance(validated_data['content']['lesson'], int):
                 validated_data['content']['lesson'] = validated_data['content']['lesson'].id
