@@ -15,4 +15,5 @@ class EditorSessionAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+
 admin.site.register(models.EditorSession, EditorSessionAdmin)

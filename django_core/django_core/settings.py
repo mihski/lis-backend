@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'lessons.apps.LessonConfig',
     'resources',
     'editors',
+    'student_tasks',
 ]
 
 MIDDLEWARE = [
@@ -103,7 +104,7 @@ DATABASES = {
         'HOST': 'lis_db',
         'PORT': '5432',
         'TEST': {
-            'NAME': 'c_test_vivek',
+            'NAME': 'd_test_v',
         },
     }
 }

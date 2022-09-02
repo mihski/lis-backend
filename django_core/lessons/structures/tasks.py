@@ -14,6 +14,10 @@ class TaskBlock(models.Model, ChildAccessMixin):
     def check_answer(self, answer):
         pass
 
+    @abstractmethod
+    def answer_details(self, answer):
+        pass
+
     class Meta:
         abstract = True
 

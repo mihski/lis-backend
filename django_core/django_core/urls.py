@@ -36,5 +36,6 @@ urlpatterns = [
     path('api/', include('accounts.urls', namespace='accounts')),
     path('api/sso_auth/', include('sso_app.urls', namespace='sso_app')),
     path('api/editors/', include('editors.urls', namespace='editors')),
+    path('api/tasks/', include('student_tasks.urls', namespace='editors')),
     path('api/swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]

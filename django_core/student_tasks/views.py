@@ -1,4 +1,4 @@
-from rest_framework import viewsets, mixins, permissions, response
+from rest_framework import viewsets, mixins, permissions, validators
 
 from lessons.models import Unit
 from student_tasks.models import StudentTaskAnswer
@@ -6,21 +6,20 @@ from student_tasks.serializers import StudentTaskAnswerSerializer
 
 
 class StudentTaskViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.UpdateModelMixin):
-    queryset = StudentTaskAnswer
-    serializer = StudentTaskAnswerSerializer
+    queryset = StudentTaskAnswer.objects.all()
+    serializer_class = StudentTaskAnswerSerializer
 
     permission_classes = (permissions.IsAuthenticated, )
 
     def get_object(self):
-        instance = StudentTaskAnswer.objects.filter(
-            user=self.request.user,
-            task__id=self.kwargs['pk']
-        ).first()
+        unit = Unit.objects.filter(id=self.kwargs['pk']).first()
 
-        if not instance:
-            instance = StudentTaskAnswer.objects.create(
-                user=self.request.user,
-                task=Unit.objects.filter(id=self.kwargs['pk'])
-            )
+        if not unit:
+            raise validators.ValidationError(f"There is no unit with id {self.kwargs['pk']}")
+
+        instance, created = StudentTaskAnswer.objects.get_or_create(
+            user=self.request.user,
+            task=unit
+        )
 
         return instance

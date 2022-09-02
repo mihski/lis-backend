@@ -217,6 +217,7 @@ class VideoBlockSerializer(UrlBlockSerializer):
 
 
 class TaskBlockSerializer(BaseLisBlockSerializer):
+    description = serializers.CharField(allow_blank=True)
     ifCorrect = serializers.CharField(source='if_correct')
     ifIncorrect = serializers.CharField(source='if_incorrect')
 
@@ -340,7 +341,7 @@ class ImageAnchorsBlockSerializer(TaskBlockSerializer):
 
 
 class SortBlockSerializer(TaskBlockSerializer):
-    block_type = LessonBlockType.radios
+    block_type = LessonBlockType.sort
 
     options = serializers.JSONField()
     correct = serializers.JSONField(write_only=True)
@@ -355,7 +356,7 @@ class SortBlockSerializer(TaskBlockSerializer):
 
 
 class ComparisonBlockSerializer(TaskBlockSerializer):
-    block_type = LessonBlockType.radios
+    block_type = LessonBlockType.comparison
 
     lists = serializers.JSONField()
     correct = serializers.JSONField(write_only=True)
@@ -534,6 +535,7 @@ class UnitSerializer(LisEditorModelSerializer):
     def create(self, validated_data):
         # creating content
         content_serializer = self.get_unit_content_serializer(validated_data['type'])
+        print(content_serializer)
         content = content_serializer(data=validated_data['content'])
         content.is_valid(raise_exception=True)
         content = content.save()

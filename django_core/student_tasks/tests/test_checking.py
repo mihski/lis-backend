@@ -1,17 +1,28 @@
 from uuid import uuid4
-
 from django.test import TestCase, Client
 from rest_framework.test import APIClient
 
 from accounts.models import User
-from lessons.models import Course, Lesson, LessonBlock, Unit
+from lessons.models import Course, Lesson, LessonBlock
 from lessons.structures import LessonBlockType
+from editors.serializers import UnitSerializer
 
 
 class TaskCheckingTest(TestCase):
     def setUp(self) -> None:
+        self.task_default = {
+            'title': 'Title',
+            'description': '',
+            'ifCorrect': 'Супер!',
+            'ifIncorrect': 'Попробуйте снова.'
+        }
         self.radio = {
-            "variants": ['I', 'you', 'he'],
+            "variants": [{
+                "id": 1,
+                "variant": 'I',
+                "ifCorrect": "Верно",
+                "ifIncorrect": "Не верно",
+            }],
             "correct": 1,
         }
         self.course = Course.objects.create()
@@ -37,42 +48,33 @@ class TaskCheckingTest(TestCase):
         self.client.force_authenticate(self.user)
 
     def create_unit(self, type: LessonBlockType, content):
-        local_id = str(uuid4())
+        unit = UnitSerializer(data=dict(
+            local_id=uuid4().hex,
+            lesson=self.lesson.id,
+            type=type.value,
+            next=[],
+            content={**self.task_default, **content},
+        ))
+        unit.is_valid()
 
-        response = self.admin_client.patch(
-            f'/api/editors/lessons/{self.lesson.id}/',
-            json={
-                'content': {
-                    'blocks': [
-                        {
-                            'local_id': local_id,
-                            'lesson': self.lesson.id,
-                            'type': type.value,
-                            'content': content,
-                            'next': [],
-                        }
-                    ],
-                    'entry': local_id,
-                    'locale': {'ru': [], 'en': []},
-                    'markup': {'ru': '', 'en': ''}
-                }
-            },
-            format='json'
-        )
-        print(response.json())
-
-        blocks = response.json()['content']['blocks']
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(blocks), 1)
-
-        return blocks[0]
+        return unit.save()
 
     def test_checking_radio(self):
-        unit_data = self.create_unit(LessonBlockType.radios, self.radio)
+        unit = self.create_unit(LessonBlockType.radios, self.radio)
         response = self.client.patch(
-            f'/api/checking/{unit_data["id"]}',
+            f'/api/tasks/answers/{unit.id}/',
+            {'answer': 1}
+        )
+        result = response.json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(result['is_correct'], True)
+
+        response = self.client.patch(
+            f'/api/tasks/answers/{unit.id}/',
             {'answer': 3}
         )
-        print(response.json())
+        result = response.json()
+
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(result['is_correct'], False)
