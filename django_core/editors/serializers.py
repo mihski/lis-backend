@@ -229,7 +229,7 @@ class RadiosBlockSerializer(TaskBlockSerializer):
     block_type = LessonBlockType.radios
 
     variants = serializers.JSONField()
-    correct = serializers.IntegerField(write_only=True)
+    correct = serializers.CharField(allow_blank=True)
 
     def validate_variants(self, variants: List[Dict[int, str]]) -> List[Dict[int, str]]:
         _check_missed_fields(variants, {'id', 'variant', 'ifCorrect', 'ifIncorrect'})
@@ -245,7 +245,7 @@ class CheckboxesBlockSerializer(TaskBlockSerializer):
     block_type = LessonBlockType.checkboxes
 
     variants = serializers.JSONField()
-    correct = serializers.JSONField(write_only=True)
+    correct = serializers.JSONField()
 
     def validate_variants(self, variants: List[Dict[int, str]]) -> List[Dict[int, str]]:
         _check_missed_fields(variants, {'id', 'variant', 'ifCorrect', 'ifIncorrect'})
@@ -262,7 +262,7 @@ class SelectsBlockSerializer(TaskBlockSerializer):
 
     body = serializers.CharField()
     selects = serializers.JSONField()
-    correct = serializers.JSONField(write_only=True)
+    correct = serializers.JSONField()
 
     def validate_selects(self, selects: Dict[int, List[Dict[str, str]]]):
         if not isinstance(selects, dict):
@@ -281,10 +281,11 @@ class SelectsBlockSerializer(TaskBlockSerializer):
 class InputBlockSerializer(TaskBlockSerializer):
     block_type = LessonBlockType.input
 
-    correct = serializers.JSONField(write_only=True)
+    correct = serializers.JSONField()
 
     def validate_correct(self, correct: Dict[str, List[str]]):
         _check_missed_fields([correct], {'ru', 'en'})
+        return correct
 
     class Meta:
         model = InputBlock
@@ -294,8 +295,8 @@ class InputBlockSerializer(TaskBlockSerializer):
 class NumberBlockSerializer(TaskBlockSerializer):
     block_type = LessonBlockType.number
 
-    tolerance = serializers.IntegerField(write_only=True)
-    correct = serializers.IntegerField(write_only=True)
+    tolerance = serializers.IntegerField()
+    correct = serializers.IntegerField()
 
     class Meta:
         model = NumberBlock
@@ -308,7 +309,7 @@ class RadiosTableBlockSerializer(TaskBlockSerializer):
     columns = serializers.JSONField()
     rows = serializers.JSONField()
     isRadio = serializers.BooleanField(source='is_radio', read_only=True)
-    correct = serializers.JSONField(write_only=True)
+    correct = serializers.JSONField()
 
     def validate_columns(self, columns: List[Dict[str, str]]):
         _check_missed_fields(columns, {'name', 'id'})
@@ -327,7 +328,7 @@ class ImageAnchorsBlockSerializer(TaskBlockSerializer):
     anchors = serializers.JSONField()
     options = serializers.JSONField()
     imgUrl = serializers.CharField(source='img_url')
-    correct = serializers.JSONField(write_only=True)
+    correct = serializers.JSONField()
 
     def validate_anchors(self, anchors: List[Dict[str, str]]):
         _check_missed_fields(anchors, {'name', 'id', 'x', 'y'})
@@ -344,7 +345,7 @@ class SortBlockSerializer(TaskBlockSerializer):
     block_type = LessonBlockType.sort
 
     options = serializers.JSONField()
-    correct = serializers.JSONField(write_only=True)
+    correct = serializers.JSONField()
 
     def validate_options(self, options: List[Dict[int, str]]) -> List[Dict[int, str]]:
         _check_missed_fields(options, {'value', 'id'})
@@ -359,7 +360,7 @@ class ComparisonBlockSerializer(TaskBlockSerializer):
     block_type = LessonBlockType.comparison
 
     lists = serializers.JSONField()
-    correct = serializers.JSONField(write_only=True)
+    correct = serializers.JSONField()
 
     def validate_lists(self, lists: List[List[Dict[str, str]]]):
         for row in lists:
@@ -535,7 +536,6 @@ class UnitSerializer(LisEditorModelSerializer):
     def create(self, validated_data):
         # creating content
         content_serializer = self.get_unit_content_serializer(validated_data['type'])
-        print(content_serializer)
         content = content_serializer(data=validated_data['content'])
         content.is_valid(raise_exception=True)
         content = content.save()

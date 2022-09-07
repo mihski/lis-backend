@@ -26,7 +26,7 @@ class RadiosBlock(TaskBlock):
     type = LessonBlockType.radios
 
     variants = models.JSONField()
-    correct = models.IntegerField()
+    correct = models.CharField(max_length=127)
 
     def check_answer(self, answer):
         return self.correct == answer
@@ -56,7 +56,7 @@ class SelectsBlock(TaskBlock):
 class InputBlock(TaskBlock):
     type = LessonBlockType.input
 
-    correct = models.JSONField()
+    correct = models.JSONField(default={'ru': [], 'en': []})
 
     def check_answer(self, answer):
         return answer == self.correct
