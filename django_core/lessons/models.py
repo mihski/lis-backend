@@ -89,3 +89,33 @@ class Unit(EditorBlockModel):
     type = models.IntegerField()
     content = models.JSONField()
     next = models.JSONField()
+
+
+class NPC(models.Model):
+    uid = models.CharField(max_length=7, unique=True)
+
+    ru_name = models.CharField(max_length=31)
+    en_name = models.CharField(max_length=31)
+
+    gender = models.CharField(max_length=6, choices=GENDERS)
+    age = models.IntegerField()
+    description = models.TextField()
+
+    usual_image = models.ImageField(upload_to='npc_emotions')
+    angry_image = models.ImageField(upload_to='npc_emotions')
+    fair_image = models.ImageField(upload_to='npc_emotions')
+    sad_image = models.ImageField(upload_to='npc_emotions')
+
+    def __str__(self):
+        return f"NPC[{self.uid}] {self.ru_name}"
+
+
+class Location(models.Model):
+    uid = models.CharField(max_length=7, unique=True)
+    name = models.CharField(max_length=31)
+
+    image = models.ImageField(upload_to='locations')
+    image_disabled = models.ImageField(upload_to='locations')
+
+    def __str__(self):
+        return f"Location[{self.uid}] {self.name}"
