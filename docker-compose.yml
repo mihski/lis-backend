@@ -4,8 +4,8 @@ services:
     lis_db:
         image: postgres
         container_name: lis_db
-        ports:
-            - "5432:5432"
+        expose:
+            - 5432
         environment:
             - POSTGRES_USER=maindb
             - POSTGRES_PASSWORD=maindb
