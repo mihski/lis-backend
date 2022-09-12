@@ -135,3 +135,12 @@ class EditorSessionViewSet(
         user_editor_session.save()
 
         return response.Response({"status": "ok"})
+
+    @decorators.action(methods=["POST"], detail=False, url_path='has_session')
+    def has_session(self, request, *args, **kwargs):
+        user_editor_session = self.get_user_session(request)
+
+        if not user_editor_session:
+            return response.Response({"status": "Nope"})
+
+        return response.Response({"status": "Yes"})
