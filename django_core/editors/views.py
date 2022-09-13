@@ -137,11 +137,10 @@ class EditorSessionViewSet(
 
         return response.Response({"status": "ok"})
 
-    @decorators.action(methods=["POST"], detail=False, url_path='has_session')
-    def has_session(self, request, *args, **kwargs):
-        user_editor_session = self.get_user_session(request)
+    @decorators.action(methods=["POST"], detail=False, url_path='my_active_sessions')
+    def my_active_sessions(self, request, *args, **kwargs):
+        user_sessions = EditorSession.objects.filter(user=request.user, is_closed=False)
 
-        if not user_editor_session:
-            raise exceptions.NotFound()
-
-        return response.Response(EditorSessionSerializer(user_editor_session).data)
+        return response.Response(
+            EditorSessionSerializer(user_sessions, many=True).data
+        )
