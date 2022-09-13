@@ -73,6 +73,13 @@ class Profile(models.Model):
 
     gender = models.CharField(max_length=6, choices=GENDER)
 
+    scientific_director = models.ForeignKey('lessons.NPC', on_delete=models.SET_NULL, null=True, blank=True)
+
+    head_form = models.CharField(max_length=15)
+    face_form = models.CharField(max_length=15)
+    hair_form = models.CharField(max_length=15)
+    dress_form = models.CharField(max_length=15)
+
 
 class ScientificDirector(models.Model):
     name = models.CharField(max_length=255)
