@@ -1,4 +1,4 @@
-from rest_framework import mixins, viewsets, authentication, permissions, decorators, response
+from rest_framework import mixins, viewsets, authentication, permissions, decorators, response, exceptions
 from django_filters import rest_framework as filters
 
 from lessons.models import Lesson, Unit, Quest, Course
@@ -96,8 +96,9 @@ class EditorSessionViewSet(
     def get_session_query(self, request):
         user_editor_session_query = EditorSession.objects.filter(course__id=request.data["course"], is_closed=False)
 
-        if "local_id" in request.data:
-            user_editor_session_query = user_editor_session_query.filter(local_id=request.data["local_id"])
+        local_id = request.data.get('local_id', '')
+
+        user_editor_session_query = user_editor_session_query.filter(local_id=local_id)
 
         return user_editor_session_query
 
@@ -141,6 +142,6 @@ class EditorSessionViewSet(
         user_editor_session = self.get_user_session(request)
 
         if not user_editor_session:
-            return response.Response({"status": "Nope"})
+            raise exceptions.NotFound()
 
-        return response.Response({"status": "Yes"})
+        return response.Response(EditorSessionSerializer(user_editor_session).data)
