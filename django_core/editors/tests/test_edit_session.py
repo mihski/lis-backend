@@ -32,10 +32,9 @@ class TestEditorSession(TestCase):
         )
         return response
 
-    def has_session(self, **kwargs):
+    def my_active_sessions(self):
         response = self.client.post(
-            f"/api/editors/sessions/has_session/",
-            kwargs,
+            f"/api/editors/sessions/my_active_sessions/",
             format="json"
         )
         return response
@@ -114,15 +113,17 @@ class TestEditorSession(TestCase):
 
     def test_check_filter_course(self):
         self.client.login(username=self.super_user.username, password="password")
+
+        response = self.my_active_sessions()
+        self.assertEqual(len(response.json()['sessions']), 0)
+
         self.start_session(course=self.course.id)
         self.start_session(course=self.course.id, local_id=self.quest.local_id)
 
-        response = self.has_session(course=self.course.id, local_id='')
+        response = self.my_active_sessions()
         self.assertEqual(response.status_code, 200)
-
-        response = self.has_session(course=self.course.id, local_id=self.quest.local_id)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()['sessions']), 2)
 
         self.end_session(course=self.course.id, local_id='')
-        response = self.has_session(course=self.course.id, local_id='')
-        self.assertEqual(response.status_code, 404)
+        response = self.my_active_sessions()
+        self.assertEqual(len(response.json()['sessions']), 1)

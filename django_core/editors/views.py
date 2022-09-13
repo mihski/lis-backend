@@ -141,6 +141,6 @@ class EditorSessionViewSet(
     def my_active_sessions(self, request, *args, **kwargs):
         user_sessions = EditorSession.objects.filter(user=request.user, is_closed=False)
 
-        return response.Response(
-            EditorSessionSerializer(user_sessions, many=True).data
-        )
+        return response.Response({
+            'sessions': EditorSessionSerializer(user_sessions, many=True).data
+        })
