@@ -154,6 +154,7 @@ class TestLessonCreating(TestCase):
 
     def create_replica_unit(self, lesson_id):
         replica_unit = _create_unit(
+            self.lesson.id,
             self.replica_block,
             LessonBlockType.replica,
         )

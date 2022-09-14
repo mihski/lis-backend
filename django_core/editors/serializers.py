@@ -4,6 +4,7 @@ from typing import List, Dict, Iterable
 
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
+from rest_framework.exceptions import PermissionDenied
 
 from accounts.models import User
 from lessons.structures.lectures import (

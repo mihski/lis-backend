@@ -48,6 +48,19 @@ class QuestViewSet(
     queryset = Quest.objects.all()
     serializer_class = QuestSerializer
 
+    def update(self, request, *args, **kwargs):
+        course_id = request.data['course']
+
+        if not EditorSession.objects.filter(
+            user=request.user,
+            course__id=course_id,
+            local_id='',
+            is_closed=False
+        ).exists():
+            raise exceptions.PermissionDenied()
+
+        return super().update(request, *args, **kwargs)
+
 
 class LessonEditorViewSet(
     mixins.RetrieveModelMixin,
@@ -63,6 +76,19 @@ class LessonEditorViewSet(
 
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
+
+    def update(self, request, *args, **kwargs):
+        lesson = self.get_object()
+
+        if not EditorSession.objects.filter(
+            user=request.user,
+            course__id=lesson.course.id,
+            local_id=lesson.local_id,
+            is_closed=False
+        ).exists():
+            raise exceptions.PermissionDenied()
+
+        return super().update(request, *args, **kwargs)
 
 
 class UnitEditorViewSet(
