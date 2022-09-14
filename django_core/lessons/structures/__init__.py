@@ -19,6 +19,7 @@ class LessonBlockType(Enum):
     a13_downloading = 213
     a15_video = 215
     a16_button = 216
+    a17_days = 217
 
     radios = 301
     checkboxes = 302

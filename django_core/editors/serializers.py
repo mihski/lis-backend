@@ -22,7 +22,8 @@ from lessons.structures.lectures import (
     MessengerStartBlock,
     MessengerEndBlock,
     DownloadingBlock,
-    ButtonBlock
+    ButtonBlock,
+    DayCounterBlock
 )
 from lessons.structures.tasks import (
     RadiosBlock,
@@ -214,6 +215,14 @@ class VideoBlockSerializer(UrlBlockSerializer):
     class Meta:
         model = VideoBlock
         fields = UrlBlockSerializer.Meta.fields
+
+
+class DayCounterBlockSerializer(BaseLisBlockSerializer):
+    block_type = LessonBlockType.a17_days
+
+    class Meta:
+        model = DayCounterBlock
+        fields = ['id', 'location', 'value']
 
 
 class TaskBlockSerializer(BaseLisBlockSerializer):

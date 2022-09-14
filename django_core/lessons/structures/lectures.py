@@ -93,3 +93,8 @@ class DownloadingBlock(LessonBlock):
 class ButtonBlock(LessonBlock):
     """ A16 """
     value = models.CharField(max_length=255)
+
+
+class DayCounterBlock(LessonBlock):
+    location = models.IntegerField()
+    value = models.IntegerField()
