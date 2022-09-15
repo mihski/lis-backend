@@ -25,6 +25,8 @@ class Course(models.Model):
     entry = models.CharField(default=None, max_length=120, blank=True, null=True)
     locale = models.JSONField(default=dict)
 
+    is_editable = models.BooleanField(default=True)
+
     def __str__(self):
         return self.name
 
