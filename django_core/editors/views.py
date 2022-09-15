@@ -31,6 +31,22 @@ class CourseViewSet(
         course = Course.objects.get(pk=pk)
         return response.Response(course.locale)
 
+    def update(self, request, *args, **kwargs):
+        course = self.get_object()
+
+        if not course.is_editable:
+            raise exceptions.NotAcceptable("Курс нельзя редактировать")
+
+        if not EditorSession.objects.filter(
+            user=request.user,
+            course__id=course.id,
+            local_id='',
+            is_closed=False
+        ).exists():
+            raise exceptions.PermissionDenied()
+
+        return super().update(request, *args, **kwargs)
+
 
 class QuestViewSet(
     mixins.RetrieveModelMixin,
@@ -47,19 +63,6 @@ class QuestViewSet(
 
     queryset = Quest.objects.all()
     serializer_class = QuestSerializer
-
-    def update(self, request, *args, **kwargs):
-        course_id = request.data['course']
-
-        if not EditorSession.objects.filter(
-            user=request.user,
-            course__id=course_id,
-            local_id='',
-            is_closed=False
-        ).exists():
-            raise exceptions.PermissionDenied()
-
-        return super().update(request, *args, **kwargs)
 
 
 class LessonEditorViewSet(
