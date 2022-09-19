@@ -989,7 +989,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ['id', 'lessons', 'quests', 'branchings', 'name', 'description', 'entry', 'locale']
+        fields = ['id', 'lessons', 'quests', 'branchings', 'name', 'description', 'entry', 'locale', 'is_editable']
 
     def to_representation(self, instance):
         """ Filter lessons and branchings inside quests """
