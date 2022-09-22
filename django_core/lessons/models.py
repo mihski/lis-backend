@@ -94,14 +94,25 @@ class Unit(EditorBlockModel):
 
 
 class NPC(models.Model):
+    class NPCGenders(models.TextChoices):
+        MALE = "male"
+        FEMALE = "female"
+
     uid = models.CharField(max_length=7, unique=True)
 
     ru_name = models.CharField(max_length=31)
     en_name = models.CharField(max_length=31)
 
-    gender = models.CharField(max_length=6, choices=GENDERS)
+    gender = models.CharField(max_length=6, choices=NPCGenders.choices, default=NPCGenders.MALE)
     age = models.IntegerField()
-    description = models.TextField()
+
+    ru_description = models.TextField()
+    en_description = models.TextField()
+
+    ru_tags = models.CharField(max_length=255, blank=True)
+    en_tags = models.CharField(max_length=255, blank=True)
+
+    is_scientific_director = models.BooleanField(default=False)
 
     usual_image = models.ImageField(upload_to='npc_emotions')
     angry_image = models.ImageField(upload_to='npc_emotions')
