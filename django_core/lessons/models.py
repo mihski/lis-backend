@@ -132,4 +132,4 @@ class Location(models.Model):
     image_disabled = models.ImageField(upload_to='locations')
 
     def __str__(self):
-        return f"Location[{self.uid}] {self.name}"
+        return f"Location[{self.uid}] {self.ru_name}"
