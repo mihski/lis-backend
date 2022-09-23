@@ -106,8 +106,8 @@ class NPC(models.Model):
     gender = models.CharField(max_length=6, choices=NPCGenders.choices, default=NPCGenders.MALE)
     age = models.IntegerField()
 
-    ru_description = models.TextField()
-    en_description = models.TextField()
+    ru_description = models.TextField(blank=True)
+    en_description = models.TextField(blank=True)
 
     ru_tags = models.CharField(max_length=255, blank=True)
     en_tags = models.CharField(max_length=255, blank=True)
@@ -125,7 +125,8 @@ class NPC(models.Model):
 
 class Location(models.Model):
     uid = models.CharField(max_length=7, unique=True)
-    name = models.CharField(max_length=31)
+    ru_name = models.CharField(max_length=31)
+    en_name = models.CharField(max_length=31)
 
     image = models.ImageField(upload_to='locations')
     image_disabled = models.ImageField(upload_to='locations')
