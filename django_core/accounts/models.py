@@ -65,20 +65,20 @@ class Profile(models.Model):
         ('male', 'Мужской'),
         ('female', 'Женский'),
     )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     
-    first_name = models.CharField(max_length=63)
-    last_name = models.CharField(max_length=63)
-    middle_name = models.CharField(max_length=63)
+    first_name = models.CharField(max_length=63, blank=True)
+    last_name = models.CharField(max_length=63, blank=True)
+    middle_name = models.CharField(max_length=63, blank=True)
 
-    gender = models.CharField(max_length=6, choices=GENDER)
+    gender = models.CharField(max_length=6, choices=GENDER, blank=True)
 
     scientific_director = models.ForeignKey('lessons.NPC', on_delete=models.SET_NULL, null=True, blank=True)
 
-    head_form = models.CharField(max_length=15)
-    face_form = models.CharField(max_length=15)
-    hair_form = models.CharField(max_length=15)
-    dress_form = models.CharField(max_length=15)
+    head_form = models.CharField(max_length=15, blank=True)
+    face_form = models.CharField(max_length=15, blank=True)
+    hair_form = models.CharField(max_length=15, blank=True)
+    dress_form = models.CharField(max_length=15, blank=True)
 
 
 class ScientificDirector(models.Model):

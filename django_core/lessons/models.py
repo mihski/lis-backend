@@ -104,7 +104,7 @@ class NPC(models.Model):
     en_name = models.CharField(max_length=31)
 
     gender = models.CharField(max_length=6, choices=NPCGenders.choices, default=NPCGenders.MALE)
-    age = models.IntegerField()
+    age = models.IntegerField(default=0)
 
     ru_description = models.TextField(blank=True)
     en_description = models.TextField(blank=True)
