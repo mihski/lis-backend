@@ -55,6 +55,9 @@ logger = logging.Logger(__file__)
 
 def _check_missed_fields(data: Iterable[Dict], required_fields: set):
     for element in data:
+        if not isinstance(element, dict):
+            continue
+
         missed_fields = required_fields.difference(set(element.keys()))
 
         if missed_fields:
@@ -243,7 +246,6 @@ class RadiosBlockSerializer(TaskBlockSerializer):
 
     def validate_variants(self, variants: List[Dict[int, str]]) -> List[Dict[int, str]]:
         _check_missed_fields(variants, {'id', 'variant', 'ifCorrect', 'ifIncorrect'})
-
         return variants
 
     class Meta:
@@ -323,9 +325,15 @@ class RadiosTableBlockSerializer(TaskBlockSerializer):
 
     def validate_columns(self, columns: List[Dict[str, str]]):
         _check_missed_fields(columns, {'name', 'id'})
+        return columns
 
     def validate_rows(self, rows: Dict[str, str]):
         _check_missed_fields([rows], {'name', 'id', 'ifCorrect', 'ifIncorrect'})
+        return rows
+
+    def validate(self, data):
+        data['is_radio'] = True
+        return data
 
     class Meta:
         model = RadiosTableBlock
@@ -342,9 +350,11 @@ class ImageAnchorsBlockSerializer(TaskBlockSerializer):
 
     def validate_anchors(self, anchors: List[Dict[str, str]]):
         _check_missed_fields(anchors, {'name', 'id', 'x', 'y'})
+        return anchors
 
     def validate_options(self, options: List[Dict[str, str]]):
         _check_missed_fields(options, {'value', 'id'})
+        return options
 
     class Meta:
         model = ImageAnchorsBlock
