@@ -307,9 +307,6 @@ class InputBlockSerializer(TaskBlockSerializer):
 class NumberBlockSerializer(TaskBlockSerializer):
     block_type = LessonBlockType.number
 
-    tolerance = serializers.IntegerField()
-    correct = serializers.IntegerField()
-
     class Meta:
         model = NumberBlock
         fields = ['tolerance', 'correct'] + TaskBlockSerializer.Meta.fields

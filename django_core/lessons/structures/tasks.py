@@ -65,8 +65,8 @@ class InputBlock(TaskBlock):
 class NumberBlock(TaskBlock):
     type = LessonBlockType.number
 
-    tolerance = models.IntegerField()
-    correct = models.IntegerField()
+    tolerance = models.FloatField()
+    correct = models.FloatField()
 
     def check_answer(self, answer):
         dx = self.correct * self.tolerance / 100
