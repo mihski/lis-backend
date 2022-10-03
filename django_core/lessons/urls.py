@@ -11,6 +11,6 @@ router.register("npc", NPCViewSet)
 router.register("locations", LocationViewSet)
 
 urlpatterns = [
-    path("lessons/<str:lesson_id>", LessonDetailViewSet.as_view({'get': 'retrieve'})),
+    path("<str:lesson_id>/", LessonDetailViewSet.as_view({'get': 'retrieve'})),
 ]
 urlpatterns += router.urls

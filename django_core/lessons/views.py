@@ -1,12 +1,14 @@
+from typing import List
+
 from rest_framework import viewsets, status
 from django.db.models import QuerySet
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from accounts.models import Profile
-from accounts.serializers import ProfileSerializer
+from accounts.serializers import ProfileSerializer, ProfileSerializerWithoutLookForms
 from lessons.models import NPC, Location, Lesson, Unit
-from lessons.serializers import NPCSerializer, LocationSerializer, LessonSerializer
+from lessons.serializers import NPCSerializer, LocationSerializer, LessonSerializer, UnitSerializer
 from helpers.structures import LessonUnitsTree
 
 
@@ -31,10 +33,24 @@ class LessonDetailViewSet(
         return lesson
 
     def retrieve(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
-        lesson = self.get_queryset()
+        lesson_queryset = self.get_queryset()
+        lesson_object: Lesson = lesson_queryset.first()
         from_unit_id = request.GET.get("from_unit_id", None)
 
-        player = ProfileSerializer(Profile.objects.get(user=request.user))
-        units = LessonUnitsTree(lesson, from_unit_id).get_queryset()  # List[Unit]
-        serializer = LessonSerializer(lesson)  # <- lesson info, player info, units info
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        player = ProfileSerializerWithoutLookForms(Profile.objects.get(user=request.user))
+        unit_tree = LessonUnitsTree(lesson_queryset, from_unit_id)
+        units = unit_tree.get_queryset()
+        units = UnitSerializer(units, many=True)
+
+        location_id, npc_id = unit_tree.get_additional_data()
+        lesson = LessonSerializer(lesson_object)  # <- lesson info, player info, units info
+        lesson_data = lesson.data
+        lesson_data.update({
+            "location": location_id,
+            "npc": npc_id,
+            # "locales": lesson_object.content.locale
+        })
+
+        data = {'lesson': lesson_data, "player": player.data, "chunk": units.data}
+
+        return Response(data, status=status.HTTP_200_OK)
