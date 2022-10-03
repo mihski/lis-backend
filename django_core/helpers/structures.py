@@ -88,7 +88,7 @@ class LessonUnitsTree:
         """ Получение отсортированных юнитов от корня """
         current_unit = self.first_unit
         queryset = [current_unit]
-        print(current_unit)
+
         while next_units := self.__get_next_unit(current_unit):
             # проверяем текущий unit на наличие доп информации
             self.__fill_additional_data(current_unit)

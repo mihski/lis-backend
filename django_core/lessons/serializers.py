@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-from accounts.serializers import ProfileSerializer
 from lessons.models import NPC, Location, Lesson, Unit
 
 

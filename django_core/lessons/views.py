@@ -1,13 +1,11 @@
-from typing import List
-
 from rest_framework import viewsets, status
 from django.db.models import QuerySet
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from accounts.models import Profile
-from accounts.serializers import ProfileSerializer, ProfileSerializerWithoutLookForms
-from lessons.models import NPC, Location, Lesson, Unit
+from accounts.serializers import ProfileSerializerWithoutLookForms
+from lessons.models import NPC, Location, Lesson
 from lessons.serializers import NPCSerializer, LocationSerializer, LessonSerializer, UnitSerializer
 from helpers.structures import LessonUnitsTree
 

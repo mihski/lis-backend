@@ -9,6 +9,8 @@ class UnitAdmin(admin.ModelAdmin):
         'id', 'local_id', 'type'
     )
     search_fields = ('local_id', 'id')
+
+
 admin.site.register(models.Course)
 admin.site.register(models.Lesson)
 admin.site.register(models.LessonBlock)
