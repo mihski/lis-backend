@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, authentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -25,7 +25,7 @@ class LessonDetailViewSet(
 ):
     serializer_class = LessonDetailSerializer
     queryset = Lesson.objects.select_related('course')
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'local_id'
 
@@ -34,7 +34,6 @@ class LessonDetailViewSet(
         from_unit_id = request.GET.get('from_unit_id', None)
 
         unit_tree = LessonUnitsTree(lesson)
-        print(request.user)
         profile, _ = Profile.objects.get_or_create(user=request.user)
         player = ProfileSerializerWithoutLookForms(profile)
 
