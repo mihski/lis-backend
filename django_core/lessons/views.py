@@ -28,25 +28,28 @@ class LessonDetailViewSet(
 
     def retrieve(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
         lesson = self.get_object()
-        from_unit_id = request.GET.get("from_unit_id", None)
-
-        player = ProfileSerializerWithoutLookForms(Profile.objects.get(user=request.user))
+        from_unit_id = request.GET.get('from_unit_id', None)
 
         unit_tree = LessonUnitsTree(lesson)
+        player = ProfileSerializerWithoutLookForms(Profile.objects.get(user=request.user))
 
-        lesson_data = LessonSerializer(lesson).data
-        lesson_name_field = lesson.local_id + '_name'
-        locales = lesson.content.locale
-        locales['ru'][lesson_name_field] = lesson.course.locale['ru'][lesson_name_field]
-        locales['en'][lesson_name_field] = lesson.course.locale['en'][lesson_name_field]
+        first_location_id, first_npc_id, unit_chunk = unit_tree.make_lessons_queue(from_unit_id)
 
-        lesson_data.update({
-            "location": unit_tree.location_id or 1,
-            "npc": unit_tree.npc_id or -1,
-            "locales": locales,
-            "tasks": unit_tree.task_count
-        })
+        lesson_data = {}
+        if not from_unit_id:
+            lesson_data = LessonSerializer(lesson).data
+            lesson_name_field = lesson.name
+            locales = lesson.content.locale
+            locales['ru'][lesson_name_field] = lesson.course.locale['ru'][lesson_name_field]
+            locales['en'][lesson_name_field] = lesson.course.locale['en'][lesson_name_field]
 
-        data = {**lesson_data, "player": player.data, "chunk": unit_tree.make_lessons_queue(from_unit_id)}
+            lesson_data.update({
+                'location': first_location_id or 1,
+                'npc': first_npc_id or -1,
+                'locales': locales,
+                'tasks': unit_tree.task_count
+            })
+
+        data = {**lesson_data, 'player': player.data, 'chunk': unit_chunk}
 
         return Response(data)

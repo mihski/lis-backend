@@ -30,9 +30,6 @@ class LessonUnitsTree:
         self.units = list(Unit.objects.filter(lesson=self.lesson))
         self.m_units = {unit.local_id: unit for unit in self.units}
 
-        self.npc_id = None
-        self.location_id = None
-
         self.block_units_type = [
             LessonBlockType.replica.value,
             LessonBlockType.email.value,
@@ -68,23 +65,34 @@ class LessonUnitsTree:
             i += 1
 
     @lru_cache(maxsize=1)
-    def make_lessons_queue(self, from_unit_id: str = None):
+    def make_lessons_queue(self, from_unit_id: str = None) -> tuple[int, int, list[dict]]:
+        first_location_id = first_npc_id = None
         node = self.tree_elements[from_unit_id or self.lesson.content.entry]
         queue = []
 
-        while not queue or (node and node.type not in self.block_units_type):
+        while not queue or node:
             queue.append(UnitSerializer(node.unit).data)
+
+            if len(queue) > 1 and node.type in self.block_units_type:
+                break
+
+            first_location_id = first_location_id or queue[-1].get('content', {}).get('location')
+            first_npc_id = first_npc_id or queue[-1].get('content', {}).get('npc')
 
             if len(node.children) >= 2:
                 replica_units = [child.unit for child in node.children]
                 queue.append({'type': 218, 'variants': UnitSerializer(replica_units, many=True).data})
                 break
 
-            node = node.children[0]
+            node = node.children[0] if node.children else None
 
-        return queue
+        if from_unit_id:
+            # except pointed
+            queue = queue[1:]
 
-    @property
+        return first_location_id, first_npc_id, queue
+
+    @cached_property
     def task_count(self):
         stack = deque([self.tree])
         visited = defaultdict(bool)

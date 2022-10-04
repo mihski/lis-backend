@@ -19,7 +19,7 @@ class UnitSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Unit
-        fields = ["id", "local_id", "type", "next", "content"]
+        fields = ["id", "local_id", "type", "content"]
 
 
 class LessonSerializer(serializers.ModelSerializer):
