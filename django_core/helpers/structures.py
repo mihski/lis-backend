@@ -12,7 +12,13 @@ class LessonUnitsNode:
         self.local_id = unit.local_id
         self.type = unit.type
         self.is_task = str(self.type).startswith("3")
-        self.children = children or []
+        self.children = set(children or [])
+
+    def __eq__(self, other):
+        return self.local_id == other.local_id
+
+    def __hash__(self):
+        return hash(self.local_id)
 
 
 class LessonUnitsTree:
@@ -49,7 +55,6 @@ class LessonUnitsTree:
 
         while i < len(queue):
             node_local_id = queue[i]
-            print(node_local_id, self.tree_elements)
             node = self.tree_elements[node_local_id]
             visited[node_local_id] = True
 
@@ -62,7 +67,7 @@ class LessonUnitsTree:
 
                 child = self.tree_elements[child_local_id]
 
-                node.children.append(child)
+                node.children.add(child)
                 queue.append(child_local_id)
 
             i += 1
@@ -95,7 +100,7 @@ class LessonUnitsTree:
                 queue.append(self._generate_a18(replica_units))
                 break
 
-            node = node.children[0] if node.children else None
+            node = list(node.children)[0] if node.children else None
 
         if from_unit_id:
             # except pointed
