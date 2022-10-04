@@ -22,7 +22,6 @@ class UnitSerializer(serializers.ModelSerializer):
         fields = ["id", "local_id", "type", "next", "content"]
 
 
-
 class LessonSerializer(serializers.ModelSerializer):
     # TODO: переделать
     lesson_number = serializers.IntegerField(default=0)

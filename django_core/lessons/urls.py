@@ -7,10 +7,8 @@ from lessons.views import NPCViewSet, LocationViewSet, LessonDetailViewSet
 app_name = "lessons"
 
 router = routers.SimpleRouter()
+router.register("", LessonDetailViewSet)
 router.register("npc", NPCViewSet)
 router.register("locations", LocationViewSet)
 
-urlpatterns = [
-    path("<str:lesson_id>/", LessonDetailViewSet.as_view({'get': 'retrieve'})),
-]
-urlpatterns += router.urls
+urlpatterns = router.urls

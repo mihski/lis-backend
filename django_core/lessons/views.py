@@ -1,12 +1,11 @@
-from rest_framework import viewsets, status
-from django.db.models import QuerySet
+from rest_framework import viewsets
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from accounts.models import Profile
 from accounts.serializers import ProfileSerializerWithoutLookForms
 from lessons.models import NPC, Location, Lesson
-from lessons.serializers import NPCSerializer, LocationSerializer, LessonSerializer, UnitSerializer
+from lessons.serializers import NPCSerializer, LocationSerializer, LessonSerializer
 from helpers.structures import LessonUnitsTree
 
 
@@ -24,31 +23,29 @@ class LessonDetailViewSet(
     viewsets.ReadOnlyModelViewSet
 ):
     serializer_class = LessonSerializer
-
-    def get_queryset(self) -> QuerySet[Lesson]:
-        qs: QuerySet[Lesson] = Lesson.objects.all()
-        lesson = qs.filter(local_id=self.kwargs["lesson_id"])
-        return lesson
+    queryset = Lesson.objects.select_related('course')
+    lookup_field = 'local_id'
 
     def retrieve(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
-        lesson_queryset = self.get_queryset()
-        lesson_object: Lesson = lesson_queryset.first()
+        lesson = self.get_object()
         from_unit_id = request.GET.get("from_unit_id", None)
 
         player = ProfileSerializerWithoutLookForms(Profile.objects.get(user=request.user))
-        unit_tree = LessonUnitsTree(lesson_queryset, from_unit_id)
-        units = unit_tree.get_queryset()
-        units = UnitSerializer(units, many=True)
+        unit_tree = LessonUnitsTree(lesson, from_unit_id)
 
-        location_id, npc_id = unit_tree.get_additional_data()
-        lesson = LessonSerializer(lesson_object)  # <- lesson info, player info, units info
-        lesson_data = lesson.data
+        lesson_data = LessonSerializer(lesson).data
+
+        lesson_name_field = lesson.local_id + '_name'
+        locales = lesson.content.locale
+        locales['ru'][lesson_name_field] = lesson.course.locale['ru'][lesson_name_field]
+        locales['en'][lesson_name_field] = lesson.course.locale['en'][lesson_name_field]
+
         lesson_data.update({
-            "location": location_id,
-            "npc": npc_id,
-            # "locales": lesson_object.content.locale
+            "location": unit_tree.location_id,
+            "npc": unit_tree.npc_id,
+            "locales": locales
         })
 
-        data = {'lesson': lesson_data, "player": player.data, "chunk": units.data}
+        data = {**lesson_data, "player": player.data, "chunk": unit_tree.data}
 
-        return Response(data, status=status.HTTP_200_OK)
+        return Response(data)
