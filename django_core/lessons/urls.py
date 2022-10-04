@@ -7,7 +7,7 @@ from lessons.views import NPCViewSet, LocationViewSet, LessonDetailViewSet
 app_name = "lessons"
 
 router = routers.SimpleRouter()
-router.register("", LessonDetailViewSet)
+router.register("lessons", LessonDetailViewSet)
 router.register("npc", NPCViewSet)
 router.register("locations", LocationViewSet)
 
