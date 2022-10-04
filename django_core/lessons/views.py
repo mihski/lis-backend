@@ -24,8 +24,6 @@ class LessonDetailViewSet(
 ):
     serializer_class = LessonDetailSerializer
     queryset = Lesson.objects.select_related('course')
-    authentication_classes = [authentication.TokenAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'local_id'
 
     def retrieve(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
