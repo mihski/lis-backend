@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from accounts.models import Profile
 from accounts.serializers import ProfileSerializerWithoutLookForms
 from lessons.models import NPC, Location, Lesson
-from lessons.serializers import NPCSerializer, LocationDetailSerializer, LessonSerializer
+from lessons.serializers import NPCSerializer, LocationDetailSerializer, LessonDetailSerializer
 from helpers.structures import LessonUnitsTree
 
 
@@ -22,7 +22,7 @@ class LocationViewSet(viewsets.ReadOnlyModelViewSet):
 class LessonDetailViewSet(
     viewsets.ReadOnlyModelViewSet
 ):
-    serializer_class = LessonSerializer
+    serializer_class = LessonDetailSerializer
     queryset = Lesson.objects.select_related('course')
     lookup_field = 'local_id'
 
@@ -37,7 +37,7 @@ class LessonDetailViewSet(
 
         lesson_data = {}
         if not from_unit_id:
-            lesson_data = LessonSerializer(lesson).data
+            lesson_data = LessonDetailSerializer(lesson).data
             lesson_name_field = lesson.name
             locales = lesson.content.locale
             locales['ru'][lesson_name_field] = lesson.course.locale['ru'][lesson_name_field]
