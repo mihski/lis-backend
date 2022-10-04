@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, authentication
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -24,6 +24,7 @@ class LessonDetailViewSet(
 ):
     serializer_class = LessonDetailSerializer
     queryset = Lesson.objects.select_related('course')
+    authentication_classes = [authentication.TokenAuthentication]
     lookup_field = 'local_id'
 
     def retrieve(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
