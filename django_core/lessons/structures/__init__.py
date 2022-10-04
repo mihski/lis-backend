@@ -2,9 +2,11 @@ from enum import Enum
 
 
 class LessonBlockType(Enum):
+    # Блоки реплики
     replica = 100
     replicaNPC = 101
 
+    # Обычные блоки
     theory = 202
     important = 203
     quote = 204
@@ -21,6 +23,7 @@ class LessonBlockType(Enum):
     a16_button = 216
     a17_days = 217
 
+    # блоки практики T1-T9
     radios = 301
     checkboxes = 302
     selects = 303

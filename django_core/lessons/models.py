@@ -9,8 +9,8 @@ GENDERS = (
 
 
 class EditorBlockModel(models.Model):
-    block_id = models.IntegerField(default=None, null=True, blank=True)
-    local_id = models.CharField(max_length=255, default='', blank=True)
+    block_id = models.IntegerField(default=None, null=True, blank=True)  # deprecated
+    local_id = models.CharField(max_length=255, default='', blank=True)  # n_1660813403095
     x = models.FloatField(default=0)
     y = models.FloatField(default=0)
 
@@ -58,7 +58,7 @@ class Laboratory(models.Model):
 class LessonBlock(models.Model):
     locale = models.JSONField(default=dict)
     markup = models.JSONField(default={'ru': [], 'en': []})
-    entry = models.CharField(default=None, max_length=120, blank=True, null=True)
+    entry = models.CharField(default=None, max_length=120, blank=True, null=True)  # if root -> local_id 1st unit
 
 
 class Lesson(EditorBlockModel):
@@ -90,7 +90,7 @@ class Unit(EditorBlockModel):
     lesson_block = models.ForeignKey(LessonBlock, on_delete=models.SET_NULL, null=True, related_name='blocks')
     type = models.IntegerField()
     content = models.JSONField()
-    next = models.JSONField()
+    next = models.JSONField()  # ["n_12313", "n_asdzcx"]
 
 
 class NPC(models.Model):
