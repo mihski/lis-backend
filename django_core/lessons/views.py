@@ -31,21 +31,22 @@ class LessonDetailViewSet(
         from_unit_id = request.GET.get("from_unit_id", None)
 
         player = ProfileSerializerWithoutLookForms(Profile.objects.get(user=request.user))
-        unit_tree = LessonUnitsTree(lesson, from_unit_id)
+
+        unit_tree = LessonUnitsTree(lesson)
 
         lesson_data = LessonSerializer(lesson).data
-
         lesson_name_field = lesson.local_id + '_name'
         locales = lesson.content.locale
         locales['ru'][lesson_name_field] = lesson.course.locale['ru'][lesson_name_field]
         locales['en'][lesson_name_field] = lesson.course.locale['en'][lesson_name_field]
 
         lesson_data.update({
-            "location": unit_tree.location_id,
-            "npc": unit_tree.npc_id,
-            "locales": locales
+            "location": unit_tree.location_id or 1,
+            "npc": unit_tree.npc_id or -1,
+            "locales": locales,
+            "tasks": unit_tree.task_count
         })
 
-        data = {**lesson_data, "player": player.data, "chunk": unit_tree.data}
+        data = {**lesson_data, "player": player.data, "chunk": unit_tree.make_lessons_queue(from_unit_id)}
 
         return Response(data)

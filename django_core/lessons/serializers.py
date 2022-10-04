@@ -24,10 +24,11 @@ class UnitSerializer(serializers.ModelSerializer):
 
 class LessonSerializer(serializers.ModelSerializer):
     # TODO: переделать
+    lesson_name = serializers.CharField(source="name")
     lesson_number = serializers.IntegerField(default=0)
     quest_number = serializers.IntegerField(default=0)
     tasks = serializers.IntegerField(default=0)
 
     class Meta:
         model = Lesson
-        fields = ["name", "lesson_number", "quest_number", "tasks"]
+        fields = ["lesson_name", "lesson_number", "quest_number", "tasks"]
