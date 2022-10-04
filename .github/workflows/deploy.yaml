@@ -26,4 +26,4 @@ jobs:
                 rsync -e "ssh -i $HOME/.ssh/key -o StrictHostKeyChecking=no" --archive --compress --delete --exclude 'django_core/static' --exclude 'django_core/media' . ${{ secrets.VPS_USER_NAME }}@${{ secrets.VPS_SERVER_NAME }}:~/lis-back/
             - name: Building on server
               run: |
-                ssh -i $HOME/.ssh/key ${{ secrets.VPS_USER_NAME }}@${{ secrets.VPS_SERVER_NAME }} 'cd lis-back && docker-compose up -d --build backend'
+                ssh -i $HOME/.ssh/key ${{ secrets.VPS_USER_NAME }}@${{ secrets.VPS_SERVER_NAME }} 'cd lis-back && docker-compose up -d --build backend nginx'
