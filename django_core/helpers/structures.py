@@ -42,7 +42,6 @@ class LessonUnitsTree:
 
         self.tree: LessonUnitsNode = LessonUnitsNode(self.m_units[self.lesson.content.entry])
         self.tree_elements: dict[str, LessonUnitsNode] = {}
-        self.queue = []
 
         self._build_tree()
 
@@ -111,7 +110,3 @@ class LessonUnitsTree:
                 current_task_count -= stack.pop().is_task
 
         return max_task_count
-
-    @property
-    def data(self):
-        return self.queue
