@@ -16,10 +16,11 @@ class LocationDetailSerializer(serializers.ModelSerializer):
 
 
 class UnitDetailSerializer(serializers.ModelSerializer):
+    local_id = serializers.CharField(source="local_id")
 
     class Meta:
         model = Unit
-        fields = ["id", "local_id", "type", "content"]
+        fields = ["id", "type", "content"]
 
 
 class LessonDetailSerializer(serializers.ModelSerializer):
