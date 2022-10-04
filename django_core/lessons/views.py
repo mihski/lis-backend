@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from accounts.models import Profile
 from accounts.serializers import ProfileSerializerWithoutLookForms
 from lessons.models import NPC, Location, Lesson
-from lessons.serializers import NPCSerializer, LocationSerializer, LessonSerializer
+from lessons.serializers import NPCSerializer, LocationDetailSerializer, LessonSerializer
 from helpers.structures import LessonUnitsTree
 
 
@@ -16,7 +16,7 @@ class NPCViewSet(viewsets.ReadOnlyModelViewSet):
 
 class LocationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Location.objects.all()
-    serializer_class = LocationSerializer
+    serializer_class = LocationDetailSerializer
 
 
 class LessonDetailViewSet(

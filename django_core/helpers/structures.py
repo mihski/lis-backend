@@ -1,7 +1,7 @@
 from collections import defaultdict, deque
 from functools import cached_property, lru_cache
 
-from lessons.serializers import UnitSerializer
+from lessons.serializers import UnitDetailSerializer
 from lessons.models import Unit, Lesson
 from lessons.structures import LessonBlockType
 
@@ -71,7 +71,7 @@ class LessonUnitsTree:
         queue = []
 
         while not queue or node:
-            queue.append(UnitSerializer(node.unit).data)
+            queue.append(UnitDetailSerializer(node.unit).data)
 
             if len(queue) > 1 and node.type in self.block_units_type:
                 break
@@ -81,7 +81,7 @@ class LessonUnitsTree:
 
             if len(node.children) >= 2:
                 replica_units = [child.unit for child in node.children]
-                queue.append({'type': 218, 'variants': UnitSerializer(replica_units, many=True).data})
+                queue.append({'type': 218, 'variants': UnitDetailSerializer(replica_units, many=True).data})
                 break
 
             node = node.children[0] if node.children else None

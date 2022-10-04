@@ -9,13 +9,13 @@ class NPCSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class LocationSerializer(serializers.ModelSerializer):
+class LocationDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
         fields = "__all__"
 
 
-class UnitSerializer(serializers.ModelSerializer):
+class UnitDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Unit
