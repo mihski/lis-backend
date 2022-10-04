@@ -64,6 +64,9 @@ class LessonUnitsTree:
 
             i += 1
 
+    def _generate_a18(self, units: list[Unit]) -> dict:
+        return {'type': 218, 'content': {'variants': UnitDetailSerializer(units, many=True).data}}
+
     @lru_cache(maxsize=1)
     def make_lessons_queue(self, from_unit_id: str = None) -> tuple[int, int, list[dict]]:
         first_location_id = first_npc_id = None
@@ -71,7 +74,12 @@ class LessonUnitsTree:
         queue = []
 
         while not queue or node:
-            queue.append(UnitDetailSerializer(node.unit).data)
+            if node.type != LessonBlockType.replica.value:
+                unit_data = UnitDetailSerializer(node.unit).data
+            else:
+                unit_data = self._generate_a18([node.unit])
+
+            queue.append(unit_data)
 
             if len(queue) > 1 and node.type in self.block_units_type:
                 break
@@ -81,7 +89,7 @@ class LessonUnitsTree:
 
             if len(node.children) >= 2:
                 replica_units = [child.unit for child in node.children]
-                queue.append({'type': 218, 'content': {'variants': UnitDetailSerializer(replica_units, many=True).data}})
+                queue.append(self._generate_a18(replica_units))
                 break
 
             node = node.children[0] if node.children else None
