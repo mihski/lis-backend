@@ -38,29 +38,32 @@ class LessonUnitsTree:
         ]
 
         self.tree: LessonUnitsNode = LessonUnitsNode(self.m_units[self.lesson.content.entry])
-        self.tree_elements: dict[str, LessonUnitsNode] = {}
+        self.tree_elements: dict[str, LessonUnitsNode] = {self.tree.local_id: self.tree}
 
         self._build_tree()
 
     def _build_tree(self):
-        queue = [self.tree]
+        queue = [self.tree.local_id]
         visited = defaultdict(bool)
         i = 0
 
         while i < len(queue):
-            node = queue[i]
+            node_local_id = queue[i]
+            print(node_local_id, self.tree_elements)
+            node = self.tree_elements[node_local_id]
+            visited[node_local_id] = True
 
-            if visited[node.local_id]:
-                i += 1
-                continue
+            for child_local_id in self.m_units[node_local_id].next:
+                if child_local_id in visited:
+                    continue
 
-            visited[node.local_id] = True
-            self.tree_elements[node.local_id] = node
+                if child_local_id not in self.tree_elements:
+                    self.tree_elements[child_local_id] = LessonUnitsNode(self.m_units[child_local_id])
 
-            for local_id in self.m_units[node.local_id].next:
-                child_node = LessonUnitsNode(self.m_units[local_id])
-                node.children.append(child_node)
-                queue.append(child_node)
+                child = self.tree_elements[child_local_id]
+
+                node.children.append(child)
+                queue.append(child_local_id)
 
             i += 1
 
