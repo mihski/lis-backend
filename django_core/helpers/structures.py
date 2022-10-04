@@ -81,7 +81,7 @@ class LessonUnitsTree:
 
             if len(node.children) >= 2:
                 replica_units = [child.unit for child in node.children]
-                queue.append({'type': 218, 'variants': UnitDetailSerializer(replica_units, many=True).data})
+                queue.append({'type': 218, 'content': {'variants': UnitDetailSerializer(replica_units, many=True).data}})
                 break
 
             node = node.children[0] if node.children else None
