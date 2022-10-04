@@ -36,13 +36,13 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class ProfileSerializerWithoutLookForms(ProfileSerializer):
+    name = serializers.CharField(source="first_name")
+
     class Meta:
         model = Profile
         fields = [
             'id',
-            'first_name',
-            'last_name',
-            'middle_name',
+            'name',
             'gender',
             'scientific_director'
         ]
