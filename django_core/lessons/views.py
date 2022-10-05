@@ -7,7 +7,7 @@ from accounts.models import Profile
 from accounts.serializers import ProfileSerializerWithoutLookForms
 from lessons.models import NPC, Location, Lesson
 from lessons.serializers import NPCSerializer, LocationDetailSerializer, LessonDetailSerializer
-from helpers.structures import LessonUnitsTree
+from helpers.structures import LessonUnitsTree, CourseLessonsTree
 
 
 class NPCViewSet(viewsets.ReadOnlyModelViewSet):
@@ -34,6 +34,8 @@ class LessonDetailViewSet(
         from_unit_id = request.GET.get('from_unit_id', None)
 
         unit_tree = LessonUnitsTree(lesson)
+        course_tree = CourseLessonsTree(lesson.course)
+
         profile, _ = Profile.objects.get_or_create(user=request.user)
         player = ProfileSerializerWithoutLookForms(profile)
 
@@ -51,7 +53,7 @@ class LessonDetailViewSet(
                 'location': first_location_id or 1,
                 'npc': first_npc_id or -1,
                 'locales': locales,
-                'tasks': unit_tree.task_count
+                'tasks': unit_tree.task_count,
             })
 
         data = {**lesson_data, 'player': player.data, 'chunk': unit_chunk}
