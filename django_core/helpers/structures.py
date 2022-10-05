@@ -2,7 +2,7 @@ from collections import defaultdict, deque
 from functools import cached_property, lru_cache
 
 from lessons.serializers import UnitDetailSerializer
-from lessons.models import Unit, Lesson
+from lessons.models import Unit, Lesson, Course, Quest, Branching
 from lessons.structures import LessonBlockType
 
 
@@ -56,12 +56,14 @@ class LessonUnitsTree:
         while i < len(queue):
             node_local_id = queue[i]
             node = self.tree_elements[node_local_id]
+
+            if visited[node_local_id]:
+                i += 1
+                continue
+
             visited[node_local_id] = True
 
             for child_local_id in self.m_units[node_local_id].next:
-                if child_local_id in visited:
-                    continue
-
                 if child_local_id not in self.tree_elements:
                     self.tree_elements[child_local_id] = LessonUnitsNode(self.m_units[child_local_id])
 
@@ -120,12 +122,11 @@ class LessonUnitsTree:
             node = stack[-1]
             visited[node.local_id] = True
 
-            current_task_count += node.is_task
-            max_task_count = max(current_task_count, max_task_count)
-
             has_next_child = False
             for child in node.children:
                 if not visited[child.local_id]:
+                    current_task_count += child.is_task
+                    max_task_count = max(current_task_count, max_task_count)
                     stack.append(child)
                     has_next_child = True
                     break
@@ -134,3 +135,41 @@ class LessonUnitsTree:
                 current_task_count -= stack.pop().is_task
 
         return max_task_count
+
+
+CourseBlockType = Lesson | Quest | Branching
+
+
+class CourseLessonNode:
+    def __init__(self, course_block: CourseBlockType, children: list[CourseBlockType] = None):
+        self.course_block = course_block
+        self.local_id = course_block.local_id
+        self.children = set(children or [])
+
+
+class CourseLessonsTree:
+    def __init__(self, course: Course) -> None:
+        self.course = course
+
+        self.lessons = list(Lesson.objects.filter(course=self.course, quest__isnull=True))
+        self.quests = list(Quest.objects.filter(course=self.course))
+        self.branchings = list(Branching.objects.filter(course=self.course))
+
+        self.m_blocks = {
+            **{lesson.local_id: lesson for lesson in self.lessons},
+            **{quest.quest: quest for quest in self.quests},
+            **{branching.local_id: branching for branching in self.branchings},
+        }
+
+        self.tree = CourseLessonNode(self.m_blocks[self.course.entry])
+
+        self._build_tree()
+
+    def _build_tree(self) -> None:
+        queue = [self.tree]
+        i = 0
+
+        while i < len(queue):
+            node = queue[i]
+
+            i += 1
