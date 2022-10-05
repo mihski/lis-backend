@@ -157,7 +157,7 @@ class CourseLessonsTree:
 
         self.m_blocks = {
             **{lesson.local_id: lesson for lesson in self.lessons},
-            **{quest.quest: quest for quest in self.quests},
+            **{quest.local_id: quest for quest in self.quests},
             **{branching.local_id: branching for branching in self.branchings},
         }
 
