@@ -56,6 +56,8 @@ class LessonDetailViewSet(
                 'npc': first_npc_id or -1,
                 'locales': locales,
                 'tasks': unit_tree.task_count,
+                'quest_number': course_tree.get_quest_number(lesson),
+                'lesson_number': course_tree.get_lesson_number(lesson),
             })
 
         data = {**lesson_data, 'player': player.data, 'chunk': unit_chunk}

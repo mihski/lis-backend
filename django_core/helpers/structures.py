@@ -1,16 +1,29 @@
+from abc import ABC, abstractmethod
 from collections import defaultdict, deque
 from functools import cached_property, lru_cache
 
 from lessons.serializers import UnitDetailSerializer
 from lessons.models import Unit, Lesson, Course, Quest, Branching
-from lessons.structures import LessonBlockType
+from lessons.structures import LessonBlockType, BranchingType
 
 
-def generate_a18_data(units: list[Unit]) -> dict:
-    return {'type': 218, 'content': {'variants': UnitDetailSerializer(units, many=True).data}}
+class AbstractNode(ABC):
+    children: set['AbstractNode']
+
+    @abstractmethod
+    def obj(self):
+        pass
+
+    @abstractmethod
+    def id(self):
+        pass
+
+    @abstractmethod
+    def next_ids(self):
+        pass
 
 
-class LessonUnitsNode:
+class LessonUnitsNode(AbstractNode):
     def __init__(self, unit: Unit, children: list['LessonUnitsNode'] = None):
         self.unit = unit
         self.local_id = unit.local_id
@@ -18,16 +31,17 @@ class LessonUnitsNode:
         self.is_task = str(self.type).startswith("3")
         self.children = set(children or [])
 
-    def get_unit_data(self, hide_task_answers: bool = False):
-        if self.unit.type != LessonBlockType.replica.value:
-            unit_data = UnitDetailSerializer(self.unit).data
-        else:
-            unit_data = generate_a18_data([self.unit])
+    @property
+    def id(self):
+        return self.local_id
 
-        if hide_task_answers:
-            unit_data.get('content', {}).pop('correct', None)
+    @property
+    def next_ids(self):
+        return self.unit.next
 
-        return unit_data
+    @property
+    def obj(self):
+        return self.unit
 
     def __eq__(self, other):
         return self.local_id == other.local_id
@@ -36,32 +50,21 @@ class LessonUnitsNode:
         return hash(self.local_id)
 
 
-class LessonUnitsTree:
-    """
-        Класс, предоставляющий список юнитов конкретного урока
-        в отсортированном и необходимом виде
-    """
-    def __init__(self, lesson: Lesson) -> None:
-        """
-            Конструктор дерева юнитов урока
-            :param queryset: конкретный урок
-            :param from_unit_id: опциональный параметр, начальный unit
-        """
-        self.lesson: Lesson = lesson
-        self.units = list(Unit.objects.filter(lesson=self.lesson))
-        self.m_units = {unit.local_id: unit for unit in self.units}
+class AbstractNodeTree(ABC):
+    node_cls = None
 
-        self.block_units_type = [
-            LessonBlockType.replica.value,
-            LessonBlockType.email.value,
-            LessonBlockType.a16_button.value,
-            *range(LessonBlockType.radios.value, LessonBlockType.comparison.value + 1)
-        ]
-
-        self.tree: LessonUnitsNode = LessonUnitsNode(self.m_units[self.lesson.content.entry])
-        self.tree_elements: dict[str, LessonUnitsNode] = {self.tree.local_id: self.tree}
-
+    def __init__(self):
+        self.tree = self.node_cls(self._get_first_element())
+        self.tree_elements: dict[str, AbstractNode] = {self.tree.id: self.tree}
         self._build_tree()
+
+    @abstractmethod
+    def _get_first_element(self):
+        pass
+
+    @abstractmethod
+    def _get_element_by_id(self, element_id: str):
+        pass
 
     def _build_tree(self):
         queue = [self.tree.local_id]
@@ -78,9 +81,11 @@ class LessonUnitsTree:
 
             visited[node_local_id] = True
 
-            for child_local_id in self.m_units[node_local_id].next:
+            for child_local_id in node.next_ids:
                 if child_local_id not in self.tree_elements:
-                    self.tree_elements[child_local_id] = LessonUnitsNode(self.m_units[child_local_id])
+                    self.tree_elements[child_local_id] = self.node_cls(
+                        self._get_element_by_id(child_local_id)
+                    )
 
                 child = self.tree_elements[child_local_id]
 
@@ -89,14 +94,50 @@ class LessonUnitsTree:
 
             i += 1
 
+
+class LessonUnitsTree(AbstractNodeTree):
+    """
+        Класс, предоставляющий список юнитов конкретного урока
+        в отсортированном и необходимом виде
+    """
+    node_cls = LessonUnitsNode
+    tree_elements: dict[str, LessonUnitsNode]
+
+    def __init__(self, lesson: Lesson) -> None:
+        self.lesson: Lesson = lesson
+        self.units = list(Unit.objects.filter(lesson=self.lesson))
+        self.m_units = {unit.local_id: unit for unit in self.units}
+
+        self.block_units_type = [
+            LessonBlockType.replica.value,
+            LessonBlockType.email.value,
+            LessonBlockType.a16_button.value,
+            *range(LessonBlockType.radios.value, LessonBlockType.comparison.value + 1)
+        ]
+
+        super().__init__()
+
+    def _get_first_element(self):
+        return self._get_element_by_id(self.lesson.content.entry)
+
+    def _get_element_by_id(self, element_id: str):
+        return self.m_units[element_id]
+
+    def _generate_a18(self, units: list[Unit]) -> dict:
+        return {'type': 218, 'content': {'variants': UnitDetailSerializer(units, many=True).data}}
+
     @lru_cache(maxsize=1)
-    def make_lessons_queue(self, from_unit_id: str = None, hide_task_answers: bool = True) -> tuple[int, int, list[dict]]:
+    def make_lessons_queue(self, from_unit_id: str = None) -> tuple[int, int, list[dict]]:
         first_location_id = first_npc_id = None
         node = self.tree_elements[from_unit_id or self.lesson.content.entry]
         queue = []
 
         while not queue or node:
-            unit_data = node.get_unit_data()
+            if node.type != LessonBlockType.replica.value:
+                unit_data = UnitDetailSerializer(node.unit).data
+            else:
+                unit_data = self._generate_a18([node.unit])
+
             queue.append(unit_data)
 
             if len(queue) > 1 and node.type in self.block_units_type:
@@ -106,8 +147,8 @@ class LessonUnitsTree:
             first_npc_id = first_npc_id or queue[-1].get('content', {}).get('npc')
 
             if len(node.children) >= 2:
-                replica_units = [child.unit for child in node.children]
-                queue.append(generate_a18_data(replica_units))
+                replica_units = [child.obj for child in node.children]
+                queue.append(self._generate_a18(replica_units))
                 break
 
             node = list(node.children)[0] if node.children else None
@@ -148,14 +189,41 @@ class LessonUnitsTree:
 CourseBlockType = Lesson | Quest | Branching
 
 
-class CourseLessonNode:
-    def __init__(self, course_block: CourseBlockType, children: list[CourseBlockType] = None):
+class CourseLessonNode(AbstractNode):
+    def __init__(self, course_block: CourseBlockType, children: list['CourseLessonNode'] = None):
         self.course_block = course_block
         self.local_id = course_block.local_id
         self.children = set(children or [])
 
+        self.is_branching = isinstance(self.course_block, Branching)
 
-class CourseLessonsTree:
+    @property
+    def obj(self):
+        return self.course_block
+
+    @property
+    def id(self):
+        return self.local_id
+
+    @property
+    def next_ids(self):
+        if self.is_branching:
+            if self.course_block.type == BranchingType.gender.value:
+                return self.course_block.content['next'].values()
+
+            if self.course_block.type == BranchingType.six_from_n.value:
+                return [self.course_block.content['next']]
+
+            if self.course_block.type == BranchingType.one_from_n.value:
+                return self.course_block.content['next']
+
+        return self.course_block.next
+
+
+class CourseLessonsTree(AbstractNodeTree):
+    node_cls = CourseLessonNode
+    tree_elements: dict[str, CourseLessonNode]
+
     def __init__(self, course: Course) -> None:
         self.course = course
 
@@ -169,15 +237,31 @@ class CourseLessonsTree:
             **{branching.local_id: branching for branching in self.branchings},
         }
 
-        self.tree = CourseLessonNode(self.m_blocks[self.course.entry])
+        super().__init__()
 
-        self._build_tree()
+    def get_quest_number(self, lesson: Lesson) -> int:
+        queue = [(0, self.tree)]  # quest_number, node
+        visited = defaultdict(bool)
 
-    def _build_tree(self) -> None:
-        queue = [self.tree]
         i = 0
 
         while i < len(queue):
-            node = queue[i]
+            quest_number, node = queue[i]
+
+            if visited[node.id]:
+                i += 1
+                continue
+
+            for child_local_id in node.next_ids:
+                queue.append((quest_number + int(not node.is_branching), self._get_element_by_id(child_local_id)))
 
             i += 1
+
+    def get_lesson_number(self, lesson: Lesson) -> int:
+        return 0
+
+    def _get_first_element(self):
+        return self.m_blocks[self.course.entry]
+
+    def _get_element_by_id(self, element_id: str):
+        return self.m_blocks[element_id]

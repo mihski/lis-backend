@@ -45,3 +45,9 @@ class BlockType(Enum):
     unit = 3
     branching = 4
 
+
+class BranchingType(Enum):
+    gender = 1
+    six_from_n = 2
+    one_from_n = 3
+
