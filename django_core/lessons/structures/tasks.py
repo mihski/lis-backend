@@ -31,7 +31,7 @@ class RadiosBlock(TaskBlock):
     def check_answer(self, answer: str) -> bool:
         return self.correct == str(answer)
 
-    def get_details(self, answer: str) -> dict[str, str]:
+    def get_details(self, answer: str) -> dict[str, bool]:
         m_variants = {v["id"]: v for v in self.variants}
         if self.check_answer(answer):
             return {answer: True}
@@ -53,9 +53,9 @@ class CheckboxesBlock(TaskBlock):
     def check_answer(self, answer: list[str]) -> bool:
         return sorted(answer) == sorted(self.correct)
 
-    def get_details(self, answer: list[str]) -> dict[str, str]:
+    def get_details(self, answer: list[str]) -> dict[str, bool]:
         m_variants = {v["id"]: v for v in self.variants}
-        details = {'task': self.if_correct if self.check_answer(answer) else self.if_incorrect}
+        details = {}
 
         for answer_item in answer:
             if answer_item not in m_variants:
