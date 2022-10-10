@@ -96,7 +96,7 @@ class InputBlock(TaskBlock):
     correct = models.JSONField(default={'ru': [], 'en': []})
 
     def check_answer(self, answer):
-        return answer == self.correct
+        return answer == self.correct['ru']
 
 
 class NumberBlock(TaskBlock):
@@ -141,8 +141,17 @@ class SortBlock(TaskBlock):
     options = models.JSONField()
     correct = models.JSONField()
 
-    def check_answer(self, answer):
+    def check_answer(self, answer: list[str]) -> bool:
         return answer == self.correct
+
+    def get_details(self, answer: list[str]) -> list[int]:
+        numbers = []
+
+        for i, option_id in enumerate(answer):
+            if self.correct[i] == option_id:
+                numbers.append(i)
+
+        return numbers
 
 
 class ComparisonBlock(TaskBlock):
@@ -151,5 +160,19 @@ class ComparisonBlock(TaskBlock):
     lists = models.JSONField()
     correct = models.JSONField()
 
-    def check_answer(self, answer):
-        return True
+    def check_answer(self, answer: list[tuple[str, str]]) -> bool:
+        return len(self.get_details(answer)) == len(self.correct)
+
+    def get_details(self, answer: list[tuple[str, str]]) -> list[int]:
+        numbers = []
+
+        m_correct = {
+            **{option_1: option_2 for option_1, option_2 in self.correct},
+            **{option_2: option_1 for option_1, option_2 in self.correct}
+        }
+
+        for i, (option_1, option_2) in enumerate(answer):
+            if m_correct[option_1] == option_2:
+                numbers.append(i)
+
+        return numbers
