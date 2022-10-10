@@ -74,8 +74,20 @@ class SelectsBlock(TaskBlock):
     selects = models.JSONField()
     correct = models.JSONField()
 
-    def check_answer(self, answer):
+    def check_answer(self, answer: dict[str, str]) -> bool:
+        for select_id, variant_id in answer.items():
+            if self.correct[select_id] != variant_id:
+                return False
+
         return True
+
+    def get_details(self, answer: dict[str, str]) -> dict[str, bool]:
+        details = {}
+
+        for select_id, variant_id in answer.items():
+            details[select_id] = self.correct[select_id] == variant_id
+
+        return details
 
 
 class InputBlock(TaskBlock):

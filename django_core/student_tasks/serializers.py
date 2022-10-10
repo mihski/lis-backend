@@ -35,7 +35,9 @@ class StudentTaskAnswerSerializer(serializers.ModelSerializer):
 
         task_block = self._get_task(instance.task)
         profile = self._get_profile(instance.task)
+
         is_correct = task_block.check_answer(validated_data['answer'])
+
         instance.profile = profile
         instance.is_correct = is_correct
         instance.save()
