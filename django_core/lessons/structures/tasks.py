@@ -34,13 +34,14 @@ class RadiosBlock(TaskBlock):
     def get_details(self, answer: str) -> dict[str, str]:
         m_variants = {v["id"]: v for v in self.variants}
         if self.check_answer(answer):
-            return {'task': self.if_correct, answer: m_variants[answer]['ifCorrect']}
+            return {answer: True}
 
         answer = str(answer)
-        if answer not in m_variants:
-            return {'task': "Такого варианта нет"}
 
-        return {answer: m_variants[answer]['ifIncorrect'], 'task': self.if_incorrect}
+        if answer not in m_variants:
+            return {answer: False}
+
+        return {answer: False}
 
 
 class CheckboxesBlock(TaskBlock):
@@ -58,11 +59,10 @@ class CheckboxesBlock(TaskBlock):
 
         for answer_item in answer:
             if answer_item not in m_variants:
-                details[answer_item] = "Такого варианта нет"
+                details[answer_item] = False
                 continue
 
-            field = "ifCorrect" if answer_item in self.correct else "ifIncorrect"
-            details[answer_item] = m_variants[answer_item][field]
+            details[answer_item] = answer_item in self.correct
 
         return details
 
