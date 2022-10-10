@@ -6,6 +6,10 @@ from lessons.models import Unit, Lesson, Course, Quest, Branching
 from lessons.structures import LessonBlockType
 
 
+def generate_a18_data(units: list[Unit]) -> dict:
+    return {'type': 218, 'content': {'variants': UnitDetailSerializer(units, many=True).data}}
+
+
 class LessonUnitsNode:
     def __init__(self, unit: Unit, children: list['LessonUnitsNode'] = None):
         self.unit = unit
@@ -13,6 +17,17 @@ class LessonUnitsNode:
         self.type = unit.type
         self.is_task = str(self.type).startswith("3")
         self.children = set(children or [])
+
+    def get_unit_data(self, hide_task_answers: bool = False):
+        if self.unit.type != LessonBlockType.replica.value:
+            unit_data = UnitDetailSerializer(self.unit).data
+        else:
+            unit_data = generate_a18_data([self.unit])
+
+        if hide_task_answers:
+            unit_data.get('content', {}).pop('correct', None)
+
+        return unit_data
 
     def __eq__(self, other):
         return self.local_id == other.local_id
@@ -74,21 +89,14 @@ class LessonUnitsTree:
 
             i += 1
 
-    def _generate_a18(self, units: list[Unit]) -> dict:
-        return {'type': 218, 'content': {'variants': UnitDetailSerializer(units, many=True).data}}
-
     @lru_cache(maxsize=1)
-    def make_lessons_queue(self, from_unit_id: str = None) -> tuple[int, int, list[dict]]:
+    def make_lessons_queue(self, from_unit_id: str = None, hide_task_answers: bool = True) -> tuple[int, int, list[dict]]:
         first_location_id = first_npc_id = None
         node = self.tree_elements[from_unit_id or self.lesson.content.entry]
         queue = []
 
         while not queue or node:
-            if node.type != LessonBlockType.replica.value:
-                unit_data = UnitDetailSerializer(node.unit).data
-            else:
-                unit_data = self._generate_a18([node.unit])
-
+            unit_data = node.get_unit_data()
             queue.append(unit_data)
 
             if len(queue) > 1 and node.type in self.block_units_type:
@@ -99,7 +107,7 @@ class LessonUnitsTree:
 
             if len(node.children) >= 2:
                 replica_units = [child.unit for child in node.children]
-                queue.append(self._generate_a18(replica_units))
+                queue.append(generate_a18_data(replica_units))
                 break
 
             node = list(node.children)[0] if node.children else None

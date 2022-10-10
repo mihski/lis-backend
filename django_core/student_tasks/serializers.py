@@ -1,35 +1,43 @@
 from rest_framework import serializers
 
-from accounts.models import User
 from lessons.structures.tasks import TaskBlock
+from accounts.models import Profile
+from lessons.models import Unit
 from student_tasks.models import StudentTaskAnswer
 
 
 class StudentTaskAnswerSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        default=serializers.CurrentUserDefault()
-    )
     is_correct = serializers.ReadOnlyField()
+    details = serializers.SerializerMethodField()
 
     class Meta:
         model = StudentTaskAnswer
-        fields = "__all__"
+        fields = ["id", "answer", "is_correct", "details"]
 
-    def _get_task(self, task_unit):
+    def _get_task(self, task_unit: Unit) -> TaskBlock:
         task_models = {t_model.type.value: t_model for t_model in TaskBlock.get_all_subclasses()}
         task_model = task_models[task_unit.type]
         task_instance = task_model.objects.filter(id=task_unit.content['id']).only().first()
 
         return task_instance
 
-    def _check_task(self, task_unit, answer):
-        task_instance = self._get_task(task_unit)
-        return task_instance.check_answer(answer)
+    def _get_profile(self, task_unit: Unit) -> bool:
+        # TODO: add course field for profile
+        profile = Profile.objects.get(user=self.context['request'].user)
+        return profile
+
+    def get_details(self, obj: StudentTaskAnswer) -> dict:
+        task_instance = self._get_task(obj.task)
+        return task_instance.get_details(obj.answer)
 
     def update(self, instance, validated_data):
         instance = super().update(instance, validated_data)
-        instance.is_correct = self._check_task(instance.task, validated_data['answer'])
+
+        task_block = self._get_task(instance.task)
+        profile = self._get_profile(instance.task)
+        is_correct = task_block.check_answer(validated_data['answer'])
+        instance.profile = profile
+        instance.is_correct = is_correct
         instance.save()
 
         return instance

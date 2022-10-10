@@ -15,7 +15,7 @@ class TaskBlock(models.Model, ChildAccessMixin):
         pass
 
     @abstractmethod
-    def answer_details(self, answer):
+    def get_details(self, answer):
         pass
 
     class Meta:
@@ -28,8 +28,19 @@ class RadiosBlock(TaskBlock):
     variants = models.JSONField()
     correct = models.CharField(max_length=127)
 
-    def check_answer(self, answer):
-        return self.correct == answer
+    def check_answer(self, answer: str) -> bool:
+        return self.correct == str(answer)
+
+    def get_details(self, answer: str) -> dict[str, str]:
+        m_variants = {v["id"]: v for v in self.variants}
+        if self.check_answer(answer):
+            return {'task': self.if_correct, answer: m_variants[answer]['ifCorrect']}
+
+        answer = str(answer)
+        if answer not in m_variants:
+            return {'task': "Такого варианта нет"}
+
+        return {answer: m_variants[answer]['ifIncorrect'], 'task': self.if_incorrect}
 
 
 class CheckboxesBlock(TaskBlock):
@@ -38,8 +49,22 @@ class CheckboxesBlock(TaskBlock):
     variants = models.JSONField()
     correct = models.JSONField()
 
-    def check_answer(self, answer):
+    def check_answer(self, answer: list[str]) -> bool:
         return sorted(answer) == sorted(self.correct)
+
+    def get_details(self, answer: list[str]) -> dict[str, str]:
+        m_variants = {v["id"]: v for v in self.variants}
+        details = {'task': self.if_correct if self.check_answer(answer) else self.if_incorrect}
+
+        for answer_item in answer:
+            if answer_item not in m_variants:
+                details[answer_item] = "Такого варианта нет"
+                continue
+
+            field = "ifCorrect" if answer_item in self.correct else "ifIncorrect"
+            details[answer_item] = m_variants[answer_item][field]
+
+        return details
 
 
 class SelectsBlock(TaskBlock):

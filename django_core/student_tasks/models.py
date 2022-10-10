@@ -1,5 +1,5 @@
 from django.db import models
-from django.conf import settings
+from accounts.models import Profile
 from rest_framework.validators import ValidationError
 
 
@@ -12,11 +12,11 @@ def validate_is_task(unit):
 
 
 class StudentTaskAnswer(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     task = models.ForeignKey('lessons.Unit', on_delete=models.CASCADE, validators=[validate_is_task])
 
     answer = models.JSONField(default=dict)
     is_correct = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"TaskAnswer[{self.id}] {self.user} {self.task}"
+        return f"TaskAnswer[{self.id}] {self.profile} - {self.task}"
