@@ -39,7 +39,9 @@ class LessonDetailViewSet(
         profile, _ = Profile.objects.get_or_create(user=request.user)
         player = ProfileSerializerWithoutLookForms(profile)
 
-        first_location_id, first_npc_id, unit_chunk = unit_tree.make_lessons_queue(from_unit_id)
+        first_location_id, first_npc_id, unit_chunk = (
+            unit_tree.make_lessons_queue(from_unit_id, hide_task_answers=True)
+        )
 
         lesson_data = {}
         if not from_unit_id:

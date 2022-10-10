@@ -15,7 +15,7 @@ class TaskBlock(models.Model, ChildAccessMixin):
         pass
 
     @abstractmethod
-    def answer_details(self, answer):
+    def get_details(self, answer):
         pass
 
     class Meta:
@@ -29,7 +29,7 @@ class RadiosBlock(TaskBlock):
     correct = models.CharField(max_length=127)
 
     def check_answer(self, answer):
-        return self.correct == answer
+        return self.correct == str(answer)
 
 
 class CheckboxesBlock(TaskBlock):
