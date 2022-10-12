@@ -4,12 +4,12 @@ from django_core.celery import app
 from resources.models import Resources
 from accounts.models import UniversityPosition
 
-ENERGY_DATA = {
-    UniversityPosition.STUDENT.value: 0,
-    UniversityPosition.INTERN.value: 10,
-    UniversityPosition.LABORATORY_ASSISTANT.value: 9,
-    UniversityPosition.ENGINEER.value: 9,
-    UniversityPosition.JUN_RESEARCH_ASSISTANT.value: 8,
+POSITION_ENERGY_MAX_DATA = {
+    UniversityPosition.STUDENT: 0,
+    UniversityPosition.INTERN: 10,
+    UniversityPosition.LABORATORY_ASSISTANT: 9,
+    UniversityPosition.ENGINEER: 9,
+    UniversityPosition.JUN_RESEARCH_ASSISTANT: 8,
 }
 
 
@@ -18,10 +18,15 @@ def refill_resources() -> None:
     """
         Задача для обновления ресурсов в фоне
     """
-    queryset: QuerySet[Resources] = Resources.objects.all()
+    resources_qs: QuerySet[Resources] = Resources.objects.all()
+    update_list = []
 
-    for item in queryset:
-        university_position = item.user.university_position
-        energy = ENERGY_DATA[university_position]
-        item.energy_amount = energy
-        item.save()
+    for resource in resources_qs:
+        university_position = resource.user.university_position
+        position = UniversityPosition.from_str(university_position)
+
+        energy = POSITION_ENERGY_MAX_DATA[position]
+        resource.energy_amount = energy
+        update_list.append(resource)
+
+    Resources.objects.bulk_update(update_list, ["energy_amount"])

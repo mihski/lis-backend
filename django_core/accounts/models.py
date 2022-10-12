@@ -19,9 +19,6 @@ class UserRole(models.Model):
 
 
 class UserManager(BaseUserManager):
-    """
-        Кастомный менеджер пользователей
-    """
     def create_user(self, username, email, password=None) -> AbstractBaseUser:
         if not email:
             raise ValueError("Users must have an email address")
@@ -50,9 +47,6 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    """
-        Таблица БД для хранения пользователей
-    """
     role = models.ForeignKey(UserRole, on_delete=models.SET_NULL, null=True)
     
     username = models.CharField(max_length=10, unique=True)
@@ -78,7 +72,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name = "User"
         verbose_name_plural = "Users"
 
-
     def __repr__(self) -> str:
         return f"{self.username}"
 
@@ -95,6 +88,22 @@ class UniversityPosition(models.TextChoices):
     LABORATORY_ASSISTANT = "Лаборант"
     ENGINEER = "Инженер"
     JUN_RESEARCH_ASSISTANT = "Мл. научный сотрудник"
+
+    @staticmethod
+    def from_str(label: str):
+        match label:
+            case UniversityPosition.STUDENT.value:
+                return UniversityPosition.STUDENT
+            case UniversityPosition.INTERN.value:
+                return UniversityPosition.INTERN
+            case UniversityPosition.LABORATORY_ASSISTANT.value:
+                return UniversityPosition.LABORATORY_ASSISTANT
+            case UniversityPosition.ENGINEER.value:
+                return UniversityPosition.ENGINEER
+            case UniversityPosition.JUN_RESEARCH_ASSISTANT.value:
+                return UniversityPosition.JUN_RESEARCH_ASSISTANT
+            case _:
+                raise NotImplementedError()
 
 
 class Profile(models.Model):
