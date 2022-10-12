@@ -89,22 +89,6 @@ class UniversityPosition(models.TextChoices):
     ENGINEER = "Инженер"
     JUN_RESEARCH_ASSISTANT = "Мл. научный сотрудник"
 
-    @staticmethod
-    def from_str(label: str):
-        match label:
-            case UniversityPosition.STUDENT.value:
-                return UniversityPosition.STUDENT
-            case UniversityPosition.INTERN.value:
-                return UniversityPosition.INTERN
-            case UniversityPosition.LABORATORY_ASSISTANT.value:
-                return UniversityPosition.LABORATORY_ASSISTANT
-            case UniversityPosition.ENGINEER.value:
-                return UniversityPosition.ENGINEER
-            case UniversityPosition.JUN_RESEARCH_ASSISTANT.value:
-                return UniversityPosition.JUN_RESEARCH_ASSISTANT
-            case _:
-                raise NotImplementedError()
-
 
 class Profile(models.Model):
     """

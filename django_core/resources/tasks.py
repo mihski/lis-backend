@@ -23,7 +23,7 @@ def refill_resources() -> None:
 
     for resource in resources_qs:
         university_position = resource.user.university_position
-        position = UniversityPosition.from_str(university_position)
+        position = UniversityPosition(university_position)
 
         energy = POSITION_ENERGY_MAX_DATA[position]
         resource.energy_amount = energy

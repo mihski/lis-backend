@@ -50,6 +50,14 @@ class ResourcesTestCase(TestCase):
         self.assertEqual(response.json()["moneyAmount"], 6)
         self.assertEqual(response.json()["energyAmount"], 2)
 
+    def test_raise_exception_without_profile(self):
+        self.profile.delete()
+        response = self.client.get("/api/resources/retrieve/")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.json()["detail"], "You should to create a profile to get access for requested resource",
+        )
+
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPOGATES=True, BROKER_BACKEND="memory")
     def test_celery_refill_energy(self) -> None:
         self.client.get("/api/resources/retrieve/")
