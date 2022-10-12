@@ -1,48 +1,61 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
-from accounts.models import User
+from rest_framework import status
+
+from accounts.models import User, Profile, UniversityPosition
+from resources.tasks import refill_resources, ENERGY_DATA
 
 
-class ResourceTestCase(TestCase):
+class ResourcesTestCase(TestCase):
     def setUp(self) -> None:
-        self.user = User.objects.create(username='test1', email='test1@mail.ru', password='test1')
+        user = User.objects.create(username="test1", email="test1@mail.ru", password="test1")
+        self.profile = Profile.objects.create(user=user)
         self.client = APIClient()
-        self.client.force_authenticate(user=self.user)
+        self.client.force_authenticate(user=user)
 
-    def test_resource_retrieving(self):
-        response = self.client.get("/api/resources/retrieve_resources/")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['timeAmount'], 0)
-        self.assertEqual(response.json()['energyAmount'], 0)
-        self.assertEqual(response.json()['moneyAmount'], 0)
+    def test_resource_retrieving(self) -> None:
+        response = self.client.get("/api/resources/retrieve/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["timeAmount"], 0)
+        self.assertEqual(response.json()["energyAmount"], 0)
+        self.assertEqual(response.json()["moneyAmount"], 0)
 
-    def test_resource_updating(self):
+    def test_resource_updating(self) -> None:
         cases = [
-            ((5, 10, 3), True),  # (timeDelta, moneyDelta, energyDelta), is_successful
+            # (timeDelta, moneyDelta, energyDelta), is_successful
+            ((5, 10, 3), True),
             ((0, -20, 3), False),
             ((-1, 30, 3), False),
             ((0, -4, -1), True),
         ]
-        response = self.client.get("/api/resources/retrieve_resources/")
-        time_amount = response.json()['timeAmount']
-        money_amount = response.json()['moneyAmount']
-        energy_amount = response.json()['energyAmount']
 
+        self.client.get("/api/resources/retrieve/")  # -> creates resources with 0 values
         for (time_delta, money_delta, energy_delta), is_successful in cases:
-            response = self.client.patch(
+            patch_response = self.client.patch(
                 "/api/resources/update/",
                 {
                     "timeDelta": time_delta,
                     "moneyDelta": money_delta,
                     "energyDelta": energy_delta,
-                }
+                },
             )
 
             if not is_successful:
-                self.assertNotEqual(response.status_code, 200)
+                self.assertEqual(patch_response.status_code, status.HTTP_400_BAD_REQUEST)
                 continue
+            self.assertEqual(patch_response.status_code, status.HTTP_200_OK)
 
-            self.assertEqual(response.status_code, 200)
-            time_amount += time_delta
-            money_amount += money_delta
-            energy_amount += energy_delta
+        response = self.client.get("/api/resources/retrieve/")
+        self.assertEqual(response.json()["timeAmount"], 5)
+        self.assertEqual(response.json()["moneyAmount"], 6)
+        self.assertEqual(response.json()["energyAmount"], 2)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPOGATES=True, BROKER_BACKEND="memory")
+    def test_celery_refill_energy(self) -> None:
+        self.client.get("/api/resources/retrieve/")
+
+        self.profile.university_position = UniversityPosition.INTERN.value
+        self.profile.save()
+
+        refill_resources.delay()
+        self.assertEqual(self.profile.resources.energy_amount, ENERGY_DATA[UniversityPosition.INTERN.value])
