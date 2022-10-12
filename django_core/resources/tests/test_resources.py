@@ -3,7 +3,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 
 from accounts.models import User, Profile, UniversityPosition
-from resources.tasks import refill_resources, ENERGY_DATA
+from resources.tasks import refill_resources, POSITION_ENERGY_MAX_DATA
 
 
 class ResourcesTestCase(TestCase):
@@ -58,4 +58,4 @@ class ResourcesTestCase(TestCase):
         self.profile.save()
 
         refill_resources.delay()
-        self.assertEqual(self.profile.resources.energy_amount, ENERGY_DATA[UniversityPosition.INTERN.value])
+        self.assertEqual(self.profile.resources.energy_amount, POSITION_ENERGY_MAX_DATA[UniversityPosition.INTERN.value])
