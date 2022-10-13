@@ -99,8 +99,6 @@ class BranchingDetailSerializer(serializers.ModelSerializer):
     def get_choices(self, obj: Branching) -> None:
         lesson_local_ids = []
 
-        print(obj.type, obj.content)
-
         if obj.type == BranchingType.six_from_n.value:
             lesson_local_ids.extend(obj.content['list'])
 

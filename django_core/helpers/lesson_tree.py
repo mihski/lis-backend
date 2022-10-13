@@ -66,7 +66,7 @@ class LessonUnitsTree(AbstractNodeTree):
         return {'type': 218, 'content': {'variants': UnitDetailSerializer(units, many=True).data}}
 
     @lru_cache(maxsize=1)
-    def make_lessons_queue(self, from_unit_id: str = None) -> tuple[int, int, list[dict]]:
+    def make_lessons_queue(self, from_unit_id: str = None, hide_task_answers: bool = False) -> tuple[int, int, list[dict]]:
         first_location_id = first_npc_id = None
         node = self.tree_elements[from_unit_id or self.lesson.content.entry]
         queue = []

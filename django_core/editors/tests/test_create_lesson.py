@@ -332,7 +332,6 @@ class TestLessonCreating(TestCase):
         )
 
         from pprint import pprint
-        pprint(response.json())
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(course_data['name'], 'course 1 patched')
