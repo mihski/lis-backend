@@ -44,10 +44,11 @@ class BlockType(Enum):
     quest = 2
     unit = 3
     branching = 4
+    entry = 5
+    img = 6
 
 
 class BranchingType(Enum):
-    gender = 1
+    profile_parameter = 1
     six_from_n = 2
     one_from_n = 3
-

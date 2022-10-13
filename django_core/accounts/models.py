@@ -109,6 +109,13 @@ class Profile(models.Model):
         default=UniversityPosition.STUDENT,
         max_length=40
     )
+    LABORATORIES = (
+        ('it', "IT"),
+        ('ls', "Науки о жизни"),
+        ('mi', "Менеджмент и инновации"),
+        ('ctm', "Компьютерные технологии и управления"),
+        ('pts', "Физико-технические науки"),
+    )
 
     class Meta:
         app_label = "accounts"
@@ -117,6 +124,8 @@ class Profile(models.Model):
 
     def __repr__(self) -> str:
         return f"{self._meta.verbose_name} - {self.user.username}"
+    scientific_director = models.ForeignKey('lessons.NPC', on_delete=models.SET_NULL, null=True, blank=True)
+    laboratory = models.CharField(max_length=120, choices=LABORATORIES, default="it")
 
     def __str__(self) -> str:
         return repr(self)

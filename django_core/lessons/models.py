@@ -51,6 +51,12 @@ class Branching(EditorBlockModel):
     content = models.JSONField()
 
 
+class ProfileBranchingChoice(models.Model):
+    profile = models.ForeignKey("accounts.Profile", on_delete=models.CASCADE)
+    branching = models.ForeignKey("Branching", on_delete=models.CASCADE)
+    choose_local_id = models.CharField(max_length=120, blank=True)
+
+
 class Laboratory(models.Model):
     name = models.CharField(max_length=127)
 
@@ -133,3 +139,12 @@ class Location(models.Model):
 
     def __str__(self):
         return f"Location[{self.uid}] {self.ru_name}"
+
+
+class CourseMapImg(models.Model):
+    course = models.ForeignKey("Course", on_delete=models.CASCADE)
+    image = models.ImageField(upload_to="course_map_images")
+    image_disabled = models.ImageField(upload_to="course_map_images")
+
+    def __str__(self):
+        return f"CourseMapImg[{self.id}] for {self.course.locale[self.course.name]}: {self.image}"
