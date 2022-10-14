@@ -106,7 +106,7 @@ class NumberBlock(TaskBlock):
     correct = models.FloatField()
 
     def check_answer(self, answer):
-        dx = self.correct * self.tolerance / 100
+        dx = self.correct * self.tolerance
 
         return self.correct - dx <= answer <= self.correct + dx
 
