@@ -158,12 +158,20 @@ class CourseMapSerializer(serializers.ModelSerializer):
         tree = CourseLessonsTree(obj)
 
         map_list = tree.get_map_for_profile(profile)
-        serialized_map_list = []
 
-        for obj in filter(lambda x: x, map_list):
-            serialized_map_list.append(model_to_serializer[obj.__class__](obj).data)
+        course_map_images = CourseMapImg.objects.filter(course=obj).all()
 
-        serialized_map_list.extend([None] * (tree.get_max_depth() - len(serialized_map_list)))
+        serialized_map_list = [None] * (tree.get_max_depth() + len(course_map_images))
+
+        for course_map in course_map_images:
+            serialized_map_list[course_map.order] = CourseMapImgCell(course_map).data
+
+        j = 0
+        for obj in map_list:
+            while j < len(serialized_map_list) and serialized_map_list[j] is not None:
+                j += 1
+
+            serialized_map_list[j] = model_to_serializer[obj.__class__](obj).data
 
         return serialized_map_list
 

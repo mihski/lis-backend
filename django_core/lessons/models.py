@@ -148,4 +148,4 @@ class CourseMapImg(models.Model):
     image_disabled = models.ImageField(upload_to="course_map_images")
 
     def __str__(self):
-        return f"CourseMapImg[{self.id}] for {self.course.locale[self.course.name]}: {self.image}"
+        return f"CourseMapImg[{self.order}] for {self.course.name}"

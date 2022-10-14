@@ -12,6 +12,7 @@ class UnitAdmin(admin.ModelAdmin):
 
 
 admin.site.register(models.Course)
+admin.site.register(models.CourseMapImg)
 admin.site.register(models.Lesson)
 admin.site.register(models.LessonBlock)
 admin.site.register(models.Unit, UnitAdmin)
