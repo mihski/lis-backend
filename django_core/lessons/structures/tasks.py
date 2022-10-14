@@ -96,7 +96,7 @@ class InputBlock(TaskBlock):
     correct = models.JSONField(default={'ru': [], 'en': []})
 
     def check_answer(self, answer):
-        return answer == self.correct['ru']
+        return answer in self.correct['ru']
 
 
 class NumberBlock(TaskBlock):
