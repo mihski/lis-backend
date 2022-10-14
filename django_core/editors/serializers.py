@@ -1,10 +1,10 @@
 import logging
 
-from enum import Enum
 from typing import List, Dict, Iterable
 
 from rest_framework import serializers
-from rest_framework.validators import ValidationError, UniqueTogetherValidator
+from rest_framework.validators import ValidationError
+from rest_framework.exceptions import PermissionDenied
 
 from accounts.models import User
 from lessons.structures.lectures import (
@@ -20,6 +20,11 @@ from lessons.structures.lectures import (
     TableBlock,
     DocBlock,
     VideoBlock,
+    MessengerStartBlock,
+    MessengerEndBlock,
+    DownloadingBlock,
+    ButtonBlock,
+    DayCounterBlock
 )
 from lessons.structures.tasks import (
     RadiosBlock,
@@ -32,79 +37,39 @@ from lessons.structures.tasks import (
     SortBlock,
     ComparisonBlock,
 )
-from lessons.models import Lesson, Unit, LessonBlock, Quest, Course, Branching
+from lessons.models import (
+    Lesson,
+    Unit,
+    LessonBlock,
+    Quest,
+    Course,
+    Branching,
+)
+from lessons.structures import LessonBlockType, BlockType
 from editors.models import Block, EditorSession
+from helpers.mixins import ChildAccessMixin
 
 
 logger = logging.Logger(__file__)
 
 
-class LessonBlockType(Enum):
-    replica = 100
-    replicaNPC = 101
-
-    theory = 202
-    important = 203
-    quote = 204
-    image = 205
-    gallery = 206
-    email = 207
-    browser = 208
-    table = 209
-    doc = 210
-    messenger = 211
-    video = 212
-
-    radios = 301
-    checkboxes = 302
-    selects = 303
-    input = 304
-    number = 305
-    radiosTable = 306
-    imageAnchors = 307
-    sort = 308
-    comparison = 309
-
-    @classmethod
-    def has_value(cls, value):
-        return value in cls._value2member_map_
-
-
-class BlockType(Enum):
-    lesson = 1
-    quest = 2
-    unit = 3
-    branching = 4
-
-
 def _check_missed_fields(data: Iterable[Dict], required_fields: set):
     for element in data:
+        if not isinstance(element, dict):
+            continue
+
         missed_fields = required_fields.difference(set(element.keys()))
 
         if missed_fields:
             raise ValidationError(f'{element} missed {missed_fields} fields')
 
 
-class BaseLisBlockSerializer(serializers.ModelSerializer):
+class BaseLisBlockSerializer(serializers.ModelSerializer, ChildAccessMixin):
     """ Requires block_type property for lessons blocks in order to deserialize block object """
     block_type: LessonBlockType = None
 
     class Meta:
         model = None
-
-    @classmethod
-    def get_all_subclasses(cls):
-        subclasses = set()
-        work = [cls]
-
-        while work:
-            parent = work.pop()
-            for child in parent.__subclasses__():
-                if child not in subclasses:
-                    subclasses.add(child)
-                    work.append(child)
-
-        return list(subclasses)
 
 
 class TextBlockSerializer(BaseLisBlockSerializer):
@@ -115,12 +80,6 @@ class TextBlockSerializer(BaseLisBlockSerializer):
 class UrlBlockSerializer(BaseLisBlockSerializer):
     class Meta:
         fields = ['id', 'title', 'url', 'location']
-
-    def validate_url(self, url: str) -> str:
-        if not url.startswith('http'):
-            raise ValidationError('url should starts with http')
-
-        return url
 
 
 class ReplicaBlockSerializer(TextBlockSerializer):
@@ -176,7 +135,7 @@ class GalleryBlockSerializer(BaseLisBlockSerializer):
 
     class Meta:
         model = GalleryBlock
-        fields = ['location', 'images']
+        fields = ['id', 'location', 'images']
 
     def validate_images(self, images: List[Dict[str, str]]):
         """ Check that images field has specified parameters """
@@ -195,10 +154,7 @@ class EmailBlockSerializer(TextBlockSerializer):
 
     class Meta:
         model = EmailBlock
-        fields = ['npc', 'subject', 'from', 'to'] + TextBlockSerializer.Meta.fields
-
-    def get_from(self, obj: EmailBlock):
-        return obj.f_from
+        fields = ['npc', 'subject', 'sender', 'to'] + TextBlockSerializer.Meta.fields
 
 
 class BrowserBlockSerializer(TextBlockSerializer):
@@ -218,22 +174,63 @@ class TableBlockSerializer(UrlBlockSerializer):
 
 
 class DocBlockSerializer(TextBlockSerializer):
-    block_type = LessonBlockType.doc
+    block_type = LessonBlockType.a10_doc
 
     class Meta:
         model = DocBlock
         fields = ['title'] + TextBlockSerializer.Meta.fields
 
 
+class MessengerStartBlockSerializer(BaseLisBlockSerializer):
+    block_type = LessonBlockType.a12_1_messenger_start
+
+    class Meta:
+        model = MessengerStartBlock
+        fields = ['id']
+
+
+class MessengerEndBlockSerializer(BaseLisBlockSerializer):
+    block_type = LessonBlockType.a12_2_messenger_end
+
+    class Meta:
+        model = MessengerEndBlock
+        fields = ['id']
+
+
+class DownloadingBlockSerializer(BaseLisBlockSerializer):
+    block_type = LessonBlockType.a13_downloading
+
+    class Meta:
+        model = DownloadingBlock
+        fields = ['id', 'title', 'url', 'location']
+
+
+class ButtonBlockSerializer(BaseLisBlockSerializer):
+    block_type = LessonBlockType.a16_button
+
+    class Meta:
+        model = ButtonBlock
+        fields = ['id', 'value']
+
+
 class VideoBlockSerializer(UrlBlockSerializer):
-    block_type = LessonBlockType.video
+    block_type = LessonBlockType.a15_video
 
     class Meta:
         model = VideoBlock
         fields = UrlBlockSerializer.Meta.fields
 
 
+class DayCounterBlockSerializer(BaseLisBlockSerializer):
+    block_type = LessonBlockType.a17_days
+
+    class Meta:
+        model = DayCounterBlock
+        fields = ['id', 'location', 'value']
+
+
 class TaskBlockSerializer(BaseLisBlockSerializer):
+    description = serializers.CharField(allow_blank=True)
     ifCorrect = serializers.CharField(source='if_correct')
     ifIncorrect = serializers.CharField(source='if_incorrect')
 
@@ -245,11 +242,10 @@ class RadiosBlockSerializer(TaskBlockSerializer):
     block_type = LessonBlockType.radios
 
     variants = serializers.JSONField()
-    correct = serializers.IntegerField(write_only=True)
+    correct = serializers.CharField(allow_blank=True)
 
     def validate_variants(self, variants: List[Dict[int, str]]) -> List[Dict[int, str]]:
         _check_missed_fields(variants, {'id', 'variant', 'ifCorrect', 'ifIncorrect'})
-
         return variants
 
     class Meta:
@@ -261,7 +257,7 @@ class CheckboxesBlockSerializer(TaskBlockSerializer):
     block_type = LessonBlockType.checkboxes
 
     variants = serializers.JSONField()
-    correct = serializers.JSONField(write_only=True)
+    correct = serializers.JSONField()
 
     def validate_variants(self, variants: List[Dict[int, str]]) -> List[Dict[int, str]]:
         _check_missed_fields(variants, {'id', 'variant', 'ifCorrect', 'ifIncorrect'})
@@ -278,7 +274,7 @@ class SelectsBlockSerializer(TaskBlockSerializer):
 
     body = serializers.CharField()
     selects = serializers.JSONField()
-    correct = serializers.JSONField(write_only=True)
+    correct = serializers.JSONField()
 
     def validate_selects(self, selects: Dict[int, List[Dict[str, str]]]):
         if not isinstance(selects, dict):
@@ -297,10 +293,11 @@ class SelectsBlockSerializer(TaskBlockSerializer):
 class InputBlockSerializer(TaskBlockSerializer):
     block_type = LessonBlockType.input
 
-    correct = serializers.JSONField(write_only=True)
+    correct = serializers.JSONField()
 
     def validate_correct(self, correct: Dict[str, List[str]]):
         _check_missed_fields([correct], {'ru', 'en'})
+        return correct
 
     class Meta:
         model = InputBlock
@@ -309,9 +306,6 @@ class InputBlockSerializer(TaskBlockSerializer):
 
 class NumberBlockSerializer(TaskBlockSerializer):
     block_type = LessonBlockType.number
-
-    tolerance = serializers.IntegerField(write_only=True)
-    correct = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = NumberBlock
@@ -324,13 +318,19 @@ class RadiosTableBlockSerializer(TaskBlockSerializer):
     columns = serializers.JSONField()
     rows = serializers.JSONField()
     isRadio = serializers.BooleanField(source='is_radio', read_only=True)
-    correct = serializers.JSONField(write_only=True)
+    correct = serializers.JSONField()
 
     def validate_columns(self, columns: List[Dict[str, str]]):
         _check_missed_fields(columns, {'name', 'id'})
+        return columns
 
     def validate_rows(self, rows: Dict[str, str]):
         _check_missed_fields([rows], {'name', 'id', 'ifCorrect', 'ifIncorrect'})
+        return rows
+
+    def validate(self, data):
+        data['is_radio'] = True
+        return data
 
     class Meta:
         model = RadiosTableBlock
@@ -343,13 +343,15 @@ class ImageAnchorsBlockSerializer(TaskBlockSerializer):
     anchors = serializers.JSONField()
     options = serializers.JSONField()
     imgUrl = serializers.CharField(source='img_url')
-    correct = serializers.JSONField(write_only=True)
+    correct = serializers.JSONField()
 
     def validate_anchors(self, anchors: List[Dict[str, str]]):
         _check_missed_fields(anchors, {'name', 'id', 'x', 'y'})
+        return anchors
 
     def validate_options(self, options: List[Dict[str, str]]):
         _check_missed_fields(options, {'value', 'id'})
+        return options
 
     class Meta:
         model = ImageAnchorsBlock
@@ -357,10 +359,10 @@ class ImageAnchorsBlockSerializer(TaskBlockSerializer):
 
 
 class SortBlockSerializer(TaskBlockSerializer):
-    block_type = LessonBlockType.radios
+    block_type = LessonBlockType.sort
 
     options = serializers.JSONField()
-    correct = serializers.JSONField(write_only=True)
+    correct = serializers.JSONField()
 
     def validate_options(self, options: List[Dict[int, str]]) -> List[Dict[int, str]]:
         _check_missed_fields(options, {'value', 'id'})
@@ -372,10 +374,10 @@ class SortBlockSerializer(TaskBlockSerializer):
 
 
 class ComparisonBlockSerializer(TaskBlockSerializer):
-    block_type = LessonBlockType.radios
+    block_type = LessonBlockType.comparison
 
     lists = serializers.JSONField()
-    correct = serializers.JSONField(write_only=True)
+    correct = serializers.JSONField()
 
     def validate_lists(self, lists: List[List[Dict[str, str]]]):
         for row in lists:
@@ -552,7 +554,7 @@ class UnitSerializer(LisEditorModelSerializer):
         # creating content
         content_serializer = self.get_unit_content_serializer(validated_data['type'])
         content = content_serializer(data=validated_data['content'])
-        content.is_valid()
+        content.is_valid(raise_exception=True)
         content = content.save()
 
         # creating unit
@@ -570,9 +572,9 @@ class UnitSerializer(LisEditorModelSerializer):
         content_serializer = self.get_unit_content_serializer(validated_data['type'])
         instance.next = validated_data.get('next', instance.next)
 
-        if instance.type == validated_data['type']:
+        if instance.type == validated_data['type'] and instance.content:
             content_obj = content_serializer.Meta.model.objects.filter(
-                id=validated_data['content']['id']
+                id=instance.content['id']
             ).only().first()
             obj = content_serializer(content_obj, data=validated_data['content'], partial=True)
             obj.is_valid()
@@ -581,7 +583,9 @@ class UnitSerializer(LisEditorModelSerializer):
             validated_data['content'] = obj.data
 
         instance.type = validated_data.get('type', instance.type)
-        instance.content = validated_data['content']
+        instance.content = validated_data.get('content', instance.content)
+        instance.x = validated_data.get('x', instance.x)
+        instance.y = validated_data.get('y', instance.x)
         instance.save()
 
         return instance
@@ -635,7 +639,6 @@ class LessonContentSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         # если нам передали блоки, то обновляем
         if 'blocks' in validated_data:
-            # TODO: почему то приходят десериализованные данные
             for block in validated_data['blocks']:
                 block['lesson'] = block['lesson'].id
 
@@ -691,7 +694,6 @@ class LessonListSerializer(serializers.ListSerializer):
             ret.append(obj_serializer.save())
 
         lids_to_delete = set(local2instance.keys()) - set(local2data.keys())
-        print(3, lids_to_delete, Lesson.objects.filter(local_id__in=lids_to_delete).count())
         # TODO: как то сохранять или создавать новые версии (ревизии)
         Lesson.objects.filter(local_id__in=lids_to_delete).delete()
 
@@ -994,7 +996,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ['id', 'lessons', 'quests', 'branchings', 'name', 'description', 'entry', 'locale']
+        fields = ['id', 'lessons', 'quests', 'branchings', 'name', 'description', 'entry', 'locale', 'is_editable']
 
     def to_representation(self, instance):
         """ Filter lessons and branchings inside quests """

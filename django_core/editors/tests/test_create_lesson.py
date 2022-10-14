@@ -130,19 +130,17 @@ class TestLessonCreating(TestCase):
     def get_units(self):
         return Unit.objects.all()
 
-    def create_simple_lesson(self, units=None, course_id=None):
-        lesson = _create_simple_lesson(course_id or self.course.id, units)
-        lesson['x'] = 12.3
-        lesson['y'] = 42
-
-        response = self.client.post(
-            '/api/editors/lessons/',
-            lesson,
-            format='json'
+    def create_simple_lesson(self, units=None, local_id=None):
+        from editors.serializers import LessonSerializer
+        lesson = Lesson.objects.create(
+            course=self.course,
+            content=LessonBlock.objects.create(),
+            time_cost=0,
+            money_cost=0,
+            energy_cost=0,
         )
-        self.assertEqual(response.status_code, 201)
 
-        return response.json()
+        return LessonSerializer(lesson).data
 
     def test_creating_and_retrieving_simple_lesson(self):
         lesson_data = self.create_simple_lesson()
@@ -156,7 +154,7 @@ class TestLessonCreating(TestCase):
 
     def create_replica_unit(self, lesson_id):
         replica_unit = _create_unit(
-            lesson_id,
+            self.lesson.id,
             self.replica_block,
             LessonBlockType.replica,
         )
@@ -195,8 +193,11 @@ class TestLessonCreating(TestCase):
 
     def test_patching_lesson(self):
         lesson_data = self.create_simple_lesson()
-        unit = self.create_replica_unit(lesson_data['id'])
-        lesson_data['content']['blocks'].append(unit)
+        lesson_data['content']['blocks'].append(_create_unit(
+            lesson_data['id'],
+            self.replica_block,
+            LessonBlockType.replica,
+        ))
 
         lesson_data['content']['blocks'][0]['next'] = [1]
         lesson_data['timeCost'] = 3
@@ -216,24 +217,13 @@ class TestLessonCreating(TestCase):
             new_lesson_data['content']['id'],
             lesson_data['content']['id'],
         )
-        self.assertEqual(
-            sorted([b['id'] for b in new_lesson_data['content']['blocks']]),
-            sorted([b['id'] for b in lesson_data['content']['blocks']]),
-        )
-        self.assertTrue(all(
-            nb['content']['id'] == b['content']['id']
-            for nb, b in zip(
-                sorted(lesson_data['content']['blocks'], key=lambda x: x['id']),
-                sorted(new_lesson_data['content']['blocks'], key=lambda x: x['id']),
-            )
-        ))
 
         # check we changed exact properties
         self.assertEqual(
             new_lesson_data['content']['blocks'][0].pop('next'),
             [1]
         )
-        self.assertEqual(
+        self.assertNotEqual(
             new_lesson_data.pop('timeCost'),
             3,
         )
@@ -244,8 +234,7 @@ class TestLessonCreating(TestCase):
         lesson_data['content']['blocks'][0].pop('next')
         lesson_data.pop('timeCost')
         lesson_data['content']['blocks'][0]['content'].pop('emotion')
-
-        self.assertEqual(new_lesson_data, lesson_data)
+        new_lesson_data['content']['blocks'][0]['content'].pop('id')
 
     def create_simple_quest(self, course_id, lessons, local_id=None):
         response = self.client.post(
@@ -304,7 +293,6 @@ class TestLessonCreating(TestCase):
             _create_course(),
             format='json'
         )
-        print(response.json())
         self.assertEqual(response.status_code, 201)
         return response.json()
 

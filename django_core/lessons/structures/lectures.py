@@ -56,7 +56,7 @@ class GalleryBlock(LessonBlock):
 class EmailBlock(TextBlock):
     npc = models.IntegerField()
     subject = models.TextField()
-    f_from = models.TextField()
+    sender = models.TextField()
     to = models.TextField()
 
 
@@ -74,3 +74,27 @@ class DocBlock(TextBlock):
 
 class VideoBlock(URLBlock):
     pass
+
+
+class MessengerStartBlock(LessonBlock):
+    pass
+
+
+class MessengerEndBlock(LessonBlock):
+    pass
+
+
+class DownloadingBlock(LessonBlock):
+    title = models.CharField(max_length=120)
+    url = models.CharField(max_length=2047)
+    location = models.IntegerField()
+
+
+class ButtonBlock(LessonBlock):
+    """ A16 """
+    value = models.CharField(max_length=255)
+
+
+class DayCounterBlock(LessonBlock):
+    location = models.IntegerField()
+    value = models.IntegerField()

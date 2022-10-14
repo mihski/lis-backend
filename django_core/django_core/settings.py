@@ -1,5 +1,6 @@
 from datetime import timedelta
 from pathlib import Path
+import datetime
 import os
 
 
@@ -35,6 +36,7 @@ INSTALLED_APPS = [
     "lessons.apps.LessonConfig",
     "resources",
     "editors",
+    "student_tasks",
 ]
 
 MIDDLEWARE = [
@@ -70,8 +72,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "django_core.wsgi.application"
 
-# Database
 
+# Database
 DATABASES = {
     'default': {
         "ENGINE": "django.db.backends.postgresql",
@@ -88,14 +90,12 @@ DATABASES = {
 
 
 # Celery configurations
-
 CELERY_BROKER_URL = "redis://redis:6379/0"
 CELERY_RESULT_BACKEND = "redis://redis:6379/0"
 CELERY_TIMEZONE = "Europe/Moscow"
 
 
 # Django caches configurations
-
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -110,7 +110,6 @@ CACHES = {
 
 
 # Constance configurations
-
 CONSTANCE_REDIS_CONNECTION = {
     "host": "redis",
     "port": 6379,
@@ -119,13 +118,10 @@ CONSTANCE_REDIS_CONNECTION = {
 
 
 # Authorizations configs
-
 AUTH_USER_MODEL = "accounts.User"
 
 
 # Password validation
-# https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -143,7 +139,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # CORS headers
 # https://pypi.org/project/django-cors-headers/
-
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
@@ -169,31 +164,22 @@ CORS_ALLOW_METHODS = [
 ]
 
 # Internationalization
-# https://docs.djangoproject.com/en/3.1/topics/i18n/
 
 LANGUAGE_CODE = "ru-ru"
-
 TIME_ZONE = "Europe/Moscow"
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
-
 CONN_MAX_AGE = None
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.1/howto/static-files/
-
-STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "static")
+STATIC_URL = '/django_static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'django_static')
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Jazzmin configuration
-
 JAZZMIN_SETTINGS = {
     "topmenu_links": [
         {"name": "Редактор курсов",  "url": "/editor/"},

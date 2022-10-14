@@ -31,4 +31,4 @@ class EditorSession(models.Model):
     def __str__(self):
         prefix = '' if not self.local_id else '- ' + str(self.get_content())
 
-        return f"EditorSession[{self.id}] {self.user} - {self.course} {prefix}"
+        return f"EditorSession[{self.id}] {self.user} - {self.course} {prefix}" + " [closed]" * self.is_closed

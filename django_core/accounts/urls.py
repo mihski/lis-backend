@@ -1,13 +1,21 @@
 from rest_framework.routers import SimpleRouter
+from django.urls import path
 
-from accounts.views import UserViewSet
+from accounts.views import ProfileViewSet
 
 app_name = 'accounts'
 
 router = SimpleRouter()
-router.register('users', UserViewSet)
 
-urlpatterns = router.urls
+urlpatterns = [
+    path(
+        "profile/",
+        ProfileViewSet.as_view(
+            {"put": "partial_update", "get": "retrieve"}
+        ),
+        name="profile-retrieve-update",
+    )
+] + router.urls
 
 
 # Override only one auth for one account

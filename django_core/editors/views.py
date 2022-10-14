@@ -1,4 +1,4 @@
-from rest_framework import mixins, viewsets, authentication, permissions, decorators, response
+from rest_framework import mixins, viewsets, authentication, permissions, decorators, response, exceptions
 from django_filters import rest_framework as filters
 
 from lessons.models import Lesson, Unit, Quest, Course
@@ -25,6 +25,27 @@ class CourseViewSet(
 
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
+
+    @decorators.action(methods=["GET"], detail=True, url_path='locale')
+    def get_locale(self, request, pk, *args, **kwargs):
+        course = Course.objects.get(pk=pk)
+        return response.Response(course.locale)
+
+    def update(self, request, *args, **kwargs):
+        course = self.get_object()
+
+        if not course.is_editable:
+            raise exceptions.NotAcceptable("Курс нельзя редактировать")
+
+        if not EditorSession.objects.filter(
+            user=request.user,
+            course__id=course.id,
+            local_id='',
+            is_closed=False
+        ).exists():
+            raise exceptions.PermissionDenied()
+
+        return super().update(request, *args, **kwargs)
 
 
 class QuestViewSet(
@@ -59,6 +80,19 @@ class LessonEditorViewSet(
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
 
+    def update(self, request, *args, **kwargs):
+        lesson = self.get_object()
+
+        if not EditorSession.objects.filter(
+            user=request.user,
+            course__id=lesson.course.id,
+            local_id=lesson.local_id,
+            is_closed=False
+        ).exists():
+            raise exceptions.PermissionDenied()
+
+        return super().update(request, *args, **kwargs)
+
 
 class UnitEditorViewSet(
     mixins.RetrieveModelMixin,
@@ -73,7 +107,7 @@ class UnitEditorViewSet(
     queryset = Unit.objects.all()
     serializer_class = UnitSerializer
 
-
+    
 class EditorSessionViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
@@ -91,8 +125,9 @@ class EditorSessionViewSet(
     def get_session_query(self, request):
         user_editor_session_query = EditorSession.objects.filter(course__id=request.data["course"], is_closed=False)
 
-        if "local_id" in request.data:
-            user_editor_session_query = user_editor_session_query.filter(local_id=request.data["local_id"])
+        local_id = request.data.get('local_id', '')
+
+        user_editor_session_query = user_editor_session_query.filter(local_id=local_id)
 
         return user_editor_session_query
 
@@ -130,3 +165,11 @@ class EditorSessionViewSet(
         user_editor_session.save()
 
         return response.Response({"status": "ok"})
+
+    @decorators.action(methods=["POST"], detail=False, url_path='my_active_sessions')
+    def my_active_sessions(self, request, *args, **kwargs):
+        user_sessions = EditorSession.objects.filter(user=request.user, is_closed=False)
+
+        return response.Response({
+            'sessions': EditorSessionSerializer(user_sessions, many=True).data
+        })

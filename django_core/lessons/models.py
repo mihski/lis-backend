@@ -9,8 +9,8 @@ GENDERS = (
 
 
 class EditorBlockModel(models.Model):
-    block_id = models.IntegerField(default=None, null=True, blank=True)
-    local_id = models.CharField(max_length=255, default='', blank=True)
+    block_id = models.IntegerField(default=None, null=True, blank=True)  # deprecated
+    local_id = models.CharField(max_length=255, default='', blank=True)  # n_1660813403095
     x = models.FloatField(default=0)
     y = models.FloatField(default=0)
 
@@ -24,6 +24,8 @@ class Course(models.Model):
 
     entry = models.CharField(default=None, max_length=120, blank=True, null=True)
     locale = models.JSONField(default=dict)
+
+    is_editable = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name
@@ -56,7 +58,7 @@ class Laboratory(models.Model):
 class LessonBlock(models.Model):
     locale = models.JSONField(default=dict)
     markup = models.JSONField(default={'ru': [], 'en': []})
-    entry = models.CharField(default=None, max_length=120, blank=True, null=True)
+    entry = models.CharField(default=None, max_length=120, blank=True, null=True)  # if root -> local_id 1st unit
 
 
 class Lesson(EditorBlockModel):
@@ -88,4 +90,46 @@ class Unit(EditorBlockModel):
     lesson_block = models.ForeignKey(LessonBlock, on_delete=models.SET_NULL, null=True, related_name='blocks')
     type = models.IntegerField()
     content = models.JSONField()
-    next = models.JSONField()
+    next = models.JSONField()  # ["n_12313", "n_asdzcx"]
+
+
+class NPC(models.Model):
+    class NPCGenders(models.TextChoices):
+        MALE = "male"
+        FEMALE = "female"
+
+    uid = models.CharField(max_length=7, unique=True)
+
+    ru_name = models.CharField(max_length=31)
+    en_name = models.CharField(max_length=31)
+
+    gender = models.CharField(max_length=6, choices=NPCGenders.choices, default=NPCGenders.MALE)
+    age = models.IntegerField(default=0)
+
+    ru_description = models.TextField(blank=True)
+    en_description = models.TextField(blank=True)
+
+    ru_tags = models.CharField(max_length=255, blank=True)
+    en_tags = models.CharField(max_length=255, blank=True)
+
+    is_scientific_director = models.BooleanField(default=False)
+
+    usual_image = models.ImageField(upload_to='npc_emotions')
+    angry_image = models.ImageField(upload_to='npc_emotions')
+    fair_image = models.ImageField(upload_to='npc_emotions')
+    sad_image = models.ImageField(upload_to='npc_emotions')
+
+    def __str__(self):
+        return f"NPC[{self.uid}] {self.ru_name}"
+
+
+class Location(models.Model):
+    uid = models.CharField(max_length=7, unique=True)
+    ru_name = models.CharField(max_length=31)
+    en_name = models.CharField(max_length=31)
+
+    image = models.ImageField(upload_to='locations')
+    image_disabled = models.ImageField(upload_to='locations')
+
+    def __str__(self):
+        return f"Location[{self.uid}] {self.ru_name}"

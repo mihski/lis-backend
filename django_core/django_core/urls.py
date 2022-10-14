@@ -18,10 +18,11 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/", include("accounts.urls", namespace="accounts")),
-    path("api/", include("resources.urls", namespace="resources")),
+    path("api/accounts", include("accounts.urls", namespace="accounts")),
+    path("api/lessons", include("resources.urls", namespace="resources")),
     path("api/sso_auth/", include('sso_app.urls', namespace="sso_app")),
     path("api/editors/", include("editors.urls", namespace="editors")),
+    path("api/tasks/", include("student_tasks.urls", namespace="tasks")),
     path("api/swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
     path("api/auth/", include("djoser.urls")),
     path("api/auth/", include("djoser.urls.jwt")),
