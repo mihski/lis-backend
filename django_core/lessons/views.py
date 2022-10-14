@@ -29,7 +29,13 @@ class LocationViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class CourseMapViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
-    queryset = Course.objects.prefetch_related("lessons", "quests", "branchings")
+    queryset = Course.objects.prefetch_related(
+        "lessons",
+        "quests",
+        "branchings",
+        "quests__lessons",
+        "quests__branchings",
+    )
     serializer_class = CourseMapSerializer
 
     permission_classes = (permissions.IsAuthenticated, )

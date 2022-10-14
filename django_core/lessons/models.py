@@ -28,7 +28,7 @@ class Course(models.Model):
     is_editable = models.BooleanField(default=True)
 
     def __str__(self):
-        return self.name
+        return f"Course[{self.id}] {self.name}"
 
 
 class Quest(EditorBlockModel):
@@ -88,7 +88,7 @@ class Lesson(EditorBlockModel):
     next = models.CharField(max_length=255, default='', blank=True)
 
     def __str__(self):
-        return self.name
+        return f"Lesson[{self.id}] {self.course}"
 
 
 class Unit(EditorBlockModel):
@@ -143,6 +143,7 @@ class Location(models.Model):
 
 class CourseMapImg(models.Model):
     course = models.ForeignKey("Course", on_delete=models.CASCADE)
+    order = models.IntegerField(default=0)
     image = models.ImageField(upload_to="course_map_images")
     image_disabled = models.ImageField(upload_to="course_map_images")
 

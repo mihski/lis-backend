@@ -162,7 +162,8 @@ class CourseMapSerializer(serializers.ModelSerializer):
 
         for obj in filter(lambda x: x, map_list):
             serialized_map_list.append(model_to_serializer[obj.__class__](obj).data)
-        serialized_map_list.extend([None] * map_list.count(None))
+
+        serialized_map_list.extend([None] * (tree.get_max_depth() - len(serialized_map_list)))
 
         return serialized_map_list
 

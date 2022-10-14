@@ -24,10 +24,10 @@ class CourseLessonNode(AbstractNode):
         return self.local_id
 
     @property
-    def next_ids(self):
+    def next_ids(self) -> list[str]:
         if self.is_branching:
             if self.course_block.type == BranchingType.profile_parameter.value:
-                return self.course_block.content['next'].values()
+                return list(self.course_block.content['next'].values())
 
             if self.course_block.type == BranchingType.one_from_n.value:
                 return self.course_block.content['next']
@@ -54,13 +54,11 @@ class CourseLessonsTree(AbstractNodeTree):
 
         blocks: list[CourseBlockType] = []
 
+        blocks.extend(list(entity.lessons.all()))
+        blocks.extend(list(entity.branchings.all()))
+
         if isinstance(entity, Course):
-            blocks.extend(list(Lesson.objects.filter(course=entity)))
-            blocks.extend(list(Branching.objects.filter(course=entity)))
-            blocks.extend(list(Quest.objects.filter(course=entity)))
-        elif isinstance(entity, Quest):
-            blocks.extend(list(Lesson.objects.filter(quest=entity)))
-            blocks.extend(list(Branching.objects.filter(quest=entity)))
+            blocks.extend(list(entity.quests.all()))
 
         self.m_blocks = {block.local_id: block for block in blocks}
 
@@ -77,6 +75,41 @@ class CourseLessonsTree(AbstractNodeTree):
 
     def _get_element_by_id(self, element_id: str):
         return self.m_blocks[element_id]
+
+    def get_max_depth(self):
+        stack = [self.tree.local_id]
+        depth = 0
+
+        while stack:
+            node = self.tree_elements[stack[-1]]
+
+            if isinstance(node.course_block, Quest):
+                quest_tree = CourseLessonsTree(node.course_block)
+                quest_depth = quest_tree.get_max_depth()
+                depth += quest_depth
+            elif isinstance(node.course_block, Lesson):
+                depth += 1
+            elif isinstance(node.course_block, Branching):
+                if node.course_block.type == BranchingType.six_from_n.value:
+                    for local_id in node.course_block.content['list']:
+                        block = self.m_blocks[local_id]
+
+                        # TODO: add Branching case (recursion?)
+                        if isinstance(block, Quest):
+                            quest_tree = CourseLessonsTree(block)
+                            depth += quest_tree.get_max_depth()
+                        elif isinstance(block, Lesson):
+                            depth += 1
+
+                if node.course_block.type != BranchingType.profile_parameter.value:
+                    depth += 1
+
+            if not node.next_ids:
+                break
+
+            stack.append(node.next_ids[0])
+
+        return depth
 
     def get_map_for_profile(self, profile: Profile) -> list[Lesson | Branching | None]:
         stack: list[str] = [self.tree.local_id]
@@ -130,7 +163,6 @@ class CourseLessonsTree(AbstractNodeTree):
 
                 stack.append(node.next_ids[0])
 
-        # map_list += [None] * (38 - len(map_list))
         return map_list
 
     def get_active(self, profile: Profile) -> int:
