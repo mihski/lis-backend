@@ -17,9 +17,9 @@ class UserAdmin(BaseUserAdmin):
             'fields': ('email', 'password'),
         }),
     )
-    list_display = ('email', 'is_superuser')
+    list_display = ('email', 'username', 'is_superuser')
     list_filter = ('is_superuser', )
-    search_fields = ('email', )
+    search_fields = ('email', 'username')
     ordering = ('email', )
 
 

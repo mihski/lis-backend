@@ -1,23 +1,44 @@
 from django.db import models
-from django.conf import settings
+
+from accounts.models import Profile
 
 
 class EmotionData(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    """
+        Таблица БД для хранения эмоций персонажа (профиля)
+    """
+    user =  models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="emotions")
     emotion_content = models.JSONField(default=dict)
     created_at = models.DateTimeField(auto_created=True)
 
+    class Meta:
+        app_label = "resources"
+        verbose_name = "EmotionData"
+        verbose_name_plural = "EmotionsData"
+
+    def __repr__(self) -> str:
+        return f"{self._meta.verbose_name} - {self.user.user.username}"
+
+    def __str__(self) -> str:
+        return repr(self)
+
 
 class Resources(models.Model):
-    RESOURCE_TYPE = (
-        ('energy', 'Энергия'),
-    )
+    """
+        Таблица БД для хранения ресурсов персонажа (профиля)
+    """
+    user = models.OneToOneField(Profile, on_delete=models.CASCADE, related_name="resources")
+    time_amount = models.PositiveIntegerField(default=0)
+    money_amount = models.PositiveIntegerField(default=0)
+    energy_amount = models.PositiveIntegerField(default=0)
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    name = models.CharField(max_length=255)
-    resource_type = models.CharField(max_length=10, choices=RESOURCE_TYPE)
-    amount = models.IntegerField(default=0)
+    class Meta:
+        verbose_name = "Resource"
+        verbose_name_plural = "Resources"
+        app_label = "resources"
 
+    def __repr__(self) -> str:
+        return f"{self._meta.verbose_name} - {self.user.user.username}"
 
-class Bonuses(models.Model):
-    content = models.JSONField()
+    def __str__(self) -> str:
+        return repr(self)

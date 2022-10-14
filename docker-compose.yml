@@ -55,9 +55,9 @@ services:
         env_file:
             environments/app.env
         volumes:
-            - ./django_core/:/usr/src/app/
+            - ./django_core:/django_core
         depends_on:
-            - redis
+            - backend
 
     celery-beat:
         build: ./django_core
@@ -65,8 +65,8 @@ services:
         env_file:
             environments/app.env
         volumes:
-            - ./django_core/:/usr/src/app/
+            - ./django_core:/django_core
         depends_on:
-            - redis
+            - backend
 volumes:
     postgres_data: {}
