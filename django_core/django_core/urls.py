@@ -20,7 +20,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("accounts.urls", namespace="accounts")),
     path("api/", include("resources.urls", namespace="resources")),
-    path("api/", include("lessons.urls", namespace="lessons")),
+    path("api/lessons/", include("lessons.urls", namespace="lessons")),
     path("api/sso_auth/", include('sso_app.urls', namespace="sso_app")),
     path("api/editors/", include("editors.urls", namespace="editors")),
     path("api/tasks/", include("student_tasks.urls", namespace="tasks")),

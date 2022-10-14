@@ -28,7 +28,7 @@ class Course(models.Model):
     is_editable = models.BooleanField(default=True)
 
     def __str__(self):
-        return self.name
+        return f"Course[{self.id}] {self.name}"
 
 
 class Quest(EditorBlockModel):
@@ -49,6 +49,12 @@ class Branching(EditorBlockModel):
     quest = models.ForeignKey(Quest, default=None, null=True, blank=True, on_delete=models.SET_NULL, related_name='branchings')
     type = models.IntegerField()
     content = models.JSONField()
+
+
+class ProfileBranchingChoice(models.Model):
+    profile = models.ForeignKey("accounts.Profile", on_delete=models.CASCADE)
+    branching = models.ForeignKey("Branching", on_delete=models.CASCADE)
+    choose_local_id = models.CharField(max_length=120, blank=True)
 
 
 class Laboratory(models.Model):
@@ -82,7 +88,7 @@ class Lesson(EditorBlockModel):
     next = models.CharField(max_length=255, default='', blank=True)
 
     def __str__(self):
-        return self.name
+        return f"Lesson[{self.id}] {self.course}"
 
 
 class Unit(EditorBlockModel):
@@ -133,3 +139,13 @@ class Location(models.Model):
 
     def __str__(self):
         return f"Location[{self.uid}] {self.ru_name}"
+
+
+class CourseMapImg(models.Model):
+    course = models.ForeignKey("Course", on_delete=models.CASCADE)
+    order = models.IntegerField(default=0)
+    image = models.ImageField(upload_to="course_map_images")
+    image_disabled = models.ImageField(upload_to="course_map_images")
+
+    def __str__(self):
+        return f"CourseMapImg[{self.order}] for {self.course.name}"

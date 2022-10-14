@@ -98,6 +98,13 @@ class Profile(models.Model):
         ("male", "Мужской"),
         ("female", "Женский"),
     )
+    LABORATORIES = (
+        ('it', "IT"),
+        ('ls', "Науки о жизни"),
+        ('mi', "Менеджмент и инновации"),
+        ('ctm', "Компьютерные технологии и управления"),
+        ('pts', "Физико-технические науки"),
+    )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="profile")
     first_name = models.CharField(max_length=63)
@@ -109,6 +116,12 @@ class Profile(models.Model):
         default=UniversityPosition.STUDENT,
         max_length=40
     )
+    scientific_director = models.ForeignKey('lessons.NPC', on_delete=models.SET_NULL, null=True, blank=True)
+    laboratory = models.CharField(max_length=120, choices=LABORATORIES, default="it")
+    head_form = models.CharField(max_length=15, blank=True)
+    face_form = models.CharField(max_length=15, blank=True)
+    hair_form = models.CharField(max_length=15, blank=True)
+    dress_form = models.CharField(max_length=15, blank=True)
 
     class Meta:
         app_label = "accounts"

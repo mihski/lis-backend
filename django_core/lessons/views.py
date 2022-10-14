@@ -1,13 +1,21 @@
-from rest_framework import viewsets, permissions, authentication
+from rest_framework import viewsets, permissions, authentication, mixins, validators
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from accounts.models import Profile
 from accounts.serializers import ProfileSerializerWithoutLookForms
-from lessons.models import NPC, Location, Lesson
-from lessons.serializers import NPCSerializer, LocationDetailSerializer, LessonDetailSerializer
-from helpers.structures import LessonUnitsTree, CourseLessonsTree
+from lessons.models import NPC, Location, Lesson, Course, Branching
+from lessons.serializers import (
+    NPCSerializer,
+    LocationDetailSerializer,
+    LessonDetailSerializer,
+    CourseMapSerializer,
+    BranchingSelectSerializer,
+    BranchingDetailSerializer
+)
+from helpers.lesson_tree import LessonUnitsTree
+from helpers.course_tree import CourseLessonsTree
 
 
 class NPCViewSet(viewsets.ReadOnlyModelViewSet):
@@ -18,6 +26,32 @@ class NPCViewSet(viewsets.ReadOnlyModelViewSet):
 class LocationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Location.objects.all()
     serializer_class = LocationDetailSerializer
+
+
+class CourseMapViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
+    queryset = Course.objects.prefetch_related(
+        "lessons",
+        "quests",
+        "branchings",
+        "quests__lessons",
+        "quests__branchings",
+    )
+    serializer_class = CourseMapSerializer
+
+    permission_classes = (permissions.IsAuthenticated, )
+
+
+class BranchSelectViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.UpdateModelMixin):
+    queryset = Branching.objects.all()
+    lookup_field = "local_id"
+
+    permission_classes = (permissions.IsAuthenticated, )
+
+    def get_serializer_class(self):
+        if self.request.method in ["PATCH", "PUT"]:
+            return BranchingSelectSerializer
+
+        return BranchingDetailSerializer
 
 
 class LessonDetailViewSet(
@@ -56,6 +90,8 @@ class LessonDetailViewSet(
                 'npc': first_npc_id or -1,
                 'locales': locales,
                 'tasks': unit_tree.task_count,
+                'quest_number': course_tree.get_quest_number(lesson),
+                'lesson_number': course_tree.get_lesson_number(lesson),
             })
 
         data = {**lesson_data, 'player': player.data, 'chunk': unit_chunk}
