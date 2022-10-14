@@ -35,7 +35,7 @@ class CourseLessonNode(AbstractNode):
             if self.course_block.type == BranchingType.six_from_n.value:
                 return [self.course_block.content['next']]
 
-        if not self.course_block.next:
+        if not self.course_block.next or self.course_block.next == "-1":
             return []
 
         return [self.course_block.next]
@@ -152,9 +152,6 @@ class CourseLessonsTree(AbstractNodeTree):
                     break
 
                 stack.append(node.course_block.next)
-
-                if None in map_list:
-                    break
             else:
                 map_list.append(node.course_block)
 
