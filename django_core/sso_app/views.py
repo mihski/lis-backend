@@ -22,7 +22,7 @@ class RedirectISUTest(APIView):
     Симулирует возвращение code.
     """
     def get(self, request):
-        return HttpResponseRedirect('http://localhost:3000/auth/?code=ASDNKJE83jS')
+        return HttpResponseRedirect('/auth/?code=ASDNKJE83jS')
 
 
 class GetISUToken(APIView):
