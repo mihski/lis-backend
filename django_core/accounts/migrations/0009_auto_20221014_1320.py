@@ -48,9 +48,9 @@ class Migration(migrations.Migration):
             name='middle_name',
             field=models.CharField(max_length=63),
         ),
-        migrations.AlterField(
-            model_name='profile',
-            name='user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='profile', to=settings.AUTH_USER_MODEL),
-        ),
+        # migrations.AlterField(
+        #     model_name='profile',
+        #     name='user',
+        #     field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='profile', to=settings.AUTH_USER_MODEL),
+        # ),
     ]

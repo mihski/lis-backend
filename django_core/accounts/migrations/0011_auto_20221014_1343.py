@@ -37,9 +37,9 @@ class Migration(migrations.Migration):
             name='scientific_director',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='lessons.npc'),
         ),
-        migrations.AddField(
-            model_name='profile',
-            name='university_position',
-            field=models.CharField(choices=[('Студент', 'Student'), ('Стажер', 'Intern'), ('Лаборант', 'Laboratory Assistant'), ('Инженер', 'Engineer'), ('Мл. научный сотрудник', 'Jun Research Assistant')], default='Студент', max_length=40),
-        ),
+        # migrations.AddField(
+        #     model_name='profile',
+        #     name='university_position',
+        #     field=models.CharField(choices=[('Студент', 'Student'), ('Стажер', 'Intern'), ('Лаборант', 'Laboratory Assistant'), ('Инженер', 'Engineer'), ('Мл. научный сотрудник', 'Jun Research Assistant')], default='Студент', max_length=40),
+        # ),
     ]
