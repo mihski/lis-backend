@@ -52,3 +52,10 @@ class BranchingType(Enum):
     profile_parameter = 1
     six_from_n = 2
     one_from_n = 3
+
+
+class BranchingViewType(Enum):
+    parameter = 1
+    m_from_n = 2
+    fork = 3  # choice of 1 quest from N
+    lessons_fork = 4  # choice of 1 lesson from N

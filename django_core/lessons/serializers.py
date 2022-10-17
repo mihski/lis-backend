@@ -2,7 +2,7 @@ from rest_framework import serializers, validators
 
 from accounts.models import Profile
 from lessons.models import NPC, Location, Lesson, Unit, Course, Branching, CourseMapImg, ProfileBranchingChoice, Quest
-from lessons.structures import BlockType, BranchingType
+from lessons.structures import BlockType, BranchingType, BranchingViewType
 from helpers.course_tree import CourseLessonsTree
 
 
@@ -57,12 +57,13 @@ class CourseMapCell(serializers.ModelSerializer):
 
 class CourseMapLessonCell(CourseMapCell):
     name = serializers.CharField()
+    type = serializers.ReadOnlyField(default=BlockType.lesson.value)
     quest = serializers.SerializerMethodField()
     energy_cost = serializers.IntegerField()
 
     class Meta:
         model = Lesson
-        fields = ["id", "name", "quest", "energy_cost"]
+        fields = ["id", "name", "type", "quest", "energy_cost"]
 
     def get_quest(self, obj: Lesson) -> dict:
         if not obj.quest:
@@ -72,20 +73,39 @@ class CourseMapLessonCell(CourseMapCell):
 
 
 class CourseMapBranchingCell(CourseMapCell):
-    subtype = serializers.CharField(source="type")
+    subtype = serializers.SerializerMethodField()
+
+    def get_subtype(self, obj: Branching):
+        if obj.type == BranchingType.profile_parameter.value:
+            return BranchingViewType.parameter.value
+        elif obj.type == BranchingType.six_from_n.value:
+            return BranchingViewType.m_from_n.value
+
+        quests = Quest.objects.filter(local_id=obj.content["next"])
+
+        if quests.count() == len(obj.content["next"]):
+            return BranchingViewType.fork.value
+
+        return BranchingViewType.lessons_fork.value
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["type"] = BlockType.branching.value
+        return data
 
     class Meta:
         model = Branching
-        fields = ["id", "subtype"]
+        fields = ["id", "type", "subtype"]
 
 
 class CourseMapImgCell(CourseMapCell):
+    type = serializers.ReadOnlyField(default=BlockType.img.value)
     image = serializers.CharField()
     image_disabled = serializers.CharField()
 
     class Meta:
         model = CourseMapImg
-        fields = ["image", "image_disabled"]
+        fields = ["type", "image", "image_disabled"]
 
 
 class BranchingDetailSerializer(serializers.ModelSerializer):
