@@ -38,6 +38,23 @@ class LessonDetailSerializer(serializers.ModelSerializer):
         fields = ["lesson_name", "lesson_number", "quest_number", "tasks"]
 
 
+class LessonChoiceSerializer(serializers.ModelSerializer):
+    type = serializers.ReadOnlyField(default="lesson")
+
+    class Meta:
+        model = Lesson
+        fields = ["id", "type", "name", "description", "money_cost"]
+
+
+class QuestChoiceSerializer(serializers.ModelSerializer):
+    type = serializers.ReadOnlyField(default="quest")
+    lessons = LessonChoiceSerializer(many=True)
+
+    class Meta:
+        model = Quest
+        fields = ["id", "type", "lessons", "name", "description"]
+
+
 class CourseMapCell(serializers.ModelSerializer):
     MAP_CELL_TYPES = (
         (BlockType.lesson, "Урок"),
@@ -100,8 +117,18 @@ class CourseMapBranchingCell(CourseMapCell):
 
 class CourseMapImgCell(CourseMapCell):
     type = serializers.ReadOnlyField(default=BlockType.img.value)
-    image = serializers.CharField()
-    image_disabled = serializers.CharField()
+    image = serializers.SerializerMethodField()
+    image_disabled = serializers.SerializerMethodField()
+
+    def _get_absolute_url(self, photo_url: str) -> str:
+        request = self.context.get('request')
+        return request.build_absolute_uri(photo_url)
+
+    def get_image(self, map_cell: CourseMapImg) -> str:
+        return self._get_absolute_url(map_cell.image.url)
+
+    def get_image_disabled(self, map_cell: CourseMapImg) -> str:
+        return self._get_absolute_url(map_cell.image.url)
 
     class Meta:
         model = CourseMapImg
@@ -111,10 +138,20 @@ class CourseMapImgCell(CourseMapCell):
 class BranchingDetailSerializer(serializers.ModelSerializer):
     id = serializers.CharField(source="local_id")
     choices = serializers.SerializerMethodField()
+    type = serializers.SerializerMethodField()
 
-    class Meta:
-        model = Branching
-        fields = ["id", "choices", "type"]
+    def get_type(self, obj: Branching):
+        if obj.type == BranchingType.profile_parameter.value:
+            return BranchingViewType.parameter.value
+        elif obj.type == BranchingType.six_from_n.value:
+            return BranchingViewType.m_from_n.value
+
+        quests = Quest.objects.filter(local_id=obj.content["next"])
+
+        if quests.count() == len(obj.content["next"]):
+            return BranchingViewType.fork.value
+
+        return BranchingViewType.lessons_fork.value
 
     def get_choices(self, obj: Branching) -> None:
         lesson_local_ids = []
@@ -125,7 +162,18 @@ class BranchingDetailSerializer(serializers.ModelSerializer):
         if obj.type == BranchingType.one_from_n.value:
             lesson_local_ids.extend(obj.content['next'])
 
-        return LessonDetailSerializer(Lesson.objects.filter(local_id__in=lesson_local_ids), many=True).data
+        lessons_data = LessonChoiceSerializer(
+            Lesson.objects.filter(local_id__in=lesson_local_ids), many=True
+        ).data
+        quests_data = QuestChoiceSerializer(
+            Quest.objects.filter(local_id__in=lesson_local_ids), many=True
+        ).data
+
+        return lessons_data + quests_data
+
+    class Meta:
+        model = Branching
+        fields = ["id", "choices", "type"]
 
 
 class BranchingSelectSerializer(serializers.ModelSerializer):
@@ -184,7 +232,10 @@ class CourseMapSerializer(serializers.ModelSerializer):
         serialized_map_list = [None] * (tree.get_max_depth() + len(course_map_images))
 
         for course_map in course_map_images:
-            serialized_map_list[course_map.order] = CourseMapImgCell(course_map).data
+            serialized_map_list[course_map.order] = CourseMapImgCell(
+                course_map,
+                context=self.context
+            ).data
 
         j = 0
         for obj in map_list:
