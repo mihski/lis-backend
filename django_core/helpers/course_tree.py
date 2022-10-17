@@ -1,6 +1,8 @@
+from functools import lru_cache
+
 from accounts.models import Profile
 from lessons.models import Lesson, Course, Quest, Branching, ProfileBranchingChoice
-from lessons.structures import BranchingType
+from lessons.structures import BranchingType, BlockType
 from helpers.abstract_tree import AbstractNode, AbstractNodeTree
 
 
@@ -64,11 +66,35 @@ class CourseLessonsTree(AbstractNodeTree):
 
         super().__init__()
 
-    def get_quest_number(self, quest: Quest) -> int:
-        pass
+    def get_quest_number(self, profile: Profile, lesson: Lesson) -> int:
+        course_map = self.get_map_for_profile(profile)
+        quest_index = 0
+        prev_quest_index = None
 
-    def get_lesson_number(self, lesson: Lesson) -> int:
-        pass
+        for course_map_cell in course_map:
+            if isinstance(course_map_cell, Lesson):
+                if course_map_cell.quest is None or course_map_cell.quest != prev_quest_index:
+                    quest_index += 1
+
+                prev_quest_index = course_map_cell.quest
+
+                if lesson.local_id == course_map_cell.local_id:
+                    return quest_index
+
+        return -1
+
+    def get_lesson_number(self, profile: Profile, lesson: Lesson) -> int:
+        course_map = self.get_map_for_profile(profile)
+        lesson_index = 0
+
+        for course_map_cell in course_map:
+            if isinstance(course_map_cell, Lesson):
+                lesson_index += 1
+
+                if lesson.local_id == course_map_cell.local_id:
+                    return lesson_index
+
+        return -1
 
     def _get_first_element(self):
         return self.m_blocks[self.entity.entry]
@@ -76,6 +102,7 @@ class CourseLessonsTree(AbstractNodeTree):
     def _get_element_by_id(self, element_id: str):
         return self.m_blocks[element_id]
 
+    @lru_cache
     def get_max_depth(self):
         stack = [self.tree.local_id]
         depth = 0
@@ -102,6 +129,7 @@ class CourseLessonsTree(AbstractNodeTree):
 
         return depth
 
+    @lru_cache
     def get_map_for_profile(self, profile: Profile) -> list[Lesson | Branching | None]:
         stack: list[str] = [self.tree.local_id]
         map_list: list[CourseBlockType | None] = []

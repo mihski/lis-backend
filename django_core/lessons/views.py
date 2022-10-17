@@ -68,14 +68,14 @@ class LessonDetailViewSet(
     viewsets.ReadOnlyModelViewSet
 ):
     serializer_class = LessonDetailSerializer
-    queryset = Lesson.objects.select_related('course')
+    queryset = Lesson.objects.select_related("course", "quest", "content")
     authentication_classes = [JWTAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
-    lookup_field = 'local_id'
+    lookup_field = "local_id"
 
     def retrieve(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
         lesson = self.get_object()
-        from_unit_id = request.GET.get('from_unit_id', None)
+        from_unit_id = request.GET.get("from_unit_id", None)
 
         unit_tree = LessonUnitsTree(lesson)
         course_tree = CourseLessonsTree(lesson.course)
@@ -92,6 +92,10 @@ class LessonDetailViewSet(
             lesson_data = LessonDetailSerializer(lesson).data
             lesson_name_field = lesson.name
             locales = lesson.content.locale
+
+            locales['ru'] = locales.get('ru', {})
+            locales['en'] = locales.get('en', {})
+
             locales['ru'][lesson_name_field] = lesson.course.locale['ru'][lesson_name_field]
             locales['en'][lesson_name_field] = lesson.course.locale['en'][lesson_name_field]
 
@@ -100,8 +104,8 @@ class LessonDetailViewSet(
                 'npc': first_npc_id or -1,
                 'locales': locales,
                 'tasks': unit_tree.task_count,
-                'quest_number': course_tree.get_quest_number(lesson),
-                'lesson_number': course_tree.get_lesson_number(lesson),
+                'quest_number': course_tree.get_quest_number(profile, lesson),
+                'lesson_number': course_tree.get_lesson_number(profile, lesson),
             })
 
         data = {**lesson_data, 'player': player.data, 'chunk': unit_chunk}

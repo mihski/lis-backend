@@ -101,7 +101,7 @@ class CourseMapLessonCell(CourseMapCell):
         if not obj.quest:
             return {}
 
-        return {"id": obj.quest.id, "name": obj.quest.name}
+        return {"id": obj.quest.local_id, "name": obj.quest.name}
 
 
 class CourseMapBranchingCell(CourseMapCell):

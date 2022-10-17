@@ -68,7 +68,7 @@ class Laboratory(models.Model):
 
 
 class LessonBlock(models.Model):
-    locale = models.JSONField(default=dict)
+    locale = models.JSONField(default={'ru': [], 'en': []})
     markup = models.JSONField(default={'ru': [], 'en': []})
     entry = models.CharField(default=None, max_length=120, blank=True, null=True)  # if root -> local_id 1st unit
 

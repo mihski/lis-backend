@@ -1,4 +1,4 @@
-from collections import defaultdict, deque
+from collections import defaultdict, deque, namedtuple
 from functools import cached_property, lru_cache
 
 from lessons.serializers import UnitDetailSerializer
@@ -57,7 +57,10 @@ class LessonUnitsTree(AbstractNodeTree):
         super().__init__()
 
     def _get_first_element(self):
-        return self._get_element_by_id(self.lesson.content.entry)
+        if self.lesson.content.entry:
+            return self._get_element_by_id(self.lesson.content.entry)
+
+        return namedtuple('Unit', ('local_id', 'type', 'next'))(-1, 0, [])
 
     def _get_element_by_id(self, element_id: str):
         return self.m_units[element_id]
@@ -67,6 +70,9 @@ class LessonUnitsTree(AbstractNodeTree):
 
     @lru_cache(maxsize=1)
     def make_lessons_queue(self, from_unit_id: str = None, hide_task_answers: bool = False) -> tuple[int, int, list[dict]]:
+        if not self.lesson.content.entry:
+            return -1, -1, []
+
         first_location_id = first_npc_id = None
         node = self.tree_elements[from_unit_id or self.lesson.content.entry]
         queue = []
@@ -100,6 +106,9 @@ class LessonUnitsTree(AbstractNodeTree):
 
     @cached_property
     def task_count(self):
+        if not self.lesson.content.entry:
+            return 0
+
         stack = deque([self.tree])
         visited = defaultdict(bool)
 
