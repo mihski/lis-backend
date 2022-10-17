@@ -1,9 +1,24 @@
 from rest_framework import serializers, validators
+from django.contrib.auth import get_user_model
 
 from accounts.models import Profile
-from lessons.models import NPC, Location, Lesson, Unit, Course, Branching, CourseMapImg, ProfileBranchingChoice, Quest
+from lessons.models import (
+    NPC,
+    Location,
+    Lesson,
+    Unit,
+    Course,
+    Branching,
+    CourseMapImg,
+    ProfileBranchingChoice,
+    Quest,
+    Review,
+    Question
+)
 from lessons.structures import BlockType, BranchingType, BranchingViewType
 from helpers.course_tree import CourseLessonsTree
+
+User = get_user_model()
 
 
 class NPCSerializer(serializers.ModelSerializer):
@@ -196,7 +211,7 @@ class BranchingSelectSerializer(serializers.ModelSerializer):
 
         if unexist_local_ids:
             raise validators.ValidationError(f"There is no block with local_id: {unexist_local_ids}")
-        
+
         return choose_local_id
 
     def update(self, branching, validated_data):
@@ -250,3 +265,31 @@ class CourseMapSerializer(serializers.ModelSerializer):
         profile = Profile.objects.get(user=self.context['request'].user)
         tree = CourseLessonsTree(obj)
         return tree.get_active(profile)
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(
+        default=serializers.CurrentUserDefault(),
+        queryset=User.objects.all(),
+    )
+    course_id = serializers.PrimaryKeyRelatedField(
+        queryset=Course.objects.all(), source="course"
+    )
+
+    class Meta:
+        model = Review
+        fields = ["text", "course_id", "user"]
+
+
+class QuestionSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(
+        default=serializers.CurrentUserDefault(),
+        queryset=User.objects.all()
+    )
+    course_id = serializers.PrimaryKeyRelatedField(
+        queryset=Course.objects.all(), source="course"
+    )
+
+    class Meta:
+        model = Question
+        fields = ["text", "course_id", "user"]

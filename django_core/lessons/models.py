@@ -1,4 +1,7 @@
 from django.db import models
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 GENDERS = (
@@ -152,3 +155,35 @@ class CourseMapImg(models.Model):
 
     def __str__(self):
         return f"CourseMapImg[{self.order}] for {self.course.name}"
+
+
+class Review(models.Model):
+    """
+        Таблица БД для хранения отзывов
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reviews")
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="reviews")
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = "lessons"
+        verbose_name = "Review"
+        verbose_name_plural = "Reviews"
+        ordering = ("created_at",)
+
+
+class Question(models.Model):
+    """
+        Таблица БД для хранения вопросов
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="questions")
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="questions")
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = "lessons"
+        verbose_name = "Question"
+        verbose_name_plural = "Questions"
+        ordering = ("created_at",)

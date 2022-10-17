@@ -1,18 +1,28 @@
-from rest_framework import viewsets, permissions, authentication, mixins, validators
+from rest_framework import viewsets, permissions, authentication, mixins, status, validators
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from accounts.models import Profile
 from accounts.serializers import ProfileSerializerWithoutLookForms
-from lessons.models import NPC, Location, Lesson, Course, Branching
+from lessons.models import (
+    NPC,
+    Location,
+    Lesson,
+    Course,
+    Branching,
+    Review,
+    Question
+)
 from lessons.serializers import (
     NPCSerializer,
     LocationDetailSerializer,
     LessonDetailSerializer,
     CourseMapSerializer,
     BranchingSelectSerializer,
-    BranchingDetailSerializer
+    BranchingDetailSerializer,
+    QuestionSerializer,
+    ReviewSerializer
 )
 from helpers.lesson_tree import LessonUnitsTree
 from helpers.course_tree import CourseLessonsTree
@@ -95,5 +105,22 @@ class LessonDetailViewSet(
             })
 
         data = {**lesson_data, 'player': player.data, 'chunk': unit_chunk}
+        return Response(data, status=status.HTTP_200_OK)
 
-        return Response(data)
+
+class ReviewViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
+    """
+        ViewSet для обработки поступающих отзывов
+    """
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+
+class QuestionViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
+    """
+        ViewSet для обработки поступающих вопросов
+    """
+    queryset = Question.objects.all()
+    serializer_class = QuestionSerializer
+    permission_classes = (permissions.IsAuthenticated,)

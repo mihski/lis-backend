@@ -1,9 +1,10 @@
-from datetime import timedelta
-from pathlib import Path
-import datetime
 import os
+import json
+from pathlib import Path
+from datetime import timedelta
 
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("DJANGO_SECRET")
 DEBUG = True
@@ -72,7 +73,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "django_core.wsgi.application"
 
-
 # Database
 DATABASES = {
     'default': {
@@ -87,6 +87,17 @@ DATABASES = {
         },
     }
 }
+
+# SMTP configurations
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+
+EMAIL_RECIPIENTS = json.loads(os.getenv("EMAIL_RECIPIENTS", "[]"))
 
 
 # Celery configurations
@@ -164,7 +175,6 @@ CORS_ALLOW_METHODS = [
 ]
 
 # Internationalization
-
 LANGUAGE_CODE = "ru-ru"
 TIME_ZONE = "Europe/Moscow"
 USE_I18N = True
@@ -173,7 +183,7 @@ USE_TZ = True
 CONN_MAX_AGE = None
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = '/django_static/'
+STATIC_URL = "/django_static/"
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = "/media/"
@@ -204,7 +214,7 @@ if ENVIRONMENT == "PROD":
 else:
     from django_core.configs.dev import *
 
-
+# Auth configurations
 DJOSER = {
     "LOGIN_FIELD": "username",
     "TOKEN_MODEL": None,  # We use only JWT

@@ -4,5 +4,6 @@ __pycache__/
 .DS_Store
 **/static/
 **/celerybeat-schedule
-django_core/media/
-django_core/static/
+./django_core/media/
+./django_core/static/
+environments/app.env

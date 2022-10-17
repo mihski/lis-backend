@@ -6,9 +6,25 @@ from lessons import models
 class UnitAdmin(admin.ModelAdmin):
     model = models.Unit
     list_display = (
-        'id', 'local_id', 'type'
+        "id", "local_id", "type"
     )
-    search_fields = ('local_id', 'id')
+    search_fields = ("local_id", "id")
+
+
+@admin.register(models.Question)
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "text", "created_at")
+    list_filter = ("user", "created_at")
+    ordering = ("-created_at",)
+    readonly_fields = ("id", "user", "created_at")
+
+
+@admin.register(models.Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "text", "created_at")
+    list_filter = ("user", "created_at")
+    ordering = ("-created_at",)
+    readonly_fields = ("id", "user", "created_at")
 
 
 admin.site.register(models.Course)

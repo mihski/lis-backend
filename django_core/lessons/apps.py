@@ -2,4 +2,7 @@ from django.apps import AppConfig
 
 
 class LessonConfig(AppConfig):
-    name = 'lessons'
+    name = "lessons"
+
+    def ready(self):
+        import lessons.signals
