@@ -97,7 +97,7 @@ EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 
-EMAIL_RECIPIENTS = json.loads(os.getenv("EMAIL_RECIPIENTS", "[]"))
+EMAIL_RECIPIENTS = os.getenv("EMAIL_RECIPIENTS", "").split(",")
 
 
 # Celery configurations

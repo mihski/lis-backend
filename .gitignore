@@ -6,4 +6,5 @@ __pycache__/
 **/celerybeat-schedule
 ./django_core/media/
 ./django_core/static/
+./django_core/django_media/
 environments/app.env

@@ -24,6 +24,7 @@ jobs:
             - name: Delivery
               run: |
                 rsync -e "ssh -i $HOME/.ssh/key -o StrictHostKeyChecking=no" --archive --compress --delete --exclude 'django_core/static' --exclude 'django_core/media' . ${{ secrets.VPS_USER_NAME }}@${{ secrets.VPS_SERVER_NAME }}:~/lis-back/
+                echo "${{secrets.APP_ENV}}" | ssh -i $HOME/.ssh/key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER_NAME }}@${{ secrets.VPS_SERVER_NAME }} -T "cat > ~/lis-back/environments/app.env"
             - name: Building on server
               run: |
-                ssh -i $HOME/.ssh/key ${{ secrets.VPS_USER_NAME }}@${{ secrets.VPS_SERVER_NAME }} 'cd lis-back && docker-compose up -d --build backend nginx'
+                ssh -i $HOME/.ssh/key ${{ secrets.VPS_USER_NAME }}@${{ secrets.VPS_SERVER_NAME }} 'cd lis-back && docker-compose up -d --build'
