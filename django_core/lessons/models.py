@@ -56,6 +56,9 @@ class ProfileBranchingChoice(models.Model):
     branching = models.ForeignKey("Branching", on_delete=models.CASCADE)
     choose_local_id = models.CharField(max_length=120, blank=True)
 
+    def __str__(self):
+        return f"ProfileBranchingChoice[{self.id}] {self.profile} on {self.branching.local_id}"
+
 
 class Laboratory(models.Model):
     name = models.CharField(max_length=127)
