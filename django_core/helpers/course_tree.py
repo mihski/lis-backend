@@ -91,16 +91,7 @@ class CourseLessonsTree(AbstractNodeTree):
                 depth += 1
             elif isinstance(node.course_block, Branching):
                 if node.course_block.type == BranchingType.six_from_n.value:
-                    for local_id in node.course_block.content['list']:
-                        block = self.m_blocks[local_id]
-
-                        # TODO: add Branching case (recursion?)
-                        if isinstance(block, Quest):
-                            quest_tree = CourseLessonsTree(block)
-                            depth += quest_tree.get_max_depth()
-                        elif isinstance(block, Lesson):
-                            depth += 1
-
+                    depth += 6
                 if node.course_block.type != BranchingType.profile_parameter.value:
                     depth += 1
 
