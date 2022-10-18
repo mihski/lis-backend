@@ -54,6 +54,7 @@ class LessonDetailSerializer(serializers.ModelSerializer):
 
 
 class LessonChoiceSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(source="local_id")
     type = serializers.ReadOnlyField(default="lesson")
 
     class Meta:
@@ -62,12 +63,17 @@ class LessonChoiceSerializer(serializers.ModelSerializer):
 
 
 class QuestChoiceSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(source="local_id")
     type = serializers.ReadOnlyField(default="quest")
     lessons = LessonChoiceSerializer(many=True)
+    money_cost = serializers.SerializerMethodField()
+
+    def get_money_cost(self, quest: Quest) -> int:
+        return sum([l.money_cost for l in quest.lessons.all()])
 
     class Meta:
         model = Quest
-        fields = ["id", "type", "lessons", "name", "description"]
+        fields = ["id", "type", "money_cost", "name", "description", "lessons"]
 
 
 class CourseMapCell(serializers.ModelSerializer):
@@ -105,21 +111,6 @@ class CourseMapLessonCell(CourseMapCell):
 
 
 class CourseMapBranchingCell(CourseMapCell):
-    subtype = serializers.SerializerMethodField()
-
-    def get_subtype(self, obj: Branching):
-        if obj.type == BranchingType.profile_parameter.value:
-            return BranchingViewType.parameter.value
-        elif obj.type == BranchingType.six_from_n.value:
-            return BranchingViewType.m_from_n.value
-
-        quests = Quest.objects.filter(local_id=obj.content["next"])
-
-        if quests.count() == len(obj.content["next"]):
-            return BranchingViewType.fork.value
-
-        return BranchingViewType.lessons_fork.value
-
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data["type"] = BlockType.branching.value
@@ -127,7 +118,7 @@ class CourseMapBranchingCell(CourseMapCell):
 
     class Meta:
         model = Branching
-        fields = ["id", "type", "subtype"]
+        fields = ["id", "type"]
 
 
 class CourseMapImgCell(CourseMapCell):
@@ -161,7 +152,7 @@ class BranchingDetailSerializer(serializers.ModelSerializer):
         elif obj.type == BranchingType.six_from_n.value:
             return BranchingViewType.m_from_n.value
 
-        quests = Quest.objects.filter(local_id=obj.content["next"])
+        quests = Quest.objects.filter(local_id__in=obj.content["next"])
 
         if quests.count() == len(obj.content["next"]):
             return BranchingViewType.fork.value
@@ -181,7 +172,10 @@ class BranchingDetailSerializer(serializers.ModelSerializer):
             Lesson.objects.filter(local_id__in=lesson_local_ids), many=True
         ).data
         quests_data = QuestChoiceSerializer(
-            Quest.objects.filter(local_id__in=lesson_local_ids), many=True
+            Quest.objects
+            .filter(local_id__in=lesson_local_ids)
+            .prefetch_related("lessons"),
+            many=True
         ).data
 
         return lessons_data + quests_data
