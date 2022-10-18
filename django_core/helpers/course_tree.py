@@ -62,8 +62,7 @@ class CourseLessonsTree(AbstractNodeTree):
         if isinstance(entity, Course):
             blocks.extend(list(entity.quests.all()))
 
-        self.m_blocks = {block.local_id: block for block in blocks}
-
+        self.m_blocks = {b.local_id: b for b in blocks}
         super().__init__()
 
     def get_quest_number(self, profile: Profile, lesson: Lesson) -> int:
@@ -161,8 +160,22 @@ class CourseLessonsTree(AbstractNodeTree):
                 if not choose_branch or not choose_branch.choose_local_id:
                     break
 
-                stack.extend(choose_branch.choose_local_id.split(','))
-                continue
+                choose_local_ids = choose_branch.choose_local_id.split(',')
+
+                if node.course_block.type == BranchingType.one_from_n.value:
+                    stack.append(choose_local_ids[0])
+                    continue
+
+                lessons = Lesson.objects.filter(local_id__in=choose_local_ids)
+                quests = Quest.objects.filter(local_id__in=choose_local_ids)
+
+                map_list.extend(lessons)
+
+                for quest in quests:
+                    quest_tree = CourseLessonsTree(quest)
+                    map_list.extend(quest_tree.get_map_for_profile(profile))
+
+                stack.append(node.course_block.content['next'])
             elif isinstance(node.course_block, Quest):
                 quest_tree = CourseLessonsTree(node.course_block)
                 map_list.extend(quest_tree.get_map_for_profile(profile))

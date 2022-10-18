@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from rest_framework import serializers, validators
 from django.contrib.auth import get_user_model
 
@@ -192,21 +194,40 @@ class BranchingSelectSerializer(serializers.ModelSerializer):
         model = Branching
         fields = ["choose_local_id"]
 
-    def validate_choose_local_id(self, choose_local_id: str) -> str:
-        local_ids = choose_local_id.split(",")
+    @lru_cache
+    def _get_blocks(self, local_ids: str) -> list[Lesson | Quest]:
         blocks = [
-            *Lesson.objects.filter(local_id__in=local_ids),
-            *Quest.objects.filter(local_id__in=local_ids),
-            *Branching.objects.filter(local_id__in=local_ids),
+            *Lesson.objects.filter(quest__isnull=True, local_id__in=local_ids.split(",")),
+            *Quest.objects.filter(local_id__in=local_ids.split(",")),
         ]
+        return blocks
+
+    def validate_choose_local_id(self, choose_local_id: str) -> str:
+        local_ids = ",".join(list(map(lambda x: x.strip(), choose_local_id.split(","))))
+        blocks = self._get_blocks(local_ids)
         blocks_local_ids = [b.local_id for b in blocks]
 
-        unexist_local_ids = set(local_ids) - set(blocks_local_ids)
+        unexist_local_ids = set(local_ids.split(",")) - set(blocks_local_ids)
 
         if unexist_local_ids:
-            raise validators.ValidationError(f"There is no block with local_id: {unexist_local_ids}")
+            raise validators.ValidationError(f"There is no block on course with local_id: {unexist_local_ids}")
 
-        return choose_local_id
+        return local_ids
+
+    def validate(self, validated_data: dict) -> dict:
+        blocks = self._get_blocks(validated_data['choose_local_id'])
+
+        if self.instance.type == BranchingType.one_from_n.value:
+            if len(blocks) != 1:
+                raise validators.ValidationError("There is no one lessons")
+
+        elif self.instance.type == BranchingType.six_from_n.value:
+            block_counts = sum([block.lessons.count() if isinstance(block, Quest) else 1 for block in blocks])
+
+            if block_counts != 6:
+                raise validators.ValidationError("There is no exact six lessons")
+
+        return validated_data
 
     def update(self, branching, validated_data):
         profile = Profile.objects.get(user=self.context["request"].user)
