@@ -79,7 +79,7 @@ class QuestChoiceSerializer(serializers.ModelSerializer):
         profile = Profile.objects.get(user=self.context['request'].user)
         lessons = quest_tree.get_map_for_profile(profile)
 
-        return LessonChoiceSerializer(lessons).data
+        return LessonChoiceSerializer(lessons, many=True).data
 
     class Meta:
         model = Quest
@@ -185,7 +185,8 @@ class BranchingDetailSerializer(serializers.ModelSerializer):
             Quest.objects
             .filter(local_id__in=lesson_local_ids)
             .prefetch_related("lessons"),
-            many=True
+            many=True,
+            context=self.context
         ).data
 
         return lessons_data + quests_data
