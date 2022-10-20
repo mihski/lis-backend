@@ -33,9 +33,9 @@ class Resources(models.Model):
     energy_amount = models.PositiveIntegerField(default=0)
 
     class Meta:
-        verbose_name = "Resource"
-        verbose_name_plural = "Resources"
         app_label = "resources"
+        verbose_name = "Resources"
+        verbose_name_plural = "Resources"
 
     def __repr__(self) -> str:
         return f"{self._meta.verbose_name} - {self.user.user.username}"

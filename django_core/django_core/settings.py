@@ -34,7 +34,7 @@ INSTALLED_APPS = [
     # custom apps
     "accounts",
     "sso_app",
-    "lessons.apps.LessonConfig",
+    "lessons",
     "resources",
     "editors",
     "student_tasks",

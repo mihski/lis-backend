@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterModelOptions(
             name='resources',
-            options={'verbose_name': 'Resource', 'verbose_name_plural': 'Resources'},
+            options={'verbose_name': 'Resources', 'verbose_name_plural': 'Resources'},
         ),
         migrations.AlterField(
             model_name='emotiondata',

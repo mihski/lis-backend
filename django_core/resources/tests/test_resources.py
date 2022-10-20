@@ -3,7 +3,8 @@ from rest_framework.test import APIClient
 from rest_framework import status
 
 from accounts.models import User, Profile, UniversityPosition
-from resources.tasks import refill_resources, POSITION_ENERGY_MAX_DATA
+from resources.tasks import refill_resources
+from resources.utils import get_max_energy_by_position
 
 
 class ResourcesTestCase(TestCase):
@@ -13,23 +14,54 @@ class ResourcesTestCase(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=user)
 
+    def __update_university_position(self, position: UniversityPosition) -> None:
+        self.profile.university_position = position.value
+        self.profile.save()
+
+    def test_update_not_creates_resources(self) -> None:
+        response = self.client.patch(
+            "/api/resources/update/",
+            {
+                "timeDelta": 0,
+                "moneyDelta": 0,
+                "energyDelta": 0,
+            },
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_resource_retrieving(self) -> None:
         response = self.client.get("/api/resources/retrieve/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["timeAmount"], 0)
         self.assertEqual(response.json()["energyAmount"], 0)
         self.assertEqual(response.json()["moneyAmount"], 0)
+        self.assertEqual(response.json()["maxEnergyAmount"], 0)
+
+    def test_energy_update_related_to_max_energy(self) -> None:
+        energy_data = {
+            UniversityPosition.INTERN: get_max_energy_by_position(UniversityPosition.INTERN),
+            UniversityPosition.ENGINEER: get_max_energy_by_position(UniversityPosition.ENGINEER),
+        }
+
+        for position, max_energy in energy_data.items():
+            self.__update_university_position(position)
+            response = self.client.get("/api/resources/retrieve/")
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(response.json()["energyAmount"], max_energy)
 
     def test_resource_updating(self) -> None:
+        position = UniversityPosition.INTERN
+        self.__update_university_position(position)
+
         cases = [
             # (timeDelta, moneyDelta, energyDelta), is_successful
-            ((5, 10, 3), True),
+            ((5, 10, -3), True),
             ((0, -20, 3), False),
             ((-1, 30, 3), False),
-            ((0, -4, -1), True),
+            ((0, -4, -2), True),
         ]
 
-        self.client.get("/api/resources/retrieve/")  # -> creates resources with 0 values
+        self.client.get("/api/resources/retrieve/")  # <- creates resources
         for (time_delta, money_delta, energy_delta), is_successful in cases:
             patch_response = self.client.patch(
                 "/api/resources/update/",
@@ -46,9 +78,9 @@ class ResourcesTestCase(TestCase):
             self.assertEqual(patch_response.status_code, status.HTTP_200_OK)
 
         response = self.client.get("/api/resources/retrieve/")
-        self.assertEqual(response.json()["timeAmount"], 5)
-        self.assertEqual(response.json()["moneyAmount"], 6)
-        self.assertEqual(response.json()["energyAmount"], 2)
+        self.assertEqual(response.json()["timeAmount"], 5) # = 5 + 0
+        self.assertEqual(response.json()["moneyAmount"], 6)  # = 10 - 4
+        self.assertEqual(response.json()["energyAmount"], 5)  # = 10 - 5
 
     def test_raise_exception_without_profile(self):
         self.profile.delete()
@@ -62,8 +94,10 @@ class ResourcesTestCase(TestCase):
     def test_celery_refill_energy(self) -> None:
         self.client.get("/api/resources/retrieve/")
 
-        self.profile.university_position = UniversityPosition.INTERN.value
+        position = UniversityPosition.INTERN
+        max_energy = get_max_energy_by_position(position)
+        self.profile.university_position = position.value
         self.profile.save()
 
         refill_resources.delay()
-        self.assertEqual(self.profile.resources.energy_amount, POSITION_ENERGY_MAX_DATA[UniversityPosition.INTERN.value])
+        self.assertEqual(self.profile.resources.energy_amount, max_energy)

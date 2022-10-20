@@ -1,20 +1,26 @@
 from rest_framework import serializers
 
-from resources.exceptions import NegativeResourcesException
+from resources.exceptions import NegativeResourcesException, ResourcesOverfillException
 from resources.models import Resources
+from resources.utils import get_max_energy_by_position
 
 
 class ResourcesSerializer(serializers.ModelSerializer):
     """
         Сериализатор для отображения данных о ресурсах
     """
-    timeAmount = serializers.IntegerField(source='time_amount')
-    moneyAmount = serializers.IntegerField(source='money_amount')
-    energyAmount = serializers.IntegerField(source='energy_amount')
+    timeAmount = serializers.IntegerField(source="time_amount", default=0)
+    moneyAmount = serializers.IntegerField(source="money_amount", default=0)
+    energyAmount = serializers.IntegerField(source="energy_amount", default=0)
+    maxEnergyAmount = serializers.SerializerMethodField(method_name="get_max_energy")
+
+    def get_max_energy(self, instance: Resources) -> int:
+        position = instance.user.university_position
+        return get_max_energy_by_position(position)
 
     class Meta:
         model = Resources
-        fields = ["id", "timeAmount", "moneyAmount", "energyAmount"]
+        fields = ["id", "timeAmount", "moneyAmount", "energyAmount", "maxEnergyAmount"]
 
 
 class ResourcesUpdateSerializer(serializers.Serializer):
@@ -25,35 +31,29 @@ class ResourcesUpdateSerializer(serializers.Serializer):
     moneyDelta = serializers.IntegerField(default=0)
     energyDelta = serializers.IntegerField(default=0)
 
-    def create(self, validated_data):
-        pass
-
-    def __validate_fields(self, field_value, field_name, value):
-        if field_value + value < 0:
-            raise NegativeResourcesException(f"{field_name} is not supposed to be negative")
-
-    def validate_moneyDelta(self, value: int):
-        instance: Resources = self.instance
-        self.__validate_fields(
-            field_value=instance.money_amount,
-            field_name="Money", value=value
-        )
-        return value
-
-    def validate_energyDelta(self, value: int):
-        instance: Resources = self.instance
-        self.__validate_fields(
-            field_value=instance.energy_amount,
-            field_name="Energy", value=value
-        )
-        return value
-
     def validate_timeDelta(self, value: int) -> int:
         if value < 0:
             raise NegativeResourcesException("Time is not supposed to be decreased")
         return value
 
-    def update(self, instance: Resources, validated_data) -> Resources:
+    def validate_moneyDelta(self, value: int) -> int:
+        if self.instance.money_amount + value < 0:
+            raise NegativeResourcesException("Money is not supposed to be decreased")
+        return value
+
+    def validate_energyDelta(self, value: int) -> int:
+        instance = self.instance
+        position = instance.user.university_position
+        max_energy = get_max_energy_by_position(position)
+
+        result = value + instance.energy_amount
+        if result < 0:
+            raise NegativeResourcesException("Energy is not supposed to be decreased")
+        elif result > max_energy:
+            raise ResourcesOverfillException("Energy is not supposed to be overfilled")
+        return value
+
+    def update(self, instance: Resources, validated_data: dict) -> Resources:
         instance.time_amount += validated_data["timeDelta"]
         instance.energy_amount += validated_data["energyDelta"]
         instance.money_amount += validated_data["moneyDelta"]
