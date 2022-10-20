@@ -201,7 +201,7 @@ ISU_MANAGER_CONFIG = {
     "client_id": os.getenv("ISU_CLIENT_ID"),
     "response_type": "code",
     "base_uri": "https://id.itmo.ru/auth/realms/itmo/protocol/openid-connect/",
-    "redirect_uri": 'https://lis.itmo.ru/api/sso_auth/redirect/',
+    "redirect_uri": 'https://lis.itmo.ru/auth/',
     "scope": os.getenv("ISU_SCOPE"),
     "grant_type": "authorization_code",
     "client_secret": os.getenv("ISU_CLIENT_SECRET")
