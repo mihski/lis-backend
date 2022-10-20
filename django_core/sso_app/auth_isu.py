@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from accounts.models import Profile
 
 User = get_user_model()
 
@@ -70,6 +71,14 @@ class ISUManager:
             last_name=last_name,
             middle_name=middle_name,
             is_active=True
+        )
+
+        # TODO: swap to registration
+        Profile.objects.create(
+            user=user,
+            gender="male",
+            laboratory="it",
+            first_name="Player",
         )
 
         user.set_unusable_password()
