@@ -16,10 +16,10 @@ class ResourceViewSet(viewsets.GenericViewSet):
 
     permission_classes = (IsAuthenticated, HasProfilePermission)
 
-    def get_serializer_class(self, *args, **kwargs):
+    def get_serializer_class(self):
         if self.request.method == "PATCH":
-            return ResourcesUpdateSerializer(*args, **kwargs)
-        return ResourcesSerializer(*args, **kwargs)
+            return ResourcesUpdateSerializer
+        return ResourcesSerializer
 
     @swagger_auto_schema(method="GET", responses={status.HTTP_200_OK: ResourcesSerializer()})
     @decorators.action(methods=["GET"], detail=False, url_path="retrieve")
@@ -30,7 +30,7 @@ class ResourceViewSet(viewsets.GenericViewSet):
         """
         profile = Profile.objects.filter(user=request.user).first()
         resource, _ = Resources.objects.get_or_create(user=profile)
-        serializer: ResourcesUpdateSerializer = self.get_serializer_class(instance=resource)
+        serializer: ResourcesUpdateSerializer = self.get_serializer_class()(instance=resource)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(method="PATCH", responses={status.HTTP_200_OK: ResourcesSerializer()})
@@ -39,7 +39,7 @@ class ResourceViewSet(viewsets.GenericViewSet):
         profile = Profile.objects.filter(user=request.user).first()
         user_resources, _ = Resources.objects.get_or_create(user=profile)
 
-        serializer: ResourcesUpdateSerializer = self.get_serializer_class(data=request.data, instance=user_resources)
+        serializer: ResourcesUpdateSerializer = self.get_serializer_class()(data=request.data, instance=user_resources)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
         serialized_data = ResourcesSerializer(instance=instance).data
