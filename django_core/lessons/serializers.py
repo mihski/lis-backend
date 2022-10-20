@@ -224,6 +224,7 @@ class BranchingSelectSerializer(serializers.ModelSerializer):
         return local_ids
 
     def validate(self, validated_data: dict) -> dict:
+        profile = Profile.objects.get(user=self.context["request"].user)
         blocks = self._get_blocks(validated_data['choose_local_id'])
 
         if self.instance.type == BranchingType.one_from_n.value:
@@ -231,7 +232,12 @@ class BranchingSelectSerializer(serializers.ModelSerializer):
                 raise validators.ValidationError("There is no one lessons")
 
         elif self.instance.type == BranchingType.six_from_n.value:
-            block_counts = sum([block.lessons.count() if isinstance(block, Quest) else 1 for block in blocks])
+            block_counts = sum([
+                len(CourseLessonsTree(block).get_map_for_profile(profile))
+                if isinstance(block, Quest)
+                else 1
+                for block in blocks
+            ])
 
             if block_counts != 6:
                 raise validators.ValidationError("There is no exact six lessons")
