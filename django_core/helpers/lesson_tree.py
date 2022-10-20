@@ -7,21 +7,25 @@ from lessons.structures import LessonBlockType
 from helpers.abstract_tree import AbstractNode, AbstractNodeTree
 
 
+MockUnit = namedtuple("Unit", ("local_id", "type", "next", "content"))
+
+
 class LessonUnitsNode(AbstractNode):
-    def __init__(self, unit: Unit, children: list['LessonUnitsNode'] = None):
+    def __init__(self, unit: Unit | MockUnit, children: list['LessonUnitsNode'] = None):
         self.unit = unit
         self.local_id = unit.local_id
         self.type = unit.type
+        self.next_unit_ids = self.unit.next
         self.is_task = str(self.type).startswith("3")
         self.children = set(children or [])
 
     @property
-    def id(self):
+    def id(self) -> str:
         return self.local_id
 
     @property
     def next_ids(self):
-        return self.unit.next
+        return self.next_unit_ids
 
     @property
     def obj(self):
@@ -51,10 +55,36 @@ class LessonUnitsTree(AbstractNodeTree):
             LessonBlockType.replica.value,
             LessonBlockType.email.value,
             LessonBlockType.a16_button.value,
+            LessonBlockType.lesson_end.value,
             *range(LessonBlockType.radios.value, LessonBlockType.comparison.value + 1)
         ]
 
         super().__init__()
+
+        self.tree_elements["end_unit"] = LessonUnitsNode(MockUnit("", LessonBlockType.lesson_end.value, [], {}))
+        self._add_end_unit()
+
+    def _add_end_unit(self):
+        queue = [self.tree.id]
+        visited = defaultdict(bool)
+        i = 0
+
+        while i < len(queue):
+            node = self.tree_elements[queue[i]]
+
+            if visited[node.id]:
+                i += 1
+                continue
+
+            visited[node.id] = True
+
+            for next_id in node.next_ids:
+                queue.append(next_id)
+
+            if not node.children:
+                node.children.add(self.tree_elements["end_unit"])
+
+            i += 1
 
     def _get_first_element(self):
         if self.lesson.content.entry:
@@ -71,7 +101,7 @@ class LessonUnitsTree(AbstractNodeTree):
     @lru_cache(maxsize=1)
     def make_lessons_queue(self, from_unit_id: str = None, hide_task_answers: bool = False) -> tuple[int, int, list[dict]]:
         if not self.lesson.content.entry:
-            return -1, -1, []
+            return -1, -1, UnitDetailSerializer([self.tree_elements["end_unit"].unit], many=True).data
 
         first_location_id = first_npc_id = None
         node = self.tree_elements[from_unit_id or self.lesson.content.entry]

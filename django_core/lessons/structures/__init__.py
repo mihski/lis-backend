@@ -34,6 +34,8 @@ class LessonBlockType(Enum):
     sort = 308
     comparison = 309
 
+    lesson_end = 400
+
     @classmethod
     def has_value(cls, value):
         return value in cls._value2member_map_
