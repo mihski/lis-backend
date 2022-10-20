@@ -166,13 +166,18 @@ class CourseLessonsTree(AbstractNodeTree):
                     stack.append(choose_local_ids[0])
                     continue
 
-                lessons = Lesson.objects.filter(local_id__in=choose_local_ids)
-                quests = Quest.objects.filter(local_id__in=choose_local_ids)
+                blocks = [
+                    *Lesson.objects.filter(local_id__in=choose_local_ids),
+                    *Quest.objects.filter(local_id__in=choose_local_ids)
+                ]
+                blocks.sort(key=lambda x: choose_local_ids.index(x.local_id))
 
-                map_list.extend(lessons)
+                for block in blocks:
+                    if isinstance(block, Lesson):
+                        map_list.append(block)
+                        continue
 
-                for quest in quests:
-                    quest_tree = CourseLessonsTree(quest)
+                    quest_tree = CourseLessonsTree(block)
                     map_list.extend(quest_tree.get_map_for_profile(profile))
 
                 stack.append(node.course_block.content['next'])
