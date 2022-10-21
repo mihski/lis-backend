@@ -248,3 +248,7 @@ if DEBUG:
             "REFRESH_TOKEN_LIFETIME": timedelta(days=366),
         }
     )
+
+# LIS Configurations
+ULTIMATE_COST = 2500
+ULTIMATE_DURATION = 3 * 60 * 60  # секунды

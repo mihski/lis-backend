@@ -99,11 +99,11 @@ class Profile(models.Model):
         ("female", "Женский"),
     )
     LABORATORIES = (
-        ('it', "IT"),
-        ('ls', "Науки о жизни"),
-        ('mi', "Менеджмент и инновации"),
-        ('ctm', "Компьютерные технологии и управления"),
-        ('pts', "Физико-технические науки"),
+        ("it", "IT"),
+        ("ls", "Науки о жизни"),
+        ("mi", "Менеджмент и инновации"),
+        ("ctm", "Компьютерные технологии и управления"),
+        ("pts", "Физико-технические науки"),
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="profile")
@@ -111,17 +111,22 @@ class Profile(models.Model):
     last_name = models.CharField(max_length=63)
     middle_name = models.CharField(max_length=63)
     gender = models.CharField(max_length=6, choices=GENDER)  # todo: по-хорошему тоже на TextChoices заменить
+
     university_position = models.CharField(
         choices=UniversityPosition.choices,
         default=UniversityPosition.STUDENT,
         max_length=40
     )
-    scientific_director = models.ForeignKey('lessons.NPC', on_delete=models.SET_NULL, null=True, blank=True)
+    scientific_director = models.ForeignKey("lessons.NPC", on_delete=models.SET_NULL, null=True, blank=True)
     laboratory = models.CharField(max_length=120, choices=LABORATORIES, default="it")
+
     head_form = models.CharField(max_length=15, blank=True)
     face_form = models.CharField(max_length=15, blank=True)
     hair_form = models.CharField(max_length=15, blank=True)
     dress_form = models.CharField(max_length=15, blank=True)
+
+    ultimate_activated = models.BooleanField(default=0)
+    ultimate_finish_datetime = models.DateTimeField(null=True, default=None, blank=True)
 
     class Meta:
         app_label = "accounts"

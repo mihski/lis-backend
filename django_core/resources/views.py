@@ -3,12 +3,22 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
+from django.conf import settings
 
 from accounts.permissions import HasProfilePermission
+from resources.exceptions import (
+    NegativeResourcesException,
+    ResourcesNotFoundException,
+    UltimateAlreadyActivatedException
+)
 from resources.models import Resources
 from resources.serializers import ResourcesSerializer, ResourcesUpdateSerializer
-from resources.exceptions import ResourcesNotFoundException
-from resources.utils import get_max_energy_by_position
+from resources.tasks import deactivate_ultimate
+from resources.utils import (
+    check_ultimate_is_active,
+    get_max_energy_by_position,
+    get_ultimate_finish_dt
+)
 
 
 class ResourcesViewSet(viewsets.GenericViewSet):
@@ -55,3 +65,27 @@ class ResourcesViewSet(viewsets.GenericViewSet):
         instance = serializer.save()
         serialized_data = ResourcesSerializer(instance=instance).data
         return Response(data=serialized_data, status=status.HTTP_200_OK)
+
+    @decorators.action(methods=["POST"], detail=False, url_path="ultimate/activate")
+    def activate_ultimate(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
+        profile = request.user.profile.first()
+
+        resources = profile.resources
+        if resources is None:
+            raise ResourcesNotFoundException("Your profile doesn't have any resources")
+
+        if check_ultimate_is_active(profile):
+            raise UltimateAlreadyActivatedException("You have already activated ultimate")
+
+        if (remains := resources.money_amount - settings.ULTIMATE_COST) < 0:
+            raise NegativeResourcesException("You don't have enough money to activate ultimate")
+
+        resources.money_amount = remains
+        resources.save()
+
+        profile.ultimate_activated = True
+        profile.ultimate_finish_datetime = get_ultimate_finish_dt(settings.ULTIMATE_DURATION)
+        profile.save()
+
+        deactivate_ultimate.apply_async(args=[profile.id], countdown=settings.ULTIMATE_DURATION)
+        return Response("Ultimate was successfully activated", status=status.HTTP_200_OK)

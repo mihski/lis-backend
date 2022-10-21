@@ -2,7 +2,10 @@ from rest_framework import serializers
 
 from resources.exceptions import NegativeResourcesException, ResourcesOverfillException
 from resources.models import Resources
-from resources.utils import get_max_energy_by_position
+from resources.utils import (
+    get_ultimate_remaining_time,
+    get_max_energy_by_position
+)
 
 
 class ResourcesSerializer(serializers.ModelSerializer):
@@ -13,14 +16,19 @@ class ResourcesSerializer(serializers.ModelSerializer):
     moneyAmount = serializers.IntegerField(source="money_amount", default=0)
     energyAmount = serializers.IntegerField(source="energy_amount", default=0)
     maxEnergyAmount = serializers.SerializerMethodField(method_name="get_max_energy")
+    ultimateRemainSeconds = serializers.SerializerMethodField(method_name="get_ultimate_remain_seconds")
 
     def get_max_energy(self, instance: Resources) -> int:
         position = instance.user.university_position
         return get_max_energy_by_position(position)
 
+    def get_ultimate_remain_seconds(self, instance: Resources) -> int:
+        profile = instance.user
+        return get_ultimate_remaining_time(profile)
+
     class Meta:
         model = Resources
-        fields = ["id", "timeAmount", "moneyAmount", "energyAmount", "maxEnergyAmount"]
+        fields = ["id", "timeAmount", "moneyAmount", "energyAmount", "maxEnergyAmount", "ultimateRemainSeconds"]
 
 
 class ResourcesUpdateSerializer(serializers.Serializer):

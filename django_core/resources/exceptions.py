@@ -1,4 +1,5 @@
 from rest_framework.exceptions import ValidationError, NotFound
+from rest_framework.exceptions import ValidationError, NotFound, APIException
 from rest_framework import status
 
 
@@ -15,3 +16,8 @@ class ResourcesOverfillException(ValidationError):
 class ResourcesNotFoundException(NotFound):
     status_code = status.HTTP_404_NOT_FOUND
     default_detail = "Resources not found"
+
+
+class UltimateAlreadyActivatedException(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_code = "Ultimate already activated"
