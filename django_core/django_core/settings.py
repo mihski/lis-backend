@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "djoser",
     "constance",
     "drf_yasg",
+    "import_export",
 
     # custom apps
     "accounts",

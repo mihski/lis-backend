@@ -1,10 +1,11 @@
-from rest_framework import viewsets, permissions, authentication, mixins, status, validators
+from rest_framework import viewsets, permissions, authentication, mixins, decorators, status
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from accounts.models import Profile
+from accounts.models import Profile, Statistics
 from accounts.serializers import ProfileSerializerWithoutLookForms
+from accounts.permissions import HasProfilePermission
 from lessons.models import (
     NPC,
     Location,
@@ -40,22 +41,17 @@ class LocationViewSet(viewsets.ReadOnlyModelViewSet):
 
 class CourseMapViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
     queryset = Course.objects.prefetch_related(
-        "lessons",
-        "quests",
-        "branchings",
-        "quests__lessons",
-        "quests__branchings",
+        "lessons", "quests", "branchings",
+        "quests__lessons", "quests__branchings",
     )
     serializer_class = CourseMapSerializer
-
     permission_classes = (permissions.IsAuthenticated, )
 
 
 class BranchSelectViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.UpdateModelMixin):
     queryset = Branching.objects.all()
-    lookup_field = "local_id"
-
     permission_classes = (permissions.IsAuthenticated, )
+    lookup_field = "local_id"
 
     def get_serializer_class(self):
         if self.request.method in ["PATCH", "PUT"]:
@@ -93,22 +89,22 @@ class LessonDetailViewSet(
             lesson_name_field = lesson.name
             locales = lesson.content.locale
 
-            locales['ru'] = locales.get('ru', {})
-            locales['en'] = locales.get('en', {})
+            locales["ru"] = locales.get("ru", {})
+            locales["en"] = locales.get("en", {})
 
-            locales['ru'][lesson_name_field] = lesson.course.locale['ru'][lesson_name_field]
-            locales['en'][lesson_name_field] = lesson.course.locale['en'][lesson_name_field]
+            locales["ru"][lesson_name_field] = lesson.course.locale["ru"][lesson_name_field]
+            locales["en"][lesson_name_field] = lesson.course.locale["en"][lesson_name_field]
 
             lesson_data.update({
-                'location': first_location_id or 1,
-                'npc': first_npc_id or -1,
-                'locales': locales,
-                'tasks': unit_tree.task_count,
-                'quest_number': course_tree.get_quest_number(profile, lesson),
-                'lesson_number': course_tree.get_lesson_number(profile, lesson),
+                "location": first_location_id or 1,
+                "npc": first_npc_id or -1,
+                "locales": locales,
+                "tasks": unit_tree.task_count,
+                "quest_number": course_tree.get_quest_number(profile, lesson),
+                "lesson_number": course_tree.get_lesson_number(profile, lesson),
             })
 
-        data = {**lesson_data, 'player': player.data, 'chunk': unit_chunk}
+        data = {**lesson_data, "player": player.data, "chunk": unit_chunk}
         return Response(data, status=status.HTTP_200_OK)
 
 
@@ -128,3 +124,21 @@ class QuestionViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
     permission_classes = (permissions.IsAuthenticated,)
+
+
+class LessonActionsViewSet(viewsets.GenericViewSet):
+    queryset = Lesson.objects.select_related("quest")
+    serializer_class = LessonDetailSerializer
+    permission_classes = [permissions.IsAuthenticated, HasProfilePermission]
+    lookup_field = "local_id"
+
+    @decorators.action(methods=["POST"], detail=True, url_path="finish")
+    def finish_lesson(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
+        lesson: Lesson = self.get_object()
+        profile = request.user.profile.first()
+
+        statistics, _ = Statistics.objects.get_or_create(profile=profile)
+        return Response(
+            data={"lesson_id": lesson.local_id, "status": "finished"},
+            status=status.HTTP_200_OK
+        )

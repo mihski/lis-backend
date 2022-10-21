@@ -17,6 +17,12 @@ class UserRole(models.Model):
         verbose_name = "UserRole"
         verbose_name_plural = "UserRoles"
 
+    def __repr__(self) -> str:
+        return f"{self._meta.verbose_name} - {self.name}"
+
+    def __str__(self) -> str:
+        return repr(self)
+
 
 class UserManager(BaseUserManager):
     def create_user(self, username, email, password=None) -> AbstractBaseUser:
@@ -73,7 +79,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name_plural = "Users"
 
     def __repr__(self) -> str:
-        return f"{self.username}"
+        return f"{self._meta.verbose_name} - {self.username}"
 
     def __str__(self) -> str:
         return repr(self)
@@ -136,7 +142,7 @@ class Profile(models.Model):
     def __repr__(self) -> str:
         return f"{self._meta.verbose_name} - {self.user.username}"
 
-    def __str__(self) -> str:
+    def __str__(self):
         return repr(self)
 
 
@@ -156,4 +162,25 @@ class ScientificDirector(models.Model):
         return f"{self._meta.verbose_name} - {self.name}"
 
     def __str__(self) -> str:
+        return repr(self)
+
+
+class Statistics(models.Model):
+    """
+        Таблица БД для хранения статистики профиля
+    """
+    profile = models.OneToOneField(Profile, on_delete=models.CASCADE, related_name="statistics")
+    quests_done = models.IntegerField(default=0)
+    lessons_done = models.IntegerField(default=0)
+    total_time_spend = models.IntegerField(default=0)
+
+    class Meta:
+        app_label = "accounts"
+        verbose_name = "ProfileStatistics"
+        verbose_name_plural = "ProfilesStatistics"
+
+    def __repr__(self) -> str:
+        return f"{self._meta.verbose_name} - {self.profile.user.username}"
+
+    def __str__(self):
         return repr(self)

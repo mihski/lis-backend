@@ -1,11 +1,12 @@
 from rest_framework.routers import SimpleRouter
 from django.urls import path
 
-from accounts.views import ProfileViewSet
+from accounts.views import ProfileViewSet, ProfileStatisticsViewSet
 
 app_name = 'accounts'
 
 router = SimpleRouter()
+router.register("profile/statistics", ProfileStatisticsViewSet)
 
 urlpatterns = [
     path(

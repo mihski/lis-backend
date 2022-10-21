@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from import_export.admin import ImportExportModelAdmin
 
 from accounts import models
 
@@ -21,6 +22,14 @@ class UserAdmin(BaseUserAdmin):
     list_filter = ('is_superuser', )
     search_fields = ('email', 'username')
     ordering = ('email', )
+
+
+@admin.register(models.Statistics)
+class StatisticsAdmin(ImportExportModelAdmin):
+    list_display = ("id", "profile", "quests_done", "lessons_done", "total_time_spend")
+    list_filter = ("quests_done", "lessons_done", "total_time_spend")
+    search_fields = ("profile__user__username",)
+    ordering = list_filter
 
 
 admin.site.register(models.UserRole)

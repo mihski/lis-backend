@@ -1,15 +1,47 @@
 from rest_framework import serializers, validators
 
-from accounts.models import User, Profile
+from accounts.models import User, Profile, Statistics
 from lessons.models import NPC
+from resources.exceptions import NegativeResourcesException
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'phone', 'first_name', 'last_name', 'middle_name']
-        read_only_fields = ['id', 'username', 'email', 'phone']
-        ref_name = 'lis_user'
+        fields = [
+            "id", "username", "email", "phone",
+            "first_name", "last_name", "middle_name"
+        ]
+        read_only_fields = ["id", "username", "email", "phone"]
+        ref_name = "lis_user"
+
+
+class ProfileStatisticsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Statistics
+        fields = ["quests_done", "lessons_done", "total_time_spend"]
+
+
+class ProfileStatisticsUpdateSerializer(serializers.Serializer):
+    quests_done = serializers.IntegerField(default=0)
+    lessons_done = serializers.IntegerField(default=0)
+    total_time_spend = serializers.IntegerField(default=0)
+
+    def validate_total_time_spend(self, value: int) -> int:
+        if value < 0:
+            raise NegativeResourcesException("Time is not supposed to be decreased")
+        return value
+
+    def update(self, instance: Statistics, validated_data: dict) -> Statistics:
+        instance.quests_done += validated_data["quests_done"]
+        instance.lessons_done += validated_data["lessons_done"]
+        instance.total_time_spend += validated_data["total_time_spend"]
+        instance.save()
+        return instance
+
+    class Meta:
+        model = Statistics
+        fields = ["quests_done", "lessons_done", "total_time_spend"]
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -24,16 +56,9 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = [
-            'id',
-            'first_name',
-            'last_name',
-            'middle_name',
-            'gender',
-            'scientific_director',
-            'head_form',
-            'face_form',
-            'hair_form',
-            'dress_form'
+            "id", "first_name", "last_name", "middle_name",
+            "gender", "scientific_director", "head_form",
+            "face_form", "hair_form", "dress_form", "statistics"
         ]
 
 
@@ -42,9 +67,4 @@ class ProfileSerializerWithoutLookForms(ProfileSerializer):
 
     class Meta:
         model = Profile
-        fields = [
-            'id',
-            'name',
-            'gender',
-            'scientific_director'
-        ]
+        fields = ["id", "name", "gender", "scientific_director"]

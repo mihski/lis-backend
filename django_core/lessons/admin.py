@@ -3,6 +3,15 @@ from django.contrib import admin
 from lessons import models
 
 
+class LessonAdmin(admin.ModelAdmin):
+    model = models.Lesson
+    list_display = (
+        "id", "local_id", "name", "quest", "time_cost", "money_cost", "energy_cost"
+    )
+    list_filter = ("local_id",)
+    search_fields = ("local_id",)
+
+
 class UnitAdmin(admin.ModelAdmin):
     model = models.Unit
     list_display = (
@@ -29,7 +38,7 @@ class ReviewAdmin(admin.ModelAdmin):
 
 admin.site.register(models.Course)
 admin.site.register(models.CourseMapImg)
-admin.site.register(models.Lesson)
+admin.site.register(models.Lesson, LessonAdmin)
 admin.site.register(models.LessonBlock)
 admin.site.register(models.Unit, UnitAdmin)
 admin.site.register(models.NPC)

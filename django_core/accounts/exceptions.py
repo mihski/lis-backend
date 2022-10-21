@@ -5,3 +5,8 @@ from rest_framework import status
 class ProfileDoesNotExistException(NotFound):
     status_code = status.HTTP_404_NOT_FOUND
     default_code = "Profile doesn't exist"
+
+
+class StatisticsDoesNotExistException(NotFound):
+    status_code = status.HTTP_404_NOT_FOUND
+    default_code = "Statistics doesn't exist"

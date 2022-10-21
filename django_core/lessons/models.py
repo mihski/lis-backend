@@ -5,15 +5,15 @@ User = get_user_model()
 
 
 GENDERS = (
-    ('any', 'Любой'),
-    ('male', 'Мужской'),
-    ('female', 'Женский'),
+    ("any", "Любой"),
+    ("male", "Мужской"),
+    ("female", "Женский"),
 )
 
 
 class EditorBlockModel(models.Model):
     block_id = models.IntegerField(default=None, null=True, blank=True)  # deprecated
-    local_id = models.CharField(max_length=255, default='', blank=True)  # n_1660813403095
+    local_id = models.CharField(max_length=255, default="", blank=True)  # n_1660813403095
     x = models.FloatField(default=0)
     y = models.FloatField(default=0)
 
@@ -22,6 +22,9 @@ class EditorBlockModel(models.Model):
 
 
 class Course(models.Model):
+    """
+        Таблица БД для хранения информации о курсах
+    """
     name = models.CharField(max_length=127)
     description = models.TextField()
 
@@ -35,7 +38,11 @@ class Course(models.Model):
 
 
 class Quest(EditorBlockModel):
-    course = models.ForeignKey(Course, null=True, on_delete=models.SET_NULL, related_name='quests')
+    """
+        Таблица БД для хранения информации о квестах
+        Квест - цепочка уроков
+    """
+    course = models.ForeignKey(Course, null=True, on_delete=models.SET_NULL, related_name="quests")
 
     name = models.CharField(max_length=127)
     description = models.TextField()
@@ -48,13 +55,21 @@ class Quest(EditorBlockModel):
 
 
 class Branching(EditorBlockModel):
-    course = models.ForeignKey(Course, null=True, on_delete=models.SET_NULL, related_name='branchings')
-    quest = models.ForeignKey(Quest, default=None, null=True, blank=True, on_delete=models.SET_NULL, related_name='branchings')
+    """
+        Таблица БД для хранения информации о ветвлениях
+        Ветвление бывает: OneToMany и ManyToOne
+    """
+    course = models.ForeignKey(Course, null=True, on_delete=models.SET_NULL, related_name="branchings")
+    quest = models.ForeignKey(Quest, default=None, null=True, blank=True, on_delete=models.SET_NULL, related_name="branchings")
     type = models.IntegerField()
     content = models.JSONField()
 
 
 class ProfileBranchingChoice(models.Model):
+    """
+        Таблица БД для хранения информации о выборе
+        ветвления определенным профилем игрока
+    """
     profile = models.ForeignKey("accounts.Profile", on_delete=models.CASCADE)
     branching = models.ForeignKey("Branching", on_delete=models.CASCADE)
     choose_local_id = models.CharField(max_length=120, blank=True)
@@ -64,23 +79,32 @@ class ProfileBranchingChoice(models.Model):
 
 
 class Laboratory(models.Model):
+    """
+        Таблица БД для хранения информации о лабораториях
+    """
     name = models.CharField(max_length=127)
 
 
 class LessonBlock(models.Model):
+    """
+        Таблица БД для хранения мета-информации уроков
+    """
     locale = models.JSONField(default={'ru': [], 'en': []})
     markup = models.JSONField(default={'ru': [], 'en': []})
     entry = models.CharField(default=None, max_length=120, blank=True, null=True)  # if root -> local_id 1st unit
 
 
 class Lesson(EditorBlockModel):
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='lessons')
-    quest = models.ForeignKey(Quest, null=True, on_delete=models.SET_NULL, related_name='lessons')
-    laboratory = models.ForeignKey(Laboratory, on_delete=models.SET_NULL, null=True)
+    """
+        Таблица БД для хранения информации об уроках
+    """
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="lessons")
+    quest = models.ForeignKey(Quest, null=True, on_delete=models.SET_NULL, related_name="lessons", blank=True)
+    laboratory = models.ForeignKey(Laboratory, on_delete=models.SET_NULL, null=True, blank=True)
 
     name = models.CharField(max_length=127)
     description = models.TextField()
-    for_gender = models.CharField(default='any', max_length=6, choices=GENDERS)
+    for_gender = models.CharField(default="any", max_length=6, choices=GENDERS)
 
     time_cost = models.IntegerField()
     money_cost = models.IntegerField()
@@ -88,24 +112,31 @@ class Lesson(EditorBlockModel):
 
     has_bonuses = models.BooleanField(default=False)
 
-    bonuses = models.JSONField(default=dict)
-    content = models.OneToOneField(LessonBlock, related_name='lesson', on_delete=models.CASCADE)
+    bonuses = models.JSONField(default=dict, blank=True)
+    content = models.OneToOneField(LessonBlock, related_name="lesson", on_delete=models.CASCADE)
 
-    next = models.CharField(max_length=255, default='', blank=True)
+    next = models.CharField(max_length=255, default="", blank=True)
 
     def __str__(self):
         return f"Lesson[{self.id}] {self.course}"
 
 
 class Unit(EditorBlockModel):
+    """
+        Таблица БД для хранения информации о частях урока.
+        Урок - последовательная цепочка юнитов.
+    """
     lesson = models.ForeignKey(Lesson, on_delete=models.SET_NULL, null=True)
-    lesson_block = models.ForeignKey(LessonBlock, on_delete=models.SET_NULL, null=True, related_name='blocks')
+    lesson_block = models.ForeignKey(LessonBlock, on_delete=models.SET_NULL, null=True, related_name="blocks")
     type = models.IntegerField()
     content = models.JSONField()
     next = models.JSONField()  # ["n_12313", "n_asdzcx"]
 
 
 class NPC(models.Model):
+    """
+        Таблица БД для хранения информации об NPC
+    """
     class NPCGenders(models.TextChoices):
         MALE = "male"
         FEMALE = "female"
@@ -126,28 +157,34 @@ class NPC(models.Model):
 
     is_scientific_director = models.BooleanField(default=False)
 
-    usual_image = models.ImageField(upload_to='npc_emotions')
-    angry_image = models.ImageField(upload_to='npc_emotions')
-    fair_image = models.ImageField(upload_to='npc_emotions')
-    sad_image = models.ImageField(upload_to='npc_emotions')
+    usual_image = models.ImageField(upload_to="npc_emotions")
+    angry_image = models.ImageField(upload_to="npc_emotions")
+    fair_image = models.ImageField(upload_to="npc_emotions")
+    sad_image = models.ImageField(upload_to="npc_emotions")
 
     def __str__(self):
         return f"NPC[{self.uid}] {self.ru_name}"
 
 
 class Location(models.Model):
+    """
+        Таблица БД для хранения информации о локациях
+    """
     uid = models.CharField(max_length=7, unique=True)
     ru_name = models.CharField(max_length=31)
     en_name = models.CharField(max_length=31)
 
-    image = models.ImageField(upload_to='locations')
-    image_disabled = models.ImageField(upload_to='locations')
+    image = models.ImageField(upload_to="locations")
+    image_disabled = models.ImageField(upload_to="locations")
 
     def __str__(self):
         return f"Location[{self.uid}] {self.ru_name}"
 
 
 class CourseMapImg(models.Model):
+    """
+        Таблица БД для хранения карт курсов
+    """
     course = models.ForeignKey("Course", on_delete=models.CASCADE)
     order = models.IntegerField(default=0)
     image = models.ImageField(upload_to="course_map_images")
