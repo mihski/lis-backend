@@ -1,3 +1,5 @@
+import datetime
+
 from rest_framework import serializers
 
 from resources.exceptions import NegativeResourcesException, ResourcesOverfillException
@@ -12,23 +14,23 @@ class ResourcesSerializer(serializers.ModelSerializer):
     """
         Сериализатор для отображения данных о ресурсах
     """
-    timeAmount = serializers.IntegerField(source="time_amount", default=0)
-    moneyAmount = serializers.IntegerField(source="money_amount", default=0)
-    energyAmount = serializers.IntegerField(source="energy_amount", default=0)
+    timeAmount = serializers.ReadOnlyField(source="time_amount", default=0)
+    moneyAmount = serializers.ReadOnlyField(source="money_amount", default=0)
+    energyAmount = serializers.ReadOnlyField(source="energy_amount", default=0)
     maxEnergyAmount = serializers.SerializerMethodField(method_name="get_max_energy")
-    ultimateRemainSeconds = serializers.SerializerMethodField(method_name="get_ultimate_remain_seconds")
+    ultimateEndDateTime = serializers.SerializerMethodField(method_name="get_ultimate_end_dt")
 
     def get_max_energy(self, instance: Resources) -> int:
         position = instance.user.university_position
         return get_max_energy_by_position(position)
 
-    def get_ultimate_remain_seconds(self, instance: Resources) -> int:
+    def get_ultimate_end_dt(self, instance: Resources) -> datetime.datetime:
         profile = instance.user
-        return get_ultimate_remaining_time(profile)
+        return profile.ultimate_finish_datetime
 
     class Meta:
         model = Resources
-        fields = ["id", "timeAmount", "moneyAmount", "energyAmount", "maxEnergyAmount", "ultimateRemainSeconds"]
+        fields = ["id", "timeAmount", "moneyAmount", "energyAmount", "maxEnergyAmount", "ultimateEndDateTime"]
 
 
 class ResourcesUpdateSerializer(serializers.Serializer):
