@@ -203,7 +203,7 @@ class CourseLessonsTree(AbstractNodeTree):
         map_list = self.get_map_for_profile(profile)
         profile_interacted = {
             *[p.lesson.local_id for p in ProfileLessonDone.objects.select_related("lesson").all()],
-            *[b.local_id for b in ProfileBranchingChoice.objects.all()]
+            *[b.branching.local_id for b in ProfileBranchingChoice.objects.select_related("branching").all()]
         }
 
         for i, block in enumerate(map_list):
