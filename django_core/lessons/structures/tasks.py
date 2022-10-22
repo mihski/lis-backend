@@ -1,4 +1,6 @@
 from abc import abstractmethod
+from collections import defaultdict
+
 from django.db import models
 from lessons.structures import LessonBlockType
 from helpers.mixins import ChildAccessMixin
@@ -119,8 +121,21 @@ class RadiosTableBlock(TaskBlock):
     is_radio = models.BooleanField()
     correct = models.JSONField()
 
-    def check_answer(self, answer):
+    def check_answer(self, answer: dict[str, list[str]]) -> bool:
+        for row, choose in answer.items():
+            if sorted(self.correct[row]) != sorted(choose):
+                return False
+
         return True
+
+    def get_details(self, answer):
+        details = defaultdict(lambda: defaultdict(bool))
+
+        for row, choose in answer.items():
+            for variant in choose:
+                details[row][variant] = variant in self.correct[row]
+
+        return details
 
 
 class ImageAnchorsBlock(TaskBlock):
