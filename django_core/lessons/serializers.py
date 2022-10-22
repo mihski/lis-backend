@@ -323,3 +323,23 @@ class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = ["text", "course_id", "user"]
+
+
+class LessonFinishSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField(source="local_id")
+    next_id = serializers.SerializerMethodField()
+
+    def get_next_id(self, lesson: Lesson):
+        course_map = CourseLessonsTree(lesson.course)
+        profile = self.context["profile"]
+        map_list = course_map.get_map_for_profile(profile)
+
+        for i, block in enumerate(map_list):
+            if i + 1 < len(map_list) and block.local_id == lesson.local_id:
+                return map_list[i + 1].local_id
+
+        return ""
+
+    class Meta:
+        model = Lesson
+        fields = ["id", "next_id"]

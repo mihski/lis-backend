@@ -13,7 +13,8 @@ from lessons.models import (
     Course,
     Branching,
     Review,
-    Question
+    Question,
+    ProfileLessonDone
 )
 from lessons.serializers import (
     NPCSerializer,
@@ -23,7 +24,8 @@ from lessons.serializers import (
     BranchingSelectSerializer,
     BranchingDetailSerializer,
     QuestionSerializer,
-    ReviewSerializer
+    ReviewSerializer,
+    LessonFinishSerializer,
 )
 from helpers.lesson_tree import LessonUnitsTree
 from helpers.course_tree import CourseLessonsTree
@@ -96,12 +98,13 @@ class LessonDetailViewSet(
             locales["en"][lesson_name_field] = lesson.course.locale["en"][lesson_name_field]
 
             lesson_data.update({
+                "finished": ProfileLessonDone.objects.filter(lesson=lesson, profile=profile).exists(),
                 "location": first_location_id or 1,
                 "npc": first_npc_id or -1,
                 "locales": locales,
                 "tasks": unit_tree.task_count,
                 "quest_number": course_tree.get_quest_number(profile, lesson),
-                "lesson_number": course_tree.get_lesson_number(profile, lesson),
+                "lesson_number": course_tree.get_lesson_number(profile, lesson) - 1,
             })
 
         data = {**lesson_data, "player": player.data, "chunk": unit_chunk}
@@ -127,18 +130,33 @@ class QuestionViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
 
 
 class LessonActionsViewSet(viewsets.GenericViewSet):
-    queryset = Lesson.objects.select_related("quest")
-    serializer_class = LessonDetailSerializer
+    queryset = Lesson.objects.select_related("course", "quest")
+    serializer_class = LessonFinishSerializer
     permission_classes = [permissions.IsAuthenticated, HasProfilePermission]
     lookup_field = "local_id"
+
+    def _take_off_resources(self, profile: Profile, lesson: Lesson) -> None:
+        resources = profile.resources
+        resources.energy_amount -= lesson.energy_cost
+        resources.time_amount += lesson.time_cost
+        resources.save()
+
+    def _calculate_statistic(self, profile: Profile, lesson: Lesson) -> None:
+        statistics, _ = Statistics.objects.get_or_create(profile=profile)
 
     @decorators.action(methods=["POST"], detail=True, url_path="finish")
     def finish_lesson(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
         lesson: Lesson = self.get_object()
-        profile = request.user.profile.first()
+        profile = request.user.profile.prefetch_related("resources").first()
 
-        statistics, _ = Statistics.objects.get_or_create(profile=profile)
-        return Response(
-            data={"lesson_id": lesson.local_id, "status": "finished"},
-            status=status.HTTP_200_OK
-        )
+        lesson_finish_data = self.serializer_class(lesson, context={"profile": profile}).data
+
+        if ProfileLessonDone.objects.filter(lesson=lesson, profile=profile).exists():
+            return lesson_finish_data
+
+        self._take_off_resources(profile, lesson)
+        self._calculate_statistic(profile, lesson)
+
+        lesson_done = ProfileLessonDone.objects.create(profile=profile, lesson=lesson)
+
+        return Response(lesson_finish_data)

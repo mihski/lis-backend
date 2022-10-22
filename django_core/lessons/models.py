@@ -224,3 +224,9 @@ class Question(models.Model):
         verbose_name = "Question"
         verbose_name_plural = "Questions"
         ordering = ("created_at",)
+
+
+class ProfileLessonDone(models.Model):
+    profile = models.ForeignKey("accounts.Profile", on_delete=models.CASCADE)
+    lesson = models.ForeignKey("Lesson", on_delete=models.CASCADE)
+    finished_at = models.DateTimeField(auto_now=True)

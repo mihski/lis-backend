@@ -1,8 +1,8 @@
 from functools import lru_cache
 
 from accounts.models import Profile
-from lessons.models import Lesson, Course, Quest, Branching, ProfileBranchingChoice
-from lessons.structures import BranchingType, BlockType
+from lessons.models import Lesson, Course, Quest, Branching, ProfileBranchingChoice, ProfileLessonDone
+from lessons.structures import BranchingType
 from helpers.abstract_tree import AbstractNode, AbstractNodeTree
 
 
@@ -200,4 +200,14 @@ class CourseLessonsTree(AbstractNodeTree):
         return map_list
 
     def get_active(self, profile: Profile) -> int:
-        return 0
+        map_list = self.get_map_for_profile(profile)
+        profile_interacted = {
+            *[p.lesson.local_id for p in ProfileLessonDone.objects.select_related("lesson").all()],
+            *[b.local_id for b in ProfileBranchingChoice.objects.all()]
+        }
+
+        for i, block in enumerate(map_list):
+            if block.local_id not in profile_interacted:
+                return i
+
+        return len(map_list)
