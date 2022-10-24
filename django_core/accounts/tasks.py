@@ -38,11 +38,16 @@ def _generate_img(profile: Profile, state: str = "usual"):
     result_img = _overlay_one_another(result_img, _get_part(profile.face_form, state))
     result_img = _overlay_one_another(result_img, _get_part(profile.brows_form, state))
     result_img = _overlay_one_another(result_img, _get_part(profile.cloth_form, state))
-    result_img[result_img == 0] = 255
+    result_img = cv2.cvtColor(result_img, cv2.COLOR_BGR2RGB)
 
-    result_img = cv2.cvtColor(result_img, cv2.COLOR_BGR2RGBA)
+    _, alpha = cv2.threshold(cv2.cvtColor(result_img, cv2.COLOR_RGB2GRAY), 0, 255, cv2.THRESH_BINARY)
+    b, g, r = cv2.split(result_img)
+    rgba = [b, g, r, alpha]
+    dst = cv2.merge(rgba, 4)
 
-    return result_img
+    print(dst.shape)
+
+    return dst
 
 
 def _set_image_field(profile: Profile, body_part: ImageFieldFile, state: str) -> None:

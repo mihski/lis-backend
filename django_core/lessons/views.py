@@ -79,7 +79,7 @@ class LessonDetailViewSet(
         course_tree = CourseLessonsTree(lesson.course)
 
         profile, _ = Profile.objects.get_or_create(user=request.user)
-        player = ProfileSerializerWithoutLookForms(profile)
+        player = ProfileSerializerWithoutLookForms(profile, context={"request": request})
 
         first_location_id, first_npc_id, unit_chunk = (
             unit_tree.make_lessons_queue(from_unit_id, hide_task_answers=True)
