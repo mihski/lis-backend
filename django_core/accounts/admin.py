@@ -35,3 +35,8 @@ class StatisticsAdmin(ImportExportModelAdmin):
 admin.site.register(models.UserRole)
 admin.site.register(models.Profile)
 admin.site.register(models.ScientificDirector)
+admin.site.register(models.ProfileAvatarHead)
+admin.site.register(models.ProfileAvatarHair)
+admin.site.register(models.ProfileAvatarFace)
+admin.site.register(models.ProfileAvatarBrows)
+admin.site.register(models.ProfileAvatarClothes)

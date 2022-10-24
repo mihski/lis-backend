@@ -1,6 +1,16 @@
 from rest_framework import serializers, validators
 
-from accounts.models import User, Profile, Statistics
+from accounts.models import (
+    User,
+    Profile,
+    Statistics,
+    ProfileAvatarHead,
+    ProfileAvatarClothes,
+    ProfileAvatarBrows,
+    ProfileAvatarFace,
+    ProfileAvatarHair
+)
+from accounts.tasks import generate_profile_images
 from lessons.models import NPC
 from resources.exceptions import NegativeResourcesException
 
@@ -45,7 +55,21 @@ class ProfileStatisticsUpdateSerializer(serializers.Serializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    scientific_director = serializers.PrimaryKeyRelatedField(queryset=NPC.objects.all())
+    scientific_director = serializers.PrimaryKeyRelatedField(queryset=NPC.objects.filter(is_scientific_director=True))
+    head_form = serializers.PrimaryKeyRelatedField(write_only=True, queryset=ProfileAvatarHead.objects.all())
+    hair_form = serializers.PrimaryKeyRelatedField(write_only=True, queryset=ProfileAvatarHair.objects.all())
+    face_form = serializers.PrimaryKeyRelatedField(write_only=True, queryset=ProfileAvatarFace.objects.all())
+    brows_form = serializers.PrimaryKeyRelatedField(write_only=True, queryset=ProfileAvatarBrows.objects.all())
+    cloth_form = serializers.PrimaryKeyRelatedField(write_only=True, queryset=ProfileAvatarClothes.objects.all())
+    usual_image = serializers.ImageField(read_only=True)
+    angry_image = serializers.ImageField(read_only=True)
+    fair_image = serializers.ImageField(read_only=True)
+    happy_image = serializers.ImageField(read_only=True)
+
+    username = serializers.CharField(source="first_name")
+    first_name = serializers.CharField(source="user.first_name")
+    last_name = serializers.CharField(source="user.last_name")
+    middle_name = serializers.CharField(source="user.middle_name")
 
     def validate_scientific_director(self, scientific_director: NPC) -> NPC:
         if not scientific_director.is_scientific_director:
@@ -53,12 +77,31 @@ class ProfileSerializer(serializers.ModelSerializer):
 
         return scientific_director
 
+    def _is_avatar_updated(self, instance: Profile, validated_data: dict) -> bool:
+        for key in validated_data:
+            if key.endswith('_form') and validated_data[key] != getattr(instance, key):
+                return True
+
+        return False
+
+    def update(self, instance, validated_data):
+        is_avatar_updated = self._is_avatar_updated(instance, validated_data)
+
+        instance = super().update(instance, validated_data)
+        instance.save()
+
+        if is_avatar_updated:
+            generate_profile_images.delay(instance.id)
+
+        return instance
+
     class Meta:
         model = Profile
         fields = [
-            "id", "first_name", "last_name", "middle_name",
-            "gender", "scientific_director", "head_form",
-            "face_form", "hair_form", "dress_form", "statistics"
+            "id", "username", "first_name", "last_name", "middle_name",
+            "gender", "scientific_director",
+            "head_form", "hair_form", "face_form", "brows_form", "cloth_form",
+            "usual_image", "angry_image", "fair_image", "happy_image",
         ]
 
 

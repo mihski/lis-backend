@@ -25,7 +25,14 @@ class ProfileViewSet(
     - 400 - с тегом "scientific_director", если NPC не может быть научником
     - 403 - если не авторизован или если пытаешься изменить не свой профиль
     """
-    queryset = Profile.objects.all()
+    queryset = Profile.objects.select_related(
+        "head_form",
+        "cloth_form",
+        "face_form",
+        "hair_form",
+        "brows_form",
+        "user",
+    ).all()
     serializer_class = ProfileSerializer
     permission_classes = (permissions.IsAuthenticated, )
 

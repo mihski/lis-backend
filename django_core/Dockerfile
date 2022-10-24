@@ -11,6 +11,10 @@ WORKDIR /django_core
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
+# opencv для работы с аватарками персонажей
+RUN apt-get update
+RUN apt-get install python3-opencv -y
+
 # ставим зависимости
 RUN pip install --upgrade pip
 COPY ./requirements.txt .

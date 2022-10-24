@@ -5,6 +5,11 @@ from django.contrib.auth.models import (
     PermissionsMixin
 )
 
+PROFILE_GENDER = (
+    ("male", "Мужской"),
+    ("female", "Женский"),
+)
+
 
 class UserRole(models.Model):
     """
@@ -96,14 +101,101 @@ class UniversityPosition(models.TextChoices):
     JUN_RESEARCH_ASSISTANT = "Мл. научный сотрудник"
 
 
+class ProfileAvatarBodyPart(models.Model):
+    gender = models.CharField(max_length=6, choices=PROFILE_GENDER)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return f"{self.__class__.__name__}[{self.id}] {self.gender}"
+
+
+class ProfileAvatarHead(ProfileAvatarBodyPart):
+    usual_part = models.ImageField(
+        upload_to='body_part/heads/',
+        default='woman_parts/Head/1 type/Woman-1-head@4x.png'
+    )
+
+
+class ProfileAvatarHair(ProfileAvatarBodyPart):
+    front_part = models.ImageField(
+        upload_to='body_part/hairs/',
+        default='woman_parts/Hair/1 type/Woman-1-hair-front-red@4x.png'
+    )
+    back_part = models.ImageField(
+        upload_to='body_part/hairs/',
+        default='woman_parts/Hair/1 type/Woman-1-hair-back-red@4x.png',
+        null=True,
+        blank=True
+    )
+
+
+class ProfileAvatarFace(ProfileAvatarBodyPart):
+    usual_part = models.ImageField(
+        upload_to='body_part/faces/',
+        default='woman_parts/Face/1 type/Woman-1-face-usual@4x.png',
+    )
+    fair_part = models.ImageField(
+        upload_to='body_part/faces/',
+        default='woman_parts/Face/1 type/Woman-1-face-fair@4x.png',
+    )
+    happy_part = models.ImageField(
+        upload_to='body_part/faces/',
+        default='woman_parts/Face/1 type/Woman-1-face-happy@4x.png',
+    )
+    angry_part = models.ImageField(
+        upload_to='body_part/faces/',
+        default='woman_parts/Face/1 type/Woman-1-face-angry@4x.png',
+    )
+
+
+class ProfileAvatarBrows(ProfileAvatarBodyPart):
+    usual_part = models.ImageField(
+        upload_to='body_part/brows/',
+        default='woman_parts/Brows/1 type/Woman-1-brows-usual-light@4x.png',
+    )
+    fair_part = models.ImageField(
+        upload_to='body_part/brows/',
+        default='woman_parts/Brows/1 type/Woman-1-brows-fair-light@4x.png',
+    )
+    happy_part = models.ImageField(
+        upload_to='body_part/brows/',
+        default='woman_parts/Brows/1 type/Woman-1-brows-happy-light@4x.png',
+    )
+    angry_part = models.ImageField(
+        upload_to='body_part/brows/',
+        default='woman_parts/Brows/1 type/Woman-1-brows-angry-light@4x.png',
+    )
+
+
+class ProfileAvatarClothes(ProfileAvatarBodyPart):
+    usual_part = models.ImageField(
+        upload_to='body_part/clothes/',
+        default='woman_parts/Brows/1 type/Woman-1-clothes-usual@4x.png',
+    )
+    fair_part = models.ImageField(
+        upload_to='body_part/clothes/',
+        default='woman_parts/Brows/1 type/Woman-1-clothes-fair@4x.png',
+    )
+    happy_part = models.ImageField(
+        upload_to='body_part/clothes/',
+        default='woman_parts/Brows/1 type/Woman-1-clothes-happy@4x.png',
+    )
+    angry_part = models.ImageField(
+        upload_to='body_part/clothes/',
+        default='woman_parts/Brows/1 type/Woman-1-clothes-angry@4x.png',
+    )
+
+
+def _upload_avatar_image(instance: "Profile", filename: str) -> str:
+    return "/".join(["avatars", instance.user.username, filename])
+
+
 class Profile(models.Model):
     """
         Таблица БД для хранения профилей персонажей
     """
-    GENDER = (
-        ("male", "Мужской"),
-        ("female", "Женский"),
-    )
     LABORATORIES = (
         ("it", "IT"),
         ("ls", "Науки о жизни"),
@@ -116,8 +208,7 @@ class Profile(models.Model):
     first_name = models.CharField(max_length=63)
     last_name = models.CharField(max_length=63)
     middle_name = models.CharField(max_length=63)
-    gender = models.CharField(max_length=6, choices=GENDER)  # todo: по-хорошему тоже на TextChoices заменить
-
+    gender = models.CharField(max_length=6, choices=PROFILE_GENDER)  # todo: по-хорошему тоже на TextChoices заменить
     university_position = models.CharField(
         choices=UniversityPosition.choices,
         default=UniversityPosition.STUDENT,
@@ -126,10 +217,16 @@ class Profile(models.Model):
     scientific_director = models.ForeignKey("lessons.NPC", on_delete=models.SET_NULL, null=True, blank=True)
     laboratory = models.CharField(max_length=120, choices=LABORATORIES, default="it")
 
-    head_form = models.CharField(max_length=15, blank=True)
-    face_form = models.CharField(max_length=15, blank=True)
-    hair_form = models.CharField(max_length=15, blank=True)
-    dress_form = models.CharField(max_length=15, blank=True)
+    head_form = models.ForeignKey("ProfileAvatarHead", on_delete=models.CASCADE, null=True)
+    face_form = models.ForeignKey("ProfileAvatarFace", on_delete=models.CASCADE, null=True)
+    hair_form = models.ForeignKey("ProfileAvatarHair", on_delete=models.CASCADE, null=True)
+    brows_form = models.ForeignKey("ProfileAvatarBrows", on_delete=models.CASCADE, null=True)
+    cloth_form = models.ForeignKey("ProfileAvatarClothes", on_delete=models.CASCADE, null=True)
+
+    usual_image = models.ImageField(upload_to=_upload_avatar_image, null=True, editable=False)
+    angry_image = models.ImageField(upload_to=_upload_avatar_image, null=True, editable=False)
+    fair_image = models.ImageField(upload_to=_upload_avatar_image, null=True, editable=False)
+    happy_image = models.ImageField(upload_to=_upload_avatar_image, null=True, editable=False)
 
     ultimate_activated = models.BooleanField(default=0)
     ultimate_finish_datetime = models.DateTimeField(null=True, default=None, blank=True)
