@@ -67,9 +67,10 @@ class ProfileSerializer(serializers.ModelSerializer):
     happy_image = serializers.ImageField(read_only=True)
 
     username = serializers.CharField(source="first_name")
-    first_name = serializers.CharField(source="user.first_name")
-    last_name = serializers.CharField(source="user.last_name")
-    middle_name = serializers.CharField(source="user.middle_name")
+    isu = serializers.ReadOnlyField(source="user.username")
+    first_name = serializers.ReadOnlyField(source="user.first_name")
+    last_name = serializers.ReadOnlyField(source="user.last_name")
+    middle_name = serializers.ReadOnlyField(source="user.middle_name")
 
     def validate_scientific_director(self, scientific_director: NPC) -> NPC:
         if not scientific_director.is_scientific_director:
@@ -98,7 +99,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = [
-            "id", "username", "first_name", "last_name", "middle_name",
+            "id", "isu", "username", "first_name", "last_name", "middle_name",
             "gender", "scientific_director",
             "head_form", "hair_form", "face_form", "brows_form", "cloth_form",
             "usual_image", "angry_image", "fair_image", "happy_image",
@@ -107,7 +108,14 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class ProfileSerializerWithoutLookForms(ProfileSerializer):
     name = serializers.CharField(source="first_name")
+    usual_image = serializers.ImageField(read_only=True)
+    angry_image = serializers.ImageField(read_only=True)
+    fair_image = serializers.ImageField(read_only=True)
+    happy_image = serializers.ImageField(read_only=True)
 
     class Meta:
         model = Profile
-        fields = ["id", "name", "gender", "scientific_director"]
+        fields = [
+            "id", "name", "gender", "scientific_director",
+            "usual_image", "angry_image", "fair_image", "happy_image",
+        ]
