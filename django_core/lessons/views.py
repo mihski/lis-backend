@@ -2,6 +2,8 @@ from rest_framework import viewsets, permissions, authentication, mixins, decora
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.request import Request
 from rest_framework.response import Response
+from drf_yasg.utils import swagger_auto_schema
+from django.conf import settings
 
 from accounts.models import Profile, Statistics
 from accounts.serializers import ProfileSerializerWithoutLookForms
@@ -31,6 +33,8 @@ from lessons.serializers import (
 from lessons.utils import process_affect
 from helpers.lesson_tree import LessonUnitsTree
 from helpers.course_tree import CourseLessonsTree
+from resources.exceptions import NotEnoughEnergyException
+from resources.utils import check_ultimate_is_active
 
 
 class NPCViewSet(viewsets.ReadOnlyModelViewSet):
@@ -49,12 +53,12 @@ class CourseMapViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
         "quests__lessons", "quests__branchings",
     )
     serializer_class = CourseMapSerializer
-    permission_classes = (permissions.IsAuthenticated, )
+    permission_classes = (permissions.IsAuthenticated,)
 
 
 class BranchSelectViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.UpdateModelMixin):
     queryset = Branching.objects.all()
-    permission_classes = (permissions.IsAuthenticated, )
+    permission_classes = (permissions.IsAuthenticated,)
     lookup_field = "local_id"
 
     def get_serializer_class(self):
@@ -73,15 +77,31 @@ class LessonDetailViewSet(
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = "local_id"
 
+    def _check_is_enough_energy(self, profile: Profile, lesson: Lesson) -> bool:
+        if (
+            check_ultimate_is_active(profile)
+            or not settings.CHECK_ENERGY_ON_LESSON_ENTER
+        ):
+            return True
+        return profile.resources.energy_amount >= lesson.energy_cost
+
+    @swagger_auto_schema(
+        responses={
+            status.HTTP_400_BAD_REQUEST: NotEnoughEnergyException.default_code
+        }
+    )
     def retrieve(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
         lesson = self.get_object()
         from_unit_id = request.GET.get("from_unit_id", None)
 
-        unit_tree = LessonUnitsTree(lesson)
-        course_tree = CourseLessonsTree(lesson.course)
-
         profile, _ = Profile.objects.get_or_create(user=request.user)
         player = ProfileSerializerWithoutLookForms(profile, context={"request": request})
+
+        if not self._check_is_enough_energy(profile, lesson):
+            raise NotEnoughEnergyException("Not enough energy to enter lesson")
+
+        unit_tree = LessonUnitsTree(lesson)
+        course_tree = CourseLessonsTree(lesson.course)
 
         first_location_id, first_npc_id, unit_chunk = (
             unit_tree.make_lessons_queue(from_unit_id, hide_task_answers=True)

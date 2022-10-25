@@ -20,3 +20,8 @@ class ResourcesNotFoundException(NotFound):
 class UltimateAlreadyActivatedException(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
     default_code = "Ultimate already activated"
+
+
+class NotEnoughEnergyException(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_code = "not_enough_energy"
