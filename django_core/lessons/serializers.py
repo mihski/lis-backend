@@ -16,7 +16,8 @@ from lessons.models import (
     Quest,
     Review,
     Question,
-    UnitAffect
+    UnitAffect,
+    EmailTypes
 )
 from lessons.structures import BlockType, BranchingType, BranchingViewType
 from lessons.utils import process_affect
@@ -323,10 +324,14 @@ class ReviewSerializer(serializers.ModelSerializer):
     course_id = serializers.PrimaryKeyRelatedField(
         queryset=Course.objects.all(), source="course"
     )
+    mail_type = serializers.ChoiceField(
+        choices=EmailTypes.choices,
+        default=EmailTypes.CONTENT
+    )
 
     class Meta:
         model = Review
-        fields = ["text", "course_id", "user"]
+        fields = ["text", "course_id", "user", "mail_type"]
 
 
 class QuestionSerializer(serializers.ModelSerializer):

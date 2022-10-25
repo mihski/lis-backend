@@ -98,6 +98,7 @@ EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 
 EMAIL_RECIPIENTS = os.getenv("EMAIL_RECIPIENTS", "").split(",")
+EMAIL_TECH = os.getenv("EMAIL_TECH", "").split(",")
 
 
 # Celery configurations

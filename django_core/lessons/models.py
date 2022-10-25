@@ -209,12 +209,18 @@ class CourseMapImg(models.Model):
         return f"CourseMapImg[{self.order}] for {self.course.name}"
 
 
+class EmailTypes(models.TextChoices):
+    CONTENT = "content"
+    TECH = "tech"
+
+
 class Review(models.Model):
     """
         Таблица БД для хранения отзывов
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reviews")
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="reviews")
+    mail_type = models.CharField(max_length=7, choices=EmailTypes.choices, default=EmailTypes.CONTENT)
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
