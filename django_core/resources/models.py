@@ -1,15 +1,15 @@
 from django.db import models
 
-from accounts.models import Profile
-
 
 class EmotionData(models.Model):
     """
         Таблица БД для хранения эмоций персонажа (профиля)
     """
-    user =  models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="emotions")
-    emotion_content = models.JSONField(default=dict)
-    created_at = models.DateTimeField(auto_created=True)
+    profile = models.ForeignKey("accounts.Profile", on_delete=models.CASCADE, related_name="emotions")
+    lesson = models.ForeignKey("lessons.Lesson", on_delete=models.CASCADE)
+    emotion = models.IntegerField()
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         app_label = "resources"
@@ -27,7 +27,7 @@ class Resources(models.Model):
     """
         Таблица БД для хранения ресурсов персонажа (профиля)
     """
-    user = models.OneToOneField(Profile, on_delete=models.CASCADE, related_name="resources")
+    user = models.OneToOneField("accounts.Profile", on_delete=models.CASCADE, related_name="resources")
     time_amount = models.PositiveIntegerField(default=0)
     money_amount = models.PositiveIntegerField(default=0)
     energy_amount = models.PositiveIntegerField(default=0)

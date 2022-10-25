@@ -19,10 +19,11 @@ from lessons.models import (
     UnitAffect,
     EmailTypes
 )
-from lessons.structures import BlockType, BranchingType, BranchingViewType, LessonBlockType
+from lessons.structures import BlockType, BranchingType, BranchingViewType
 from lessons.structures.tasks import TaskBlock
 from lessons.utils import process_affect
 from helpers.course_tree import CourseLessonsTree
+from resources.models import EmotionData
 
 User = get_user_model()
 
@@ -362,10 +363,18 @@ class QuestionSerializer(serializers.ModelSerializer):
         fields = ["text", "course_id", "user"]
 
 
+class EmotionDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmotionData
+        fields = ["id", "comment", "emotion"]
+
+
 class LessonFinishSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField(source="local_id")
     next_id = serializers.SerializerMethodField()
     next_type = serializers.SerializerMethodField()
+    emotion = EmotionDataSerializer(write_only=True)
+    duration = serializers.IntegerField(write_only=True)
 
     @lru_cache
     def get_next_obj(self, lesson: Lesson):
@@ -393,6 +402,12 @@ class LessonFinishSerializer(serializers.ModelSerializer):
 
         return ""
 
+    def validate(self, validated_data):
+        validated_data.pop("emotion")
+        validated_data.pop("duration")
+
+        return validated_data
+
     class Meta:
         model = Lesson
-        fields = ["id", "next_id", "next_type"]
+        fields = ["id", "next_id", "next_type", "emotion", "duration"]

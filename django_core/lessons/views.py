@@ -34,6 +34,7 @@ from lessons.utils import process_affect
 from helpers.lesson_tree import LessonUnitsTree
 from helpers.course_tree import CourseLessonsTree
 from resources.exceptions import NotEnoughEnergyException
+from resources.models import EmotionData
 from resources.utils import check_ultimate_is_active
 
 
@@ -163,8 +164,18 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
         resources.time_amount += lesson.time_cost
         resources.save()
 
-    def _calculate_statistic(self, profile: Profile, lesson: Lesson) -> None:
+    def _calculate_statistic(self, profile: Profile, lesson: Lesson, duration: int) -> None:
         statistics, _ = Statistics.objects.get_or_create(profile=profile)
+        statistics.total_time_spend += duration
+        statistics.save()
+
+    def _create_emotion(self, profile: Profile, lesson: Lesson, emotion: dict) -> None:
+        EmotionData.objects.create(
+            emotion=emotion["emotion"],
+            comment=emotion["comment"],
+            profile=profile,
+            lesson=lesson
+        )
 
     @decorators.action(methods=["POST"], detail=True, url_path="finish")
     def finish_lesson(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
@@ -177,7 +188,8 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
             return Response(lesson_finish_data)
 
         self._take_off_resources(profile, lesson)
-        self._calculate_statistic(profile, lesson)
+        self._calculate_statistic(profile, lesson, request.data["duration"])
+        self._create_emotion(profile, lesson, request.data["emotion"])
 
         lesson_done = ProfileLessonDone.objects.create(profile=profile, lesson=lesson)
 

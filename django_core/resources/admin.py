@@ -4,7 +4,7 @@ from resources import models
 
 
 class EmotionDataAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "emotion_content", "created_at")
+    list_display = ("id", "profile", "created_at")
     ordering = ("-created_at",)
 
 
