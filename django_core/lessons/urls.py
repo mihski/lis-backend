@@ -1,3 +1,4 @@
+from django.urls import path
 from rest_framework import routers
 
 from lessons.views import (
@@ -8,7 +9,8 @@ from lessons.views import (
     CourseMapViewSet,
     BranchSelectViewSet,
     ReviewViewSet,
-    QuestionViewSet
+    QuestionViewSet,
+    CallbackAPIView
 )
 
 app_name = "lessons"
@@ -23,4 +25,7 @@ router.register("branchings", BranchSelectViewSet)
 router.register("reviews", ReviewViewSet)
 router.register("questions", QuestionViewSet)
 
-urlpatterns = router.urls
+urlpatterns = [
+    *router.urls,
+    path("callbacks/<str:pk>/", CallbackAPIView.as_view())
+]

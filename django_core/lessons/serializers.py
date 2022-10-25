@@ -15,9 +15,11 @@ from lessons.models import (
     ProfileBranchingChoice,
     Quest,
     Review,
-    Question
+    Question,
+    UnitAffect
 )
 from lessons.structures import BlockType, BranchingType, BranchingViewType
+from lessons.utils import process_affect
 from helpers.course_tree import CourseLessonsTree
 
 User = get_user_model()
@@ -33,6 +35,14 @@ class LocationDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
         fields = "__all__"
+
+
+class UnitAffectSerializer(serializers.ModelSerializer):
+    method = serializers.CharField(default="PUT")
+
+    class Meta:
+        model = UnitAffect
+        fields = ["code", "api_path", "method", "body"]
 
 
 class UnitDetailSerializer(serializers.ModelSerializer):
@@ -244,11 +254,19 @@ class BranchingSelectSerializer(serializers.ModelSerializer):
 
         return validated_data
 
+    def _process_callbacks(self, choose_local_id: str, profile: Profile) -> None:
+        lessons = Lesson.objects.filter(local_id__in=choose_local_id.split(","))
+        for lesson in lessons:
+            process_affect(lesson.profile_affect, profile)
+
     def update(self, branching, validated_data):
         profile = Profile.objects.get(user=self.context["request"].user)
         choice_branching, created = ProfileBranchingChoice.objects.get_or_create(profile=profile, branching=branching)
         choice_branching.choose_local_id = validated_data["choose_local_id"]
         choice_branching.save()
+
+        self._process_callbacks(choice_branching.choose_local_id, profile)
+
         return branching
 
 

@@ -61,7 +61,12 @@ class LessonUnitsTree(AbstractNodeTree):
 
         super().__init__()
 
-        self.tree_elements["end_unit"] = LessonUnitsNode(MockUnit("", LessonBlockType.lesson_end.value, [], {}))
+        self.tree_elements["end_unit"] = LessonUnitsNode(MockUnit(
+            "",
+            LessonBlockType.lesson_end.value,
+            [],
+            {},
+        ))
         self._add_end_unit()
 
     def _add_end_unit(self):
@@ -96,7 +101,11 @@ class LessonUnitsTree(AbstractNodeTree):
         return self.m_units[element_id]
 
     def _generate_a18(self, units: list[Unit]) -> dict:
-        return {'type': 218, 'content': {'variants': UnitDetailSerializer(units, many=True).data}}
+        return {
+            'type': 218,
+            'content': {'variants': UnitDetailSerializer(units, many=True).data},
+            'has_callback': all([u.profile_affect_id for u in units])
+        }
 
     @lru_cache(maxsize=1)
     def make_lessons_queue(self, from_unit_id: str = None, hide_task_answers: bool = False) -> tuple[int, int, list[dict]]:

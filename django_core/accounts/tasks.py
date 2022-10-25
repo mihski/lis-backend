@@ -45,8 +45,6 @@ def _generate_img(profile: Profile, state: str = "usual"):
     rgba = [b, g, r, alpha]
     dst = cv2.merge(rgba, 4)
 
-    print(dst.shape)
-
     return dst
 
 

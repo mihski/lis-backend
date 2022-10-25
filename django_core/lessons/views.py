@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, authentication, mixins, decorators, status
+from rest_framework import viewsets, permissions, authentication, mixins, decorators, status, views, validators
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -14,7 +14,8 @@ from lessons.models import (
     Branching,
     Review,
     Question,
-    ProfileLessonDone
+    ProfileLessonDone,
+    Unit
 )
 from lessons.serializers import (
     NPCSerializer,
@@ -27,6 +28,7 @@ from lessons.serializers import (
     ReviewSerializer,
     LessonFinishSerializer,
 )
+from lessons.utils import process_affect
 from helpers.lesson_tree import LessonUnitsTree
 from helpers.course_tree import CourseLessonsTree
 
@@ -160,3 +162,18 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
         lesson_done = ProfileLessonDone.objects.create(profile=profile, lesson=lesson)
 
         return Response(lesson_finish_data)
+
+
+class CallbackAPIView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        block = Unit.objects.filter(local_id=pk).first()
+
+        if not block:
+            raise validators.ValidationError(f"There is no unit with {block.local_id}")
+
+        affect = block.profile_affect
+        process_affect(affect, request.user.profile.first())
+
+        return Response({"status": "ok"})

@@ -11,6 +11,18 @@ GENDERS = (
 )
 
 
+class UnitAffect(models.Model):
+    class UnitCodeType(models.TextChoices):
+        LABORATORY_CHOICE = "laboratory_choice"
+        JOB_CHOICE = "job_choice"
+
+    code = models.CharField(max_length=31, choices=UnitCodeType.choices)
+    content = models.JSONField()
+
+    def __str__(self):
+        return f"UnitAffect[{self.id}] {self.code}"
+
+
 class EditorBlockModel(models.Model):
     block_id = models.IntegerField(default=None, null=True, blank=True)  # deprecated
     local_id = models.CharField(max_length=255, default="", blank=True)  # n_1660813403095
@@ -117,6 +129,8 @@ class Lesson(EditorBlockModel):
 
     next = models.CharField(max_length=255, default="", blank=True)
 
+    profile_affect = models.ForeignKey("UnitAffect", null=True, on_delete=models.SET_NULL, blank=True)
+
     def __str__(self):
         return f"Lesson[{self.id}] {self.course}"
 
@@ -130,7 +144,8 @@ class Unit(EditorBlockModel):
     lesson_block = models.ForeignKey(LessonBlock, on_delete=models.SET_NULL, null=True, related_name="blocks")
     type = models.IntegerField()
     content = models.JSONField()
-    next = models.JSONField()  # ["n_12313", "n_asdzcx"]
+    next = models.JSONField()
+    profile_affect = models.ForeignKey("UnitAffect", null=True, on_delete=models.SET_NULL, blank=True)
 
 
 class NPC(models.Model):

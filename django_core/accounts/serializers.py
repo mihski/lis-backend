@@ -91,8 +91,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         instance = super().update(instance, validated_data)
         instance.save()
 
-        print(is_avatar_updated)
-
         if is_avatar_updated:
             generate_profile_images.delay(instance.id)
 
@@ -102,7 +100,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = [
             "id", "isu", "username", "first_name", "last_name", "middle_name",
-            "gender", "scientific_director",
+            "gender", "scientific_director", "university_position", "laboratory",
             "head_form", "hair_form", "face_form", "brows_form", "cloth_form",
             "usual_image", "angry_image", "fair_image", "happy_image",
         ]
