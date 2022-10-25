@@ -6,7 +6,7 @@ from accounts.views import ProfileViewSet, ProfileStatisticsViewSet
 app_name = 'accounts'
 
 router = SimpleRouter()
-router.register("profile/statistics", ProfileStatisticsViewSet)
+router.register("profile", ProfileStatisticsViewSet)
 
 urlpatterns = [
     path(

@@ -1,4 +1,6 @@
-from rest_framework import viewsets, mixins, permissions, status
+from typing import Any
+
+from rest_framework import viewsets, mixins, permissions, status, decorators
 from rest_framework.response import Response
 from rest_framework.request import Request
 
@@ -45,29 +47,26 @@ class ProfileViewSet(
         serializer.save(user=self.request.user)
 
 
-class ProfileStatisticsViewSet(
-    viewsets.GenericViewSet,
-    mixins.RetrieveModelMixin,
-    mixins.UpdateModelMixin
-):
+class ProfileStatisticsViewSet(viewsets.GenericViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileStatisticsSerializer
     permission_classes = (permissions.IsAuthenticated, HasProfilePermission)
-    http_method_names = ["get", "patch"]
 
-    def get_serializer(self, *args: tuple, **kwargs: dict):
+    def get_serializer(self, *args: tuple, **kwargs: dict) -> Any:
         if self.request.method == "PATCH":
             return ProfileStatisticsUpdateSerializer(*args, **kwargs)
         return ProfileStatisticsSerializer(*args, **kwargs)
 
-    def retrieve(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
-        profile = self.get_object()
+    @decorators.action(methods=["GET"], detail=False, url_path="statistics")
+    def retrieve_statistics(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
+        profile = request.user.profile.first()
         statistics, _ = Statistics.objects.get_or_create(profile=profile)
         serializer: ProfileStatisticsSerializer = self.get_serializer(instance=statistics)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def partial_update(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
-        profile = self.get_object()
+    @decorators.action(methods=["PATCH"], detail=False, url_path="statistics/update")
+    def update_statistics(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
+        profile = request.user.profile.first()
         profile_statistics = Statistics.objects.filter(profile=profile)
         if not profile_statistics.exists():
             raise StatisticsDoesNotExistException("Your profile doesn't have any statistics")
@@ -77,6 +76,6 @@ class ProfileStatisticsViewSet(
             data=request.data
         )
         serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-        self.perform_update(serializer)
         return Response(serializer.data, status=status.HTTP_200_OK)
