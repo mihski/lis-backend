@@ -1,7 +1,6 @@
 import os
-import json
 from pathlib import Path
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -253,3 +252,4 @@ if DEBUG:
 # LIS Configurations
 ULTIMATE_COST = 2500
 ULTIMATE_DURATION = 3 * 60 * 60  # секунды
+START_COURSE_DATE = datetime(day=1, month=9, year=2022)

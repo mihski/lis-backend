@@ -1,30 +1,34 @@
-import datetime
+import datetime as dt
 
 from rest_framework import serializers
+from django.conf import settings
 
 from resources.exceptions import NegativeResourcesException, ResourcesOverfillException
 from resources.models import Resources
-from resources.utils import (
-    get_ultimate_remaining_time,
-    get_max_energy_by_position
-)
+from resources.utils import get_max_energy_by_position
 
 
 class ResourcesSerializer(serializers.ModelSerializer):
     """
         Сериализатор для отображения данных о ресурсах
     """
-    timeAmount = serializers.ReadOnlyField(source="time_amount", default=0)
+    timeAmount = serializers.SerializerMethodField(method_name="get_time_amount_timestamp")
     moneyAmount = serializers.ReadOnlyField(source="money_amount", default=0)
     energyAmount = serializers.ReadOnlyField(source="energy_amount", default=0)
     maxEnergyAmount = serializers.SerializerMethodField(method_name="get_max_energy")
     ultimateEndDateTime = serializers.SerializerMethodField(method_name="get_ultimate_end_dt")
 
+    def get_time_amount_timestamp(self, instance: Resources) -> int:
+        time_delta = dt.timedelta(days=instance.time_amount)
+        course_start_date = settings.START_COURSE_DATE
+        course_current_date = course_start_date + time_delta
+        return int(course_current_date.timestamp())
+
     def get_max_energy(self, instance: Resources) -> int:
         position = instance.user.university_position
         return get_max_energy_by_position(position)
 
-    def get_ultimate_end_dt(self, instance: Resources) -> datetime.datetime:
+    def get_ultimate_end_dt(self, instance: Resources) -> dt.datetime:
         profile = instance.user
         return profile.ultimate_finish_datetime
 

@@ -1,4 +1,7 @@
+from datetime import timedelta
+
 from django.test import TestCase, override_settings
+from django.conf import settings
 from rest_framework.test import APIClient
 from rest_framework import status
 
@@ -8,6 +11,8 @@ from resources.utils import get_max_energy_by_position
 
 
 class ResourcesTestCase(TestCase):
+    START_COURSE_DATE = settings.START_COURSE_DATE
+
     def setUp(self) -> None:
         user = User.objects.create(username="test1", email="test1@mail.ru", password="test1")
         self.profile = Profile.objects.create(user=user)
@@ -32,10 +37,13 @@ class ResourcesTestCase(TestCase):
     def test_resource_retrieving(self) -> None:
         response = self.client.get("/api/resources/retrieve/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json()["timeAmount"], 0)
         self.assertEqual(response.json()["energyAmount"], 0)
         self.assertEqual(response.json()["moneyAmount"], 0)
         self.assertEqual(response.json()["maxEnergyAmount"], 0)
+        self.assertEqual(
+            response.json()["timeAmount"],
+            self.START_COURSE_DATE.timestamp()
+        )
 
     def test_energy_update_related_to_max_energy(self) -> None:
         energy_data = {
@@ -78,7 +86,8 @@ class ResourcesTestCase(TestCase):
             self.assertEqual(patch_response.status_code, status.HTTP_200_OK)
 
         response = self.client.get("/api/resources/retrieve/")
-        self.assertEqual(response.json()["timeAmount"], 5) # = 5 + 0
+        profile_timestamp = (self.START_COURSE_DATE + timedelta(days=5)).timestamp()
+        self.assertEqual(response.json()["timeAmount"], profile_timestamp) # = 5 + 0
         self.assertEqual(response.json()["moneyAmount"], 6)  # = 10 - 4
         self.assertEqual(response.json()["energyAmount"], 5)  # = 10 - 5
 
