@@ -205,9 +205,7 @@ class Profile(models.Model):
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="profile")
-    first_name = models.CharField(max_length=63)
-    last_name = models.CharField(max_length=63)
-    middle_name = models.CharField(max_length=63)
+    username = models.CharField(max_length=63)
     gender = models.CharField(max_length=6, choices=PROFILE_GENDER)  # todo: по-хорошему тоже на TextChoices заменить
     university_position = models.CharField(
         choices=UniversityPosition.choices,

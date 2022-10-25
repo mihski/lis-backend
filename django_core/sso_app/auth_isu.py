@@ -78,7 +78,7 @@ class ISUManager:
             user=user,
             gender="male",
             laboratory="it",
-            first_name="Player",
+            username="Player",
         )
 
         user.set_unusable_password()

@@ -25,13 +25,13 @@ class ProfileTestCase(TestCase):
         self.client.force_login(user)
 
     def test_setting_name_and_gender(self) -> None:
-        body = {"first_name": "test", "gender": "male"}
+        body = {"username": "test", "gender": "male"}
 
         response = self.client.put(path=self.API_URL, data=body)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         self.profile.refresh_from_db()
-        self.assertEqual(self.profile.first_name, body["first_name"])
+        self.assertEqual(self.profile.username, body["username"])
         self.assertEqual(self.profile.gender, body["gender"])
 
     def test_setting_avatar(self) -> None:
@@ -64,7 +64,7 @@ class ProfileTestCase(TestCase):
         response = self.client.get(path=self.API_URL)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue("first_name" in response.json())
+        self.assertTrue("username" in response.json())
         self.assertTrue("head_form" in response.json())
 
     def test_retrieve_statistics(self):

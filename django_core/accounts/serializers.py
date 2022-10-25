@@ -66,7 +66,6 @@ class ProfileSerializer(serializers.ModelSerializer):
     fair_image = serializers.ImageField(read_only=True)
     happy_image = serializers.ImageField(read_only=True)
 
-    username = serializers.CharField(source="first_name")
     isu = serializers.ReadOnlyField(source="user.username")
     first_name = serializers.ReadOnlyField(source="user.first_name")
     last_name = serializers.ReadOnlyField(source="user.last_name")
@@ -107,7 +106,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class ProfileSerializerWithoutLookForms(ProfileSerializer):
-    name = serializers.CharField(source="first_name")
+    name = serializers.CharField(source="username")
     usual_image = serializers.ImageField(read_only=True)
     angry_image = serializers.ImageField(read_only=True)
     fair_image = serializers.ImageField(read_only=True)
