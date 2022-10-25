@@ -154,7 +154,7 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
         lesson_finish_data = self.serializer_class(lesson, context={"profile": profile}).data
 
         if ProfileLessonDone.objects.filter(lesson=lesson, profile=profile).exists():
-            return lesson_finish_data
+            return Response(lesson_finish_data)
 
         self._take_off_resources(profile, lesson)
         self._calculate_statistic(profile, lesson)

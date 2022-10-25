@@ -365,18 +365,34 @@ class QuestionSerializer(serializers.ModelSerializer):
 class LessonFinishSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField(source="local_id")
     next_id = serializers.SerializerMethodField()
+    next_type = serializers.SerializerMethodField()
 
-    def get_next_id(self, lesson: Lesson):
+    @lru_cache
+    def get_next_obj(self, lesson: Lesson):
         course_map = CourseLessonsTree(lesson.course)
         profile = self.context["profile"]
         map_list = course_map.get_map_for_profile(profile)
 
         for i, block in enumerate(map_list):
             if i + 1 < len(map_list) and block.local_id == lesson.local_id:
-                return map_list[i + 1].local_id
+                return map_list[i + 1]
+
+    def get_next_type(self, lesson: Lesson) -> int:
+        next_obj = self.get_next_obj(lesson)
+
+        if isinstance(next_obj, Lesson):
+            return BlockType.lesson.value
+
+        return BlockType.branching.value
+
+    def get_next_id(self, lesson: Lesson) -> str:
+        next_obj = self.get_next_obj(lesson)
+
+        if next_obj:
+            return next_obj.local_id
 
         return ""
 
     class Meta:
         model = Lesson
-        fields = ["id", "next_id"]
+        fields = ["id", "next_id", "next_type"]
