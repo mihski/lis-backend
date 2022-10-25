@@ -19,7 +19,8 @@ from lessons.models import (
     UnitAffect,
     EmailTypes
 )
-from lessons.structures import BlockType, BranchingType, BranchingViewType
+from lessons.structures import BlockType, BranchingType, BranchingViewType, LessonBlockType
+from lessons.structures.tasks import TaskBlock
 from lessons.utils import process_affect
 from helpers.course_tree import CourseLessonsTree
 
@@ -48,6 +49,19 @@ class UnitAffectSerializer(serializers.ModelSerializer):
 
 class UnitDetailSerializer(serializers.ModelSerializer):
     id = serializers.CharField(source="local_id")
+    content = serializers.SerializerMethodField()
+
+    def get_content(self, unit: Unit) -> dict:
+        if not (300 <= unit.type < 400):
+            return unit.content
+
+        task_models = {t_model.type.value: t_model for t_model in TaskBlock.get_all_subclasses()}
+        task_model = task_models[unit.type]
+
+        task_instance: TaskBlock = task_model.objects.filter(id=unit.content["id"]).only().first()
+        task_instance.shuffle_content(unit.content)
+
+        return unit.content
 
     class Meta:
         model = Unit

@@ -1,3 +1,4 @@
+import random
 from abc import abstractmethod
 from collections import defaultdict
 
@@ -19,6 +20,9 @@ class TaskBlock(models.Model, ChildAccessMixin):
     @abstractmethod
     def get_details(self, answer):
         pass
+
+    def shuffle_content(self, content: dict) -> dict:
+        return content
 
     class Meta:
         abstract = True
@@ -156,6 +160,19 @@ class SortBlock(TaskBlock):
     options = models.JSONField()
     correct = models.JSONField()
 
+    def shuffle_content(self, content: dict) -> dict:
+        if len(content["options"]) == 1:
+            return content["options"]
+
+        random.shuffle(content["options"])
+
+        answer = list(map(lambda x: x["id"], content["options"]))
+
+        if self.check_answer(answer):
+            return self.shuffle_content(content)
+
+        return content
+
     def check_answer(self, answer: list[str]) -> bool:
         return answer == self.correct
 
@@ -191,3 +208,23 @@ class ComparisonBlock(TaskBlock):
                 numbers.append(i)
 
         return numbers
+
+    def shuffle_content(self, content: dict) -> dict:
+        options_1 = content["lists"][0]
+        options_2 = content["lists"][1]
+
+        if len(options_1) == 1 and len(options_2) == 1:
+            return content
+
+        random.shuffle(options_1)
+        random.shuffle(options_2)
+
+        answer = list(zip(
+            list(map(lambda x: x["id"], options_1)),
+            list(map(lambda x: x["id"], options_2)),
+        ))
+
+        if self.check_answer(answer):
+            return self.shuffle_content(content)
+
+        return content
