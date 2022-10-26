@@ -30,8 +30,8 @@ class ResourcesSerializer(serializers.ModelSerializer):
         return get_max_energy_by_position(position)
 
     def get_ultimate_end(self, instance: Resources) -> int:
-        profile = instance.user
-        return int(profile.ultimate_finish_datetime.timestamp()) * 1000
+        end_datetime = instance.user.ultimate_finish_datetime
+        return end_datetime or int(end_datetime.timestamp()) * 1000
 
     class Meta:
         model = Resources
