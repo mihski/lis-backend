@@ -31,7 +31,11 @@ class ResourcesSerializer(serializers.ModelSerializer):
 
     def get_ultimate_end(self, instance: Resources) -> int:
         end_datetime = instance.user.ultimate_finish_datetime
-        return end_datetime or int(end_datetime.timestamp()) * 1000
+
+        if not end_datetime:
+            return 0
+
+        return int(end_datetime.timestamp()) * 1000
 
     class Meta:
         model = Resources
