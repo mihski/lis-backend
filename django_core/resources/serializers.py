@@ -16,25 +16,34 @@ class ResourcesSerializer(serializers.ModelSerializer):
     moneyAmount = serializers.ReadOnlyField(source="money_amount", default=0)
     energyAmount = serializers.ReadOnlyField(source="energy_amount", default=0)
     maxEnergyAmount = serializers.SerializerMethodField(method_name="get_max_energy")
-    ultimateEndDateTime = serializers.SerializerMethodField(method_name="get_ultimate_end_dt")
+    ultimateCost = serializers.IntegerField(default=2500)
+    ultimateEnd = serializers.SerializerMethodField(method_name="get_ultimate_end")
 
     def get_time_amount_timestamp(self, instance: Resources) -> int:
         time_delta = dt.timedelta(days=instance.time_amount)
         course_start_date = settings.START_COURSE_DATE
         course_current_date = course_start_date + time_delta
-        return int(course_current_date.timestamp())
+        return int(course_current_date.timestamp()) * 1000
 
     def get_max_energy(self, instance: Resources) -> int:
         position = instance.user.university_position
         return get_max_energy_by_position(position)
 
-    def get_ultimate_end_dt(self, instance: Resources) -> dt.datetime:
+    def get_ultimate_end(self, instance: Resources) -> int:
         profile = instance.user
-        return profile.ultimate_finish_datetime
+        return int(profile.ultimate_finish_datetime.timestamp()) * 1000
 
     class Meta:
         model = Resources
-        fields = ["id", "timeAmount", "moneyAmount", "energyAmount", "maxEnergyAmount", "ultimateEndDateTime"]
+        fields = [
+            "id",
+            "timeAmount",
+            "moneyAmount",
+            "energyAmount",
+            "maxEnergyAmount",
+            "ultimateCost",
+            "ultimateEnd"
+        ]
 
 
 class ResourcesUpdateSerializer(serializers.Serializer):
