@@ -160,7 +160,10 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
 
     def _take_off_resources(self, profile: Profile, lesson: Lesson) -> None:
         resources = profile.resources
-        resources.energy_amount -= lesson.energy_cost
+
+        if not check_ultimate_is_active(profile):
+            resources.energy_amount -= lesson.energy_cost
+
         resources.time_amount += lesson.time_cost
         resources.save()
 
