@@ -373,6 +373,8 @@ class LessonFinishSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField(source="local_id")
     next_id = serializers.SerializerMethodField()
     next_type = serializers.SerializerMethodField()
+    salary_amount = serializers.SerializerMethodField()
+
     emotion = EmotionDataSerializer(write_only=True)
     duration = serializers.IntegerField(write_only=True)
 
@@ -385,6 +387,14 @@ class LessonFinishSerializer(serializers.ModelSerializer):
         for i, block in enumerate(map_list):
             if i + 1 < len(map_list) and block.local_id == lesson.local_id:
                 return map_list[i + 1]
+
+    def get_salary_amount(self, lesson: Lesson) -> int:
+        if not lesson.profile_affect:
+            return 0
+
+        salary_amount = lesson.profile_affect.content["amount"]
+
+        return salary_amount
 
     def get_next_type(self, lesson: Lesson) -> int:
         next_obj = self.get_next_obj(lesson)
@@ -410,4 +420,4 @@ class LessonFinishSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lesson
-        fields = ["id", "next_id", "next_type", "emotion", "duration"]
+        fields = ["id", "next_id", "next_type", "salary_amount", "emotion", "duration"]

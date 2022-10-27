@@ -1,5 +1,6 @@
-from django.db import models
+from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
+from django.db import models
 
 User = get_user_model()
 
@@ -15,9 +16,16 @@ class UnitAffect(models.Model):
     class UnitCodeType(models.TextChoices):
         LABORATORY_CHOICE = "laboratory_choice"
         JOB_CHOICE = "job_choice"
+        SALARY = "salary"
 
     code = models.CharField(max_length=31, choices=UnitCodeType.choices)
     content = models.JSONField()
+
+    def clean(self):
+        if self.code == UnitAffect.UnitCodeType.SALARY and "amount" not in self.content:
+            raise ValidationError("Salary content have to has amount")
+
+        return super().clean()
 
     def __str__(self):
         return f"UnitAffect[{self.id}] {self.code}"

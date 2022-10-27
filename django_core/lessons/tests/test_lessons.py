@@ -2,7 +2,7 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 
 from accounts.models import User, Profile, Statistics
-from lessons.models import Lesson, Course, LessonBlock
+from lessons.models import Lesson, Course, LessonBlock, UnitAffect
 from resources.models import EmotionData, Resources
 
 
@@ -21,6 +21,9 @@ class TestFinishingLesson(TestCase):
             energy_cost=0,
             content=self.lesson_block,
         )
+        self.lesson.profile_affect = UnitAffect.objects.create(code="salary", content={"amount": 2500})
+        self.lesson.save()
+
         self.course.entry = self.lesson.local_id
         self.course.save()
 
@@ -45,3 +48,4 @@ class TestFinishingLesson(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(EmotionData.objects.count(), 1)
         self.assertEqual(Statistics.objects.get(profile=self.profile).total_time_spend, 2)
+        self.assertEqual(self.profile.resources.money_amount, 2500)

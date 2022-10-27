@@ -1,7 +1,12 @@
+import logging
+
 import datetime as dt
 
 from accounts.models import Profile
 from accounts.models import UniversityPosition
+
+logger = logging.Logger(__file__)
+
 
 POSITION_ENERGY_MAX_DATA = {
     UniversityPosition.STUDENT: 0,
@@ -19,7 +24,15 @@ def get_max_energy_by_position(position: str) -> int:
 
 def check_ultimate_is_active(profile: Profile) -> bool:
     finish_dt = profile.ultimate_finish_datetime
-    if not profile.ultimate_activated:  return False
+
+    if not finish_dt and profile.ultimate_activated:
+        logger.warning("ultimate was not activated while finish_dt exists")
+        profile.ultimate_activated = False
+        profile.save()
+
+    if not profile.ultimate_activated:
+        return False
+
     return finish_dt > dt.datetime.now().replace(
         tzinfo=finish_dt.astimezone().tzinfo
     )

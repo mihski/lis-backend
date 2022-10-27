@@ -158,11 +158,14 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
     permission_classes = [permissions.IsAuthenticated, HasProfilePermission]
     lookup_field = "local_id"
 
-    def _take_off_resources(self, profile: Profile, lesson: Lesson) -> None:
+    def _calculate_resources(self, profile: Profile, lesson: Lesson, salary: int = 0) -> None:
         resources = profile.resources
 
         if not check_ultimate_is_active(profile):
             resources.energy_amount -= lesson.energy_cost
+
+        resources.money_amount += salary
+        resources.save()
 
         resources.time_amount += lesson.time_cost
         resources.save()
@@ -190,8 +193,8 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
         if ProfileLessonDone.objects.filter(lesson=lesson, profile=profile).exists():
             return Response(lesson_finish_data)
 
-        self._take_off_resources(profile, lesson)
-        self._calculate_statistic(profile, lesson, request.data["duration"])
+        self._calculate_resources(profile, lesson, salary=lesson_finish_data["salary_amount"])
+        self._calculate_statistic(profile, lesson, duration=int(request.data["duration"]))
         self._create_emotion(profile, lesson, request.data["emotion"])
 
         lesson_done = ProfileLessonDone.objects.create(profile=profile, lesson=lesson)
