@@ -158,15 +158,21 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
     permission_classes = [permissions.IsAuthenticated, HasProfilePermission]
     lookup_field = "local_id"
 
+    def _get_scientific_bonuses(self, profile: Profile, lesson: Lesson) -> tuple[int, int]:
+        s_bonuses = lesson.bonuses.get(str(profile.scientific_director_id), {})
+
+        return s_bonuses.get("energy", 0), s_bonuses.get("money", 0)
+
     def _calculate_resources(self, profile: Profile, lesson: Lesson, salary: int = 0) -> None:
         resources = profile.resources
 
         if not check_ultimate_is_active(profile):
             resources.energy_amount -= lesson.energy_cost
 
-        resources.money_amount += salary
-        resources.save()
+        s_energy, s_money = self._get_scientific_bonuses(profile, lesson)
 
+        resources.energy_amount += s_energy
+        resources.money_amount += salary + s_money
         resources.time_amount += lesson.time_cost
         resources.save()
 

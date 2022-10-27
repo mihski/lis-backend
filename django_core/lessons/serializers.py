@@ -78,7 +78,7 @@ class LessonDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lesson
-        fields = ["lesson_name", "lesson_number", "quest_number", "tasks"]
+        fields = ["lesson_name", "lesson_number", "quest_number", "tasks", "bonuses"]
 
 
 class LessonChoiceSerializer(serializers.ModelSerializer):
