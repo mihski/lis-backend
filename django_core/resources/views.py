@@ -88,4 +88,4 @@ class ResourcesViewSet(viewsets.GenericViewSet):
         profile.save()
 
         deactivate_ultimate.apply_async(args=[profile.id], countdown=settings.ULTIMATE_DURATION)
-        return Response("Ultimate was successfully activated", status=status.HTTP_200_OK)
+        return Response(ResourcesSerializer(resources).data)

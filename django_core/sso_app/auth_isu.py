@@ -5,7 +5,9 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from accounts.models import Profile
+from accounts.models import Profile, ProfileAvatarHead, ProfileAvatarFace, ProfileAvatarBrows, ProfileAvatarClothes, \
+    ProfileAvatarHair
+from accounts.tasks import generate_profile_images
 
 User = get_user_model()
 
@@ -74,12 +76,18 @@ class ISUManager:
         )
 
         # TODO: swap to registration
-        Profile.objects.create(
+        profile = Profile.objects.create(
             user=user,
             gender="male",
             laboratory="it",
             username="Player",
+            head_form=ProfileAvatarHead.objects.first(),
+            face_form=ProfileAvatarFace.objects.first(),
+            hair_form=ProfileAvatarHair.objects.first(),
+            cloth_form=ProfileAvatarClothes.objects.first(),
+            brows_form=ProfileAvatarBrows.objects.first(),
         )
+        generate_profile_images.delay(profile.id)
 
         user.set_unusable_password()
 
