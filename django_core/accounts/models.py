@@ -4,11 +4,11 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin
 )
+from django_lifecycle import LifecycleModel, AFTER_CREATE, AFTER_UPDATE, hook
 
-PROFILE_GENDER = (
-    ("male", "Мужской"),
-    ("female", "Женский"),
-)
+from accounts.choices import UniversityPosition, PROFILE_GENDER, LABORATORIES
+from resources.models import Resources
+from resources.utils import get_max_energy_by_position
 
 
 class UserRole(models.Model):
@@ -57,7 +57,7 @@ class UserManager(BaseUserManager):
         return user
 
 
-class User(AbstractBaseUser, PermissionsMixin):
+class User(AbstractBaseUser, PermissionsMixin, LifecycleModel):
     role = models.ForeignKey(UserRole, on_delete=models.SET_NULL, null=True)
     
     username = models.CharField(max_length=10, unique=True)
@@ -78,6 +78,22 @@ class User(AbstractBaseUser, PermissionsMixin):
     def is_staff(self):
         return self.is_superuser
 
+    @hook(AFTER_CREATE)
+    def create_related_profile(self) -> None:
+        from accounts.tasks import generate_profile_images
+
+        profile = Profile.objects.create(
+            user=self,
+            username=None,
+            gender=None,
+            head_form=ProfileAvatarHead.objects.first(),
+            face_form=ProfileAvatarFace.objects.first(),
+            hair_form=ProfileAvatarHair.objects.first(),
+            cloth_form=ProfileAvatarClothes.objects.first(),
+            brows_form=ProfileAvatarBrows.objects.first(),
+        )
+        generate_profile_images.delay(profile.id)
+
     class Meta:
         app_label = "accounts"
         verbose_name = "User"
@@ -89,16 +105,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self) -> str:
         return repr(self)
 
-
-class UniversityPosition(models.TextChoices):
-    """
-        Роль персонажа в университете
-    """
-    STUDENT = "Студент"
-    INTERN = "Стажер"
-    LABORATORY_ASSISTANT = "Лаборант"
-    ENGINEER = "Инженер"
-    JUN_RESEARCH_ASSISTANT = "Мл. научный сотрудник"
 
 
 class ProfileAvatarBodyPart(models.Model):
@@ -192,21 +198,14 @@ def _upload_avatar_image(instance: "Profile", filename: str) -> str:
     return "/".join(["avatars", instance.user.username, filename])
 
 
-class Profile(models.Model):
+class Profile(LifecycleModel):
     """
         Таблица БД для хранения профилей персонажей
     """
-    LABORATORIES = (
-        ("it", "IT"),
-        ("ls", "Науки о жизни"),
-        ("mi", "Менеджмент и инновации"),
-        ("ctm", "Компьютерные технологии и управления"),
-        ("pts", "Физико-технические науки"),
-    )
-
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="profile")
-    username = models.CharField(max_length=63)
-    gender = models.CharField(max_length=6, choices=PROFILE_GENDER)  # todo: по-хорошему тоже на TextChoices заменить
+    username = models.CharField(max_length=63, null=True)
+    gender = models.CharField(max_length=6, choices=PROFILE_GENDER, null=True)  # todo: по-хорошему тоже на TextChoices
+    # заменить
     university_position = models.CharField(
         choices=UniversityPosition.choices,
         default=UniversityPosition.STUDENT,
@@ -228,6 +227,23 @@ class Profile(models.Model):
 
     ultimate_activated = models.BooleanField(default=0)
     ultimate_finish_datetime = models.DateTimeField(null=True, default=None, blank=True)
+
+    @hook(AFTER_CREATE)
+    def create_related_entities(self) -> None:
+        Resources.objects.create(user=self, money_amount=500)
+        Statistics.objects.create(profile=self)
+
+    @hook(AFTER_UPDATE, when="university_position", has_changed=True, was=UniversityPosition.STUDENT)
+    def update_energy_after_job_hiring(self):
+        max_energy = get_max_energy_by_position(self.university_position)
+        self.resources.energy_amount = max_energy
+        self.resources.save()
+
+    @hook(AFTER_UPDATE, when="university_position", has_changed=True, was_not=UniversityPosition.STUDENT)
+    def update_energy_after_new_position(self) -> None:
+        max_energy = get_max_energy_by_position(self.university_position)
+        self.resources.energy_amount = min(self.resources.energy_amount, max_energy)
+        self.resources.save()
 
     class Meta:
         app_label = "accounts"

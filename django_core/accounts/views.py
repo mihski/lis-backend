@@ -4,9 +4,7 @@ from rest_framework import viewsets, mixins, permissions, status, decorators
 from rest_framework.response import Response
 from rest_framework.request import Request
 
-from accounts.models import Profile, Statistics
-from accounts.permissions import HasProfilePermission
-from accounts.exceptions import StatisticsDoesNotExistException
+from accounts.models import Profile
 from accounts.serializers import (
     ProfileSerializer,
     ProfileStatisticsSerializer,
@@ -39,18 +37,13 @@ class ProfileViewSet(
     permission_classes = (permissions.IsAuthenticated, )
 
     def get_object(self):
-        profile, _ = Profile.objects.get_or_create(user=self.request.user)
-        self.check_object_permissions(self.request, profile)
-        return profile
-
-    def perform_update(self, serializer):
-        serializer.save(user=self.request.user)
+        return self.request.user.profile.get()
 
 
 class ProfileStatisticsViewSet(viewsets.GenericViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileStatisticsSerializer
-    permission_classes = (permissions.IsAuthenticated, HasProfilePermission)
+    permission_classes = (permissions.IsAuthenticated,)
 
     def get_serializer(self, *args: tuple, **kwargs: dict) -> Any:
         if self.request.method == "PATCH":
@@ -59,20 +52,15 @@ class ProfileStatisticsViewSet(viewsets.GenericViewSet):
 
     @decorators.action(methods=["GET"], detail=False, url_path="statistics")
     def retrieve_statistics(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
-        profile = request.user.profile.first()
-        statistics, _ = Statistics.objects.get_or_create(profile=profile)
-        serializer: ProfileStatisticsSerializer = self.get_serializer(instance=statistics)
+        profile_statistics = request.user.profile.get().statistics  # TODO: select_related("statistics") ?
+        serializer: ProfileStatisticsSerializer = self.get_serializer(instance=profile_statistics)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @decorators.action(methods=["PATCH"], detail=False, url_path="statistics/update")
     def update_statistics(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
-        profile = request.user.profile.first()
-        profile_statistics = Statistics.objects.filter(profile=profile)
-        if not profile_statistics.exists():
-            raise StatisticsDoesNotExistException("Your profile doesn't have any statistics")
-
+        profile_statistics = request.user.profile.get().statistics # TODO: select_related("statistics") ?
         serializer: ProfileStatisticsUpdateSerializer = self.get_serializer(
-            instance=profile_statistics.first(),
+            instance=profile_statistics,
             data=request.data
         )
         serializer.is_valid(raise_exception=True)

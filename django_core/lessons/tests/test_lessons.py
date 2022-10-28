@@ -1,9 +1,9 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from accounts.models import User, Profile, Statistics
+from accounts.models import User
 from lessons.models import Lesson, Course, LessonBlock, UnitAffect
-from resources.models import EmotionData, Resources
+from resources.models import EmotionData
 
 
 class TestFinishingLesson(TestCase):
@@ -28,8 +28,7 @@ class TestFinishingLesson(TestCase):
         self.course.save()
 
         self.user = User.objects.create(username="test", email="test@mail.ru", password="test")
-        self.profile = Profile.objects.create(user=self.user)
-        self.resources = Resources.objects.create(user=self.profile)
+        self.profile = self.user.profile.get()
         self.client = APIClient()
         self.client.force_login(self.user)
 
@@ -47,5 +46,5 @@ class TestFinishingLesson(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(EmotionData.objects.count(), 1)
-        self.assertEqual(Statistics.objects.get(profile=self.profile).total_time_spend, 2)
-        self.assertEqual(self.profile.resources.money_amount, 2500)
+        self.assertEqual(self.profile.statistics.total_time_spend, 2)
+        self.assertEqual(self.profile.resources.money_amount, 3000)

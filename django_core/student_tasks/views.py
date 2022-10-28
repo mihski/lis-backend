@@ -1,6 +1,5 @@
 from rest_framework import viewsets, mixins, permissions, validators
 
-from accounts.models import Profile
 from lessons.models import Unit
 from student_tasks.models import StudentTaskAnswer
 from student_tasks.serializers import StudentTaskAnswerSerializer
@@ -17,7 +16,7 @@ class StudentTaskViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mix
         if not unit:
             raise validators.ValidationError(f"There is no unit with id {self.kwargs['pk']}")
 
-        profile, created = Profile.objects.get_or_create(user=self.request.user)
+        profile = self.request.user.profile.get()
         instance, created = StudentTaskAnswer.objects.get_or_create(
             profile=profile,
             task=unit

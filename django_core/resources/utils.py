@@ -2,8 +2,8 @@ import logging
 
 import datetime as dt
 
-from accounts.models import Profile
-from accounts.models import UniversityPosition
+from accounts.choices import UniversityPosition
+from accounts import models
 
 logger = logging.Logger(__file__)
 
@@ -22,7 +22,7 @@ def get_max_energy_by_position(position: str) -> int:
     return POSITION_ENERGY_MAX_DATA[position]
 
 
-def check_ultimate_is_active(profile: Profile) -> bool:
+def check_ultimate_is_active(profile: "models.Profile") -> bool:
     finish_dt = profile.ultimate_finish_datetime
 
     if not finish_dt and profile.ultimate_activated:
@@ -38,7 +38,7 @@ def check_ultimate_is_active(profile: Profile) -> bool:
     )
 
 
-def get_ultimate_remaining_time(profile: Profile) -> int:
+def get_ultimate_remaining_time(profile) -> int:
     if not check_ultimate_is_active(profile):
         return 0
 

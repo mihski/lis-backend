@@ -5,7 +5,6 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from accounts.models import Profile
 from lessons.models import (
     Lesson,
     Quest,
@@ -14,7 +13,6 @@ from lessons.models import (
     LessonBlock,
     Course
 )
-from resources.models import Resources
 
 User = get_user_model()
 
@@ -28,8 +26,8 @@ class BranchingTestCase(TestCase):
             email="test@mail.ru",
             password="test"
         )
-        self.profile = Profile.objects.create(user=user)
-        self.resources = Resources.objects.create(user=self.profile)
+        self.profile = user.profile.get()
+        self.resources = self.profile.resources
         self.client = APIClient()
         self.client.force_login(user)
         self._create_fixtures()

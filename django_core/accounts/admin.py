@@ -8,7 +8,7 @@ from accounts import models
 @admin.register(models.User)
 class UserAdmin(BaseUserAdmin):
     fieldsets = (
-        (None, {'fields': ('email', 'password')}),
+        (None, {'fields': ('email', 'password', 'username')}),
         ('Permissions', {'fields': ('is_active', 'is_superuser',
                                        'groups', 'user_permissions')}),
     )

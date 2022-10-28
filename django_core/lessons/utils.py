@@ -4,7 +4,7 @@ from lessons.models import UnitAffect
 from resources.utils import get_max_energy_by_position
 
 
-def process_affect(affect: UnitAffect, profile: Profile = None) -> None:
+def process_affect(affect: UnitAffect, profile: Profile) -> None:
     if affect and affect.code in [UnitAffect.UnitCodeType.LABORATORY_CHOICE, UnitAffect.UnitCodeType.JOB_CHOICE]:
         serializer = ProfileSerializer(
             instance=profile,

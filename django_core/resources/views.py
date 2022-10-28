@@ -5,10 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
 from django.conf import settings
 
-from accounts.permissions import HasProfilePermission
 from resources.exceptions import (
     NegativeResourcesException,
-    ResourcesNotFoundException,
     UltimateAlreadyActivatedException
 )
 from resources.models import Resources
@@ -24,7 +22,7 @@ from resources.utils import (
 class ResourcesViewSet(viewsets.GenericViewSet):
     queryset = Resources.objects.all()
     serializer_class = ResourcesSerializer
-    permission_classes = (IsAuthenticated, HasProfilePermission)
+    permission_classes = (IsAuthenticated,)
 
     def get_serializer_class(self):
         if self.request.method == "PATCH":
@@ -39,27 +37,17 @@ class ResourcesViewSet(viewsets.GenericViewSet):
             Если нет, создаем дефолтный ресурс для пользователя
         """
         profile = request.user.profile.first()
-        user_resources, is_created = Resources.objects.get_or_create(user=profile)
-        max_energy = get_max_energy_by_position(profile.university_position)
-
-        if is_created:  user_resources.energy_amount = max_energy
-        user_resources.energy_amount = min(user_resources.energy_amount, max_energy)
-        user_resources.save()
-
-        serializer: ResourcesSerializer = self.get_serializer_class()(instance=user_resources)
+        serializer: ResourcesSerializer = self.get_serializer_class()(instance=profile.resources)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(method="PATCH", responses={status.HTTP_200_OK: ResourcesSerializer()})
     @decorators.action(methods=["PATCH"], detail=False, url_path="update")
     def update_resources(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
         profile = request.user.profile.first()
-        user_resources = Resources.objects.filter(user=profile)
-        if not user_resources.exists():
-            raise ResourcesNotFoundException("Your profile doesn't have any resources")
 
         serializer: ResourcesUpdateSerializer = self.get_serializer_class()(
             data=request.data,
-            instance=user_resources.first()
+            instance=profile.resources
         )
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
@@ -69,10 +57,7 @@ class ResourcesViewSet(viewsets.GenericViewSet):
     @decorators.action(methods=["POST"], detail=False, url_path="ultimate/activate")
     def activate_ultimate(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
         profile = request.user.profile.first()
-
         resources = profile.resources
-        if resources is None:
-            raise ResourcesNotFoundException("Your profile doesn't have any resources")
 
         if check_ultimate_is_active(profile):
             raise UltimateAlreadyActivatedException("You have already activated ultimate")
