@@ -2,6 +2,8 @@ from functools import lru_cache
 
 from rest_framework import serializers, validators
 from django.contrib.auth import get_user_model
+from django.db.models import Sum
+from django.db import transaction
 
 from accounts.models import Profile
 from lessons.models import (
@@ -19,11 +21,13 @@ from lessons.models import (
     UnitAffect,
     EmailTypes
 )
-from lessons.structures import BlockType, BranchingType, BranchingViewType
+from lessons.structures import BlockType, BranchingType, BranchingViewType, LessonBlockType
 from lessons.structures.tasks import TaskBlock
 from lessons.utils import process_affect
+from lessons.exceptions import BranchingAlreadyChosenException
 from helpers.course_tree import CourseLessonsTree
-from resources.models import EmotionData
+from resources.exceptions import NotEnoughMoneyException
+from resources.models import EmotionData, Resources
 
 User = get_user_model()
 
@@ -250,7 +254,7 @@ class BranchingSelectSerializer(serializers.ModelSerializer):
         return local_ids
 
     def validate(self, validated_data: dict) -> dict:
-        profile = Profile.objects.get(user=self.context["request"].user)
+        profile: Profile = self.context["request"].user.profile.first()
         blocks = self._get_blocks(validated_data['choose_local_id'])
 
         if self.instance.type == BranchingType.one_from_n.value:
@@ -275,14 +279,46 @@ class BranchingSelectSerializer(serializers.ModelSerializer):
         for lesson in lessons:
             process_affect(lesson.profile_affect, profile)
 
-    def update(self, branching, validated_data):
-        profile = Profile.objects.get(user=self.context["request"].user)
-        choice_branching, created = ProfileBranchingChoice.objects.get_or_create(profile=profile, branching=branching)
-        choice_branching.choose_local_id = validated_data["choose_local_id"]
-        choice_branching.save()
+    def _check_block_is_quest(self, block: Lesson | Quest) -> bool:
+        return Quest.objects.filter(local_id=block.local_id).exists()
 
-        self._process_callbacks(choice_branching.choose_local_id, profile)
+    def _collect_quest_price(self, quest: Quest) -> int:
+        return quest.lessons.aggregate(total_price=Sum("money_cost"))["total_price"]
 
+    def _get_blocks_total_price(self, blocks: list[Quest | Lesson]) -> int:
+        total_lessons_price = 0
+        for block in blocks:
+            total_lessons_price += (
+                self._collect_quest_price(block) if self._check_block_is_quest(block)
+                else block.money_cost
+            )
+        return total_lessons_price
+
+    def update(self, branching: Branching, validated_data: dict) -> Branching:
+        profile: Profile = self.context["request"].user.profile.first()
+        choose_local_id = validated_data["choose_local_id"]
+
+        profile_branching = ProfileBranchingChoice.objects.filter(profile=profile, branching=branching)
+        if profile_branching.exists():
+            raise BranchingAlreadyChosenException("You have already selected this branching")
+
+        local_ids = ",".join(list(map(lambda x: x.strip(), choose_local_id.split(","))))
+        blocks = self._get_blocks(local_ids)
+
+        profile_resources = profile.resources
+        branching_price = self._get_blocks_total_price(blocks)
+        if profile_resources.money_amount < branching_price:
+            raise NotEnoughMoneyException("Not enough money to select this branching")
+
+        with transaction.atomic():
+            profile_resources.money_amount -= branching_price
+            profile_resources.save()
+
+            profile_branching = ProfileBranchingChoice.objects.create(profile=profile, branching=branching)
+            profile_branching.choose_local_id = choose_local_id
+            profile_branching.save()
+
+        self._process_callbacks(profile_branching.choose_local_id, profile)
         return branching
 
 

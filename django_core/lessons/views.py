@@ -1,4 +1,13 @@
-from rest_framework import viewsets, permissions, authentication, mixins, decorators, status, views, validators
+from rest_framework import (
+    viewsets,
+    permissions,
+    authentication,
+    mixins,
+    decorators,
+    status,
+    views,
+    validators
+)
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -31,9 +40,10 @@ from lessons.serializers import (
     LessonFinishSerializer,
 )
 from lessons.utils import process_affect
+from lessons.exceptions import BranchingAlreadyChosenException
 from helpers.lesson_tree import LessonUnitsTree
 from helpers.course_tree import CourseLessonsTree
-from resources.exceptions import NotEnoughEnergyException
+from resources.exceptions import NotEnoughEnergyException, NotEnoughMoneyException
 from resources.models import EmotionData
 from resources.utils import check_ultimate_is_active
 
@@ -54,20 +64,28 @@ class CourseMapViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
         "quests__lessons", "quests__branchings",
     )
     serializer_class = CourseMapSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, )
 
 
 class BranchSelectViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.UpdateModelMixin):
     queryset = Branching.objects.all()
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, HasProfilePermission)
     lookup_field = "local_id"
 
     def get_serializer_class(self):
         if self.request.method in ["PATCH", "PUT"]:
             return BranchingSelectSerializer
-
         return BranchingDetailSerializer
 
+    @swagger_auto_schema(responses={
+        status.HTTP_400_BAD_REQUEST: f"{BranchingAlreadyChosenException.default_code}, {NotEnoughMoneyException.default_code}",
+    })
+    def update(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
+        return super().update(request, *args, **kwargs)
+
+    @swagger_auto_schema(responses={status.HTTP_400_BAD_REQUEST: BranchingAlreadyChosenException.default_code})
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
 
 class LessonDetailViewSet(
     viewsets.ReadOnlyModelViewSet
@@ -88,7 +106,7 @@ class LessonDetailViewSet(
 
     @swagger_auto_schema(
         responses={
-            status.HTTP_400_BAD_REQUEST: NotEnoughEnergyException.default_code
+            status.HTTP_400_BAD_REQUEST: NotEnoughEnergyException.default_code,
         }
     )
     def retrieve(self, request: Request, *args: tuple, **kwargs: dict) -> Response:

@@ -22,6 +22,11 @@ class UltimateAlreadyActivatedException(APIException):
     default_code = "Ultimate already activated"
 
 
+class NotEnoughMoneyException(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_code = "not_enough_money"
+
+
 class NotEnoughEnergyException(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
     default_code = "not_enough_energy"
