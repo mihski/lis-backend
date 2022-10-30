@@ -75,20 +75,6 @@ class ISUManager:
             is_active=True
         )
 
-        # TODO: swap to registration
-        profile = Profile.objects.create(
-            user=user,
-            gender="male",
-            laboratory="it",
-            username="Player",
-            head_form=ProfileAvatarHead.objects.first(),
-            face_form=ProfileAvatarFace.objects.first(),
-            hair_form=ProfileAvatarHair.objects.first(),
-            cloth_form=ProfileAvatarClothes.objects.first(),
-            brows_form=ProfileAvatarBrows.objects.first(),
-        )
-        generate_profile_images.delay(profile.id)
-
         user.set_unusable_password()
 
         return user
