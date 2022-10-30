@@ -22,8 +22,12 @@ class UnitAffect(models.Model):
     content = models.JSONField()
 
     def clean(self):
-        if self.code == UnitAffect.UnitCodeType.SALARY and "amount" not in self.content:
-            raise ValidationError("Salary content have to has amount")
+        if self.code == UnitAffect.UnitCodeType.SALARY:
+            if not "amount" not in self.content:
+                raise ValidationError("Salary content have to has amount")
+
+            if not isinstance(self.content["amount"], int) and self.content["amount"] != "by_position":
+                raise ValidationError("Salary should be int or 'by_position' string")
 
         return super().clean()
 

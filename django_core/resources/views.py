@@ -14,7 +14,6 @@ from resources.serializers import ResourcesSerializer, ResourcesUpdateSerializer
 from resources.tasks import deactivate_ultimate
 from resources.utils import (
     check_ultimate_is_active,
-    get_max_energy_by_position,
     get_ultimate_finish_dt
 )
 

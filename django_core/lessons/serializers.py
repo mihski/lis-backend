@@ -28,6 +28,7 @@ from lessons.exceptions import BranchingAlreadyChosenException
 from helpers.course_tree import CourseLessonsTree
 from resources.exceptions import NotEnoughMoneyException
 from resources.models import EmotionData, Resources
+from resources.utils import get_salary_by_position
 
 User = get_user_model()
 
@@ -425,10 +426,20 @@ class LessonFinishSerializer(serializers.ModelSerializer):
                 return map_list[i + 1]
 
     def get_salary_amount(self, lesson: Lesson) -> int:
+        salary_amount = 0
+
         if not lesson.profile_affect:
-            return 0
+            next_obj = self.get_next_obj(lesson)
+
+            if isinstance(next_obj, Branching) and next_obj.type != 2:
+                salary_amount = get_salary_by_position(self.context["profile"].university_position)
+
+            return salary_amount
 
         salary_amount = lesson.profile_affect.content["amount"]
+
+        if not isinstance(salary_amount, int):
+            salary_amount = get_salary_by_position(self.context["profile"].university_position)
 
         return salary_amount
 

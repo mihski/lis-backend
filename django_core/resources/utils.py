@@ -16,10 +16,23 @@ POSITION_ENERGY_MAX_DATA = {
     UniversityPosition.JUN_RESEARCH_ASSISTANT: 8,
 }
 
+POSITION_SALARY = {
+    UniversityPosition.STUDENT: 0,
+    UniversityPosition.INTERN: 500,
+    UniversityPosition.LABORATORY_ASSISTANT: 750,
+    UniversityPosition.ENGINEER: 850,
+    UniversityPosition.JUN_RESEARCH_ASSISTANT: 1250,
+}
+
 
 def get_max_energy_by_position(position: str) -> int:
     position = UniversityPosition(position)
     return POSITION_ENERGY_MAX_DATA[position]
+
+
+def get_salary_by_position(position: str) -> int:
+    position = UniversityPosition(position)
+    return POSITION_SALARY[position]
 
 
 def check_ultimate_is_active(profile: "models.Profile") -> bool:
@@ -38,7 +51,7 @@ def check_ultimate_is_active(profile: "models.Profile") -> bool:
     )
 
 
-def get_ultimate_remaining_time(profile) -> int:
+def get_ultimate_remaining_time(profile: "models.Profile") -> int:
     if not check_ultimate_is_active(profile):
         return 0
 
