@@ -52,6 +52,11 @@ class NPCViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = NPC.objects.all()
     serializer_class = NPCSerializer
 
+    @decorators.action(methods=["GET"], detail=False, url_path="list/directors")
+    def directors(self, request, *args, **kwargs) -> Response:
+        queryset = self.get_queryset().filter(is_scientific_director=True)
+        return Response(self.serializer_class(queryset, many=True).data)
+
 
 class LocationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Location.objects.all()
