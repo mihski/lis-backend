@@ -87,6 +87,7 @@ class BranchSelectViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mi
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 
+
 class LessonDetailViewSet(
     viewsets.ReadOnlyModelViewSet
 ):

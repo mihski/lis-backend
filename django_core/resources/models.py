@@ -37,6 +37,9 @@ class Resources(models.Model):
         verbose_name = "Resources"
         verbose_name_plural = "Resources"
 
+    def set_energy(self, energy_amount: int) -> None:
+        self.energy_amount = max(self.energy_amount, energy_amount)
+
     def __repr__(self) -> str:
         return f"{self._meta.verbose_name} - {self.user.user.username}"
 

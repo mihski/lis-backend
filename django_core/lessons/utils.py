@@ -15,5 +15,5 @@ def process_affect(affect: UnitAffect, profile: Profile) -> None:
         serializer.save()
 
         if affect.code == UnitAffect.UnitCodeType.JOB_CHOICE:
-            profile.resources.energy_amount = get_max_energy_by_position(profile.university_position)
+            profile.resources.set_energy(get_max_energy_by_position(profile.university_position))
             profile.resources.save()

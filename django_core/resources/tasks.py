@@ -19,7 +19,7 @@ def refill_resources() -> None:
         position = UniversityPosition(university_position)
 
         energy = get_max_energy_by_position(position)
-        resource.energy_amount = energy
+        resource.set_energy(energy)
         update_list.append(resource)
 
     Resources.objects.bulk_update(update_list, ["energy_amount"])

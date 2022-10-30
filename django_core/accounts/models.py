@@ -236,13 +236,13 @@ class Profile(LifecycleModel):
     @hook(AFTER_UPDATE, when="university_position", has_changed=True, was=UniversityPosition.STUDENT)
     def update_energy_after_job_hiring(self):
         max_energy = get_max_energy_by_position(self.university_position)
-        self.resources.energy_amount = max_energy
+        self.resources.set_energy(max_energy)
         self.resources.save()
 
     @hook(AFTER_UPDATE, when="university_position", has_changed=True, was_not=UniversityPosition.STUDENT)
     def update_energy_after_new_position(self) -> None:
         max_energy = get_max_energy_by_position(self.university_position)
-        self.resources.energy_amount = min(self.resources.energy_amount, max_energy)
+        self.resources.set_energy(max_energy)
         self.resources.save()
 
     class Meta:
