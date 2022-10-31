@@ -84,7 +84,7 @@ class User(AbstractBaseUser, PermissionsMixin, LifecycleModel):
 
         profile = Profile.objects.create(
             user=self,
-            username="unknown",
+            username=None,
             gender=None,
             head_form=ProfileAvatarHead.objects.first(),
             face_form=ProfileAvatarFace.objects.first(),
