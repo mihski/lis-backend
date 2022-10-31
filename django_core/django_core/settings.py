@@ -230,6 +230,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication"
     ),
+    "EXCEPTION_HANDLER": "helpers.exceptions.custom_exception_handler"
 }
 
 SIMPLE_JWT = {

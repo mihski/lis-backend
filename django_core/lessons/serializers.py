@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from rest_framework import serializers, validators
+from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.db import transaction
@@ -21,10 +21,19 @@ from lessons.models import (
     UnitAffect,
     EmailTypes
 )
-from lessons.structures import BlockType, BranchingType, BranchingViewType, LessonBlockType
+from lessons.structures import (
+    BlockType,
+    BranchingType,
+    BranchingViewType,
+    LessonBlockType
+)
 from lessons.structures.tasks import TaskBlock
 from lessons.utils import process_affect
-from lessons.exceptions import BranchingAlreadyChosenException
+from lessons.exceptions import (
+    BranchingAlreadyChosenException,
+    BlockNotFoundException,
+    NotEnoughBlocksToSelectBranchException
+)
 from helpers.course_tree import CourseLessonsTree
 from resources.exceptions import NotEnoughMoneyException
 from resources.models import EmotionData, Resources
@@ -250,7 +259,7 @@ class BranchingSelectSerializer(serializers.ModelSerializer):
         unexist_local_ids = set(local_ids.split(",")) - set(blocks_local_ids)
 
         if unexist_local_ids:
-            raise validators.ValidationError(f"There is no block on course with local_id: {unexist_local_ids}")
+            raise BlockNotFoundException(f"There is no block on course with local_id: {unexist_local_ids}")
 
         return local_ids
 
@@ -260,7 +269,7 @@ class BranchingSelectSerializer(serializers.ModelSerializer):
 
         if self.instance.type == BranchingType.one_from_n.value:
             if len(blocks) != 1:
-                raise validators.ValidationError("There is no one lessons")
+                raise NotEnoughBlocksToSelectBranchException("There is no one lessons")
 
         elif self.instance.type == BranchingType.six_from_n.value:
             block_counts = sum([
@@ -271,7 +280,7 @@ class BranchingSelectSerializer(serializers.ModelSerializer):
             ])
 
             if block_counts != 6:
-                raise validators.ValidationError("There is no exact six lessons")
+                raise NotEnoughBlocksToSelectBranchException("There is no exact six lessons")
 
         return validated_data
 

@@ -1,25 +1,20 @@
-from rest_framework.exceptions import ValidationError, NotFound, APIException
+from rest_framework.exceptions import APIException
 from rest_framework import status
 
 
-class NegativeResourcesException(ValidationError):
+class NegativeResourcesException(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
-    default_code = "Resources must be positive"
+    default_code = "negative_resources"
 
 
-class ResourcesOverfillException(ValidationError):
+class EnergyOverfillException(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
-    default_code = "Resource should not be overfilled"
-
-
-class ResourcesNotFoundException(NotFound):
-    status_code = status.HTTP_404_NOT_FOUND
-    default_detail = "Resources not found"
+    default_code = "energy_overfill"
 
 
 class UltimateAlreadyActivatedException(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
-    default_code = "Ultimate already activated"
+    default_code = "ultimate_already_activated"
 
 
 class NotEnoughMoneyException(APIException):

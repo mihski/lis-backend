@@ -13,6 +13,8 @@ from lessons.models import (
     LessonBlock,
     Course
 )
+from lessons.exceptions import BranchingAlreadyChosenException
+from resources.exceptions import NotEnoughMoneyException
 
 User = get_user_model()
 
@@ -95,10 +97,10 @@ class BranchingTestCase(TestCase):
         response = self._send_patch_request()
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.json()["detail"], "You have already selected this branching")
+        self.assertEqual(response.json()["error_code"], BranchingAlreadyChosenException.default_code)
 
     def test_not_enough_money_to_select_branching_exception(self) -> None:
         self._update_money(0)
         response = self._send_patch_request()
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.json()["detail"], "Not enough money to select this branching")
+        self.assertEqual(response.json()["error_code"], NotEnoughMoneyException.default_code)

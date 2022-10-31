@@ -3,7 +3,7 @@ import datetime as dt
 from rest_framework import serializers
 from django.conf import settings
 
-from resources.exceptions import NegativeResourcesException, ResourcesOverfillException
+from resources.exceptions import NegativeResourcesException, EnergyOverfillException
 from resources.models import Resources
 from resources.utils import get_max_energy_by_position
 
@@ -77,7 +77,7 @@ class ResourcesUpdateSerializer(serializers.Serializer):
         if result < 0:
             raise NegativeResourcesException("Energy is not supposed to be decreased")
         elif result > max_energy:
-            raise ResourcesOverfillException("Energy is not supposed to be overfilled")
+            raise EnergyOverfillException("Energy is not supposed to be overfilled")
         return value
 
     def update(self, instance: Resources, validated_data: dict) -> Resources:

@@ -123,6 +123,17 @@ class ProfileAvatarHead(ProfileAvatarBodyPart):
         default='woman_parts/Head/1 type/Woman-1-head@4x.png'
     )
 
+    class Meta:
+        app_label = "accounts"
+        verbose_name = "ProfileAvatarHead"
+        verbose_name_plural = "ProfileAvatarHeads"
+
+    def __repr__(self) -> str:
+        return f"{self._meta.verbose_name}[{self.id}]"
+
+    def __str__(self) -> str:
+        return repr(self)
+
 
 class ProfileAvatarHair(ProfileAvatarBodyPart):
     front_part = models.ImageField(
@@ -135,6 +146,17 @@ class ProfileAvatarHair(ProfileAvatarBodyPart):
         null=True,
         blank=True
     )
+
+    class Meta:
+        app_label = "accounts"
+        verbose_name = "ProfileAvatarHair"
+        verbose_name_plural = "ProfileAvatarHair"
+
+    def __repr__(self) -> str:
+        return f"{self._meta.verbose_name}[{self.id}]"
+
+    def __str__(self) -> str:
+        return repr(self)
 
 
 class ProfileAvatarFace(ProfileAvatarBodyPart):
@@ -155,6 +177,17 @@ class ProfileAvatarFace(ProfileAvatarBodyPart):
         default='woman_parts/Face/1 type/Woman-1-face-angry@4x.png',
     )
 
+    class Meta:
+        app_label = "accounts"
+        verbose_name = "ProfileAvatarFace"
+        verbose_name_plural = "ProfileAvatarFaces"
+
+    def __repr__(self) -> str:
+        return f"{self._meta.verbose_name}[{self.id}]"
+
+    def __str__(self) -> str:
+        return repr(self)
+
 
 class ProfileAvatarBrows(ProfileAvatarBodyPart):
     usual_part = models.ImageField(
@@ -174,6 +207,17 @@ class ProfileAvatarBrows(ProfileAvatarBodyPart):
         default='woman_parts/Brows/1 type/Woman-1-brows-angry-light@4x.png',
     )
 
+    class Meta:
+        app_label = "accounts"
+        verbose_name = "ProfileAvatarBrows"
+        verbose_name_plural = "ProfileAvatarBrows"
+
+    def __repr__(self) -> str:
+        return f"{self._meta.verbose_name}[{self.id}]"
+
+    def __str__(self) -> str:
+        return repr(self)
+
 
 class ProfileAvatarClothes(ProfileAvatarBodyPart):
     usual_part = models.ImageField(
@@ -192,6 +236,17 @@ class ProfileAvatarClothes(ProfileAvatarBodyPart):
         upload_to='body_part/clothes/',
         default='woman_parts/Brows/1 type/Woman-1-clothes-angry@4x.png',
     )
+
+    class Meta:
+        app_label = "accounts"
+        verbose_name = "ProfileAvatarClothes"
+        verbose_name_plural = "ProfileAvatarClothes"
+
+    def __repr__(self) -> str:
+        return f"{self._meta.verbose_name}[{self.id}]"
+
+    def __str__(self) -> str:
+        return repr(self)
 
 
 def _upload_avatar_image(instance: "Profile", filename: str) -> str:
@@ -251,7 +306,7 @@ class Profile(LifecycleModel):
         verbose_name_plural = "Profiles"
 
     def __repr__(self) -> str:
-        return f"{self._meta.verbose_name} - {self.user.username}"
+        return f"{self._meta.verbose_name} - {self.username}"
 
     def __str__(self):
         return repr(self)
@@ -291,7 +346,7 @@ class Statistics(models.Model):
         verbose_name_plural = "ProfilesStatistics"
 
     def __repr__(self) -> str:
-        return f"{self._meta.verbose_name} - {self.profile.user.username}"
+        return f"{self._meta.verbose_name} - {self.profile.username}"
 
     def __str__(self):
         return repr(self)

@@ -17,7 +17,7 @@ class EmotionData(models.Model):
         verbose_name_plural = "EmotionsData"
 
     def __repr__(self) -> str:
-        return f"{self._meta.verbose_name} - {self.user.user.username}"
+        return f"{self._meta.verbose_name} - {self.profile.username}"
 
     def __str__(self) -> str:
         return repr(self)
@@ -41,7 +41,7 @@ class Resources(models.Model):
         self.energy_amount = max(self.energy_amount, energy_amount)
 
     def __repr__(self) -> str:
-        return f"{self._meta.verbose_name} - {self.user.user.username}"
+        return f"{self._meta.verbose_name} - {self.user.username}"
 
     def __str__(self) -> str:
         return repr(self)

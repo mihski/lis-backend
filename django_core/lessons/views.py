@@ -40,10 +40,19 @@ from lessons.serializers import (
     LessonFinishSerializer,
 )
 from lessons.utils import process_affect
-from lessons.exceptions import BranchingAlreadyChosenException
+from lessons.exceptions import (
+    BranchingAlreadyChosenException,
+    UnitNotFoundException,
+    BlockNotFoundException,
+    NotEnoughBlocksToSelectBranchException
+)
 from helpers.lesson_tree import LessonUnitsTree
 from helpers.course_tree import CourseLessonsTree
-from resources.exceptions import NotEnoughEnergyException, NotEnoughMoneyException
+from helpers.swagger_factory import SwaggerFactory
+from resources.exceptions import (
+    NotEnoughEnergyException,
+    NotEnoughMoneyException
+)
 from resources.models import EmotionData
 from resources.utils import check_ultimate_is_active
 
@@ -82,13 +91,23 @@ class BranchSelectViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mi
             return BranchingSelectSerializer
         return BranchingDetailSerializer
 
-    @swagger_auto_schema(responses={
-        status.HTTP_400_BAD_REQUEST: f"{BranchingAlreadyChosenException.default_code}, {NotEnoughMoneyException.default_code}",
-    })
+    @swagger_auto_schema(**SwaggerFactory()(
+        responses=[
+            BranchingAlreadyChosenException,
+            NotEnoughMoneyException,
+            BlockNotFoundException,
+            NotEnoughBlocksToSelectBranchException
+        ]
+    ))
     def update(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
         return super().update(request, *args, **kwargs)
 
-    @swagger_auto_schema(responses={status.HTTP_400_BAD_REQUEST: BranchingAlreadyChosenException.default_code})
+    @swagger_auto_schema(**SwaggerFactory()(
+        responses=[
+            BranchingAlreadyChosenException,
+            NotEnoughMoneyException
+        ]
+    ))
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 
@@ -110,11 +129,9 @@ class LessonDetailViewSet(
             return True
         return profile.resources.energy_amount >= lesson.energy_cost
 
-    @swagger_auto_schema(
-        responses={
-            status.HTTP_400_BAD_REQUEST: NotEnoughEnergyException.default_code,
-        }
-    )
+    @swagger_auto_schema(**SwaggerFactory()(
+        responses=[NotEnoughEnergyException]
+    ))
     def retrieve(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
         lesson = self.get_object()
         from_unit_id = request.GET.get("from_unit_id", None)
@@ -235,13 +252,16 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
 class CallbackAPIView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
+    @swagger_auto_schema(**SwaggerFactory()(
+        responses=[UnitNotFoundException]
+    ))
     def post(self, request, pk):
         block = Unit.objects.filter(local_id=pk).first()
 
         if not block:
-            raise validators.ValidationError(f"There is no unit with {block.local_id}")
+            raise UnitNotFoundException(f"Unit with id: {block.local_id} not found")
 
         affect = block.profile_affect
         process_affect(affect, request.user.profile.first())
 
-        return Response({"status": "ok"})
+        return Response({"status": "ok"}, status=status.HTTP_200_OK)

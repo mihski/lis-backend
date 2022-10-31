@@ -35,19 +35,12 @@ class ResourcesTestCase(TestCase):
             int(self.START_COURSE_DATE.timestamp()) * 1000
         )
 
-    def test_energy_update_related_to_max_energy(self) -> None:
-        energy_data = {
-            UniversityPosition.INTERN: get_max_energy_by_position(UniversityPosition.INTERN),
-            UniversityPosition.ENGINEER: get_max_energy_by_position(UniversityPosition.ENGINEER),
-        }
+    def test_energy_not_decrease_after_changing_uni_position(self) -> None:
+        self.__update_university_position(UniversityPosition.INTERN)
+        self.__update_university_position(UniversityPosition.ENGINEER)
 
-        for position, max_energy in energy_data.items():
-            self.__update_university_position(position)
-            response = self.client.get("/api/resources/retrieve/")
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-            self.resources.refresh_from_db()
-            self.assertEqual(self.resources.energy_amount, max_energy)
+        self.resources.refresh_from_db()
+        self.assertEqual(self.resources.energy_amount, get_max_energy_by_position(UniversityPosition.INTERN))
 
     def test_resource_updating(self) -> None:
         position = UniversityPosition.INTERN

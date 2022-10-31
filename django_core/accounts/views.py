@@ -3,6 +3,7 @@ from typing import Any
 from rest_framework import viewsets, mixins, permissions, status, decorators
 from rest_framework.response import Response
 from rest_framework.request import Request
+from drf_yasg.utils import swagger_auto_schema
 
 from accounts.models import Profile
 from accounts.serializers import (
@@ -10,6 +11,9 @@ from accounts.serializers import (
     ProfileStatisticsSerializer,
     ProfileStatisticsUpdateSerializer
 )
+from lessons.exceptions import NPCIsNotScientificDirectorException
+from resources.exceptions import NegativeResourcesException
+from helpers.swagger_factory import SwaggerFactory
 
 
 class ProfileViewSet(
@@ -39,6 +43,18 @@ class ProfileViewSet(
     def get_object(self):
         return self.request.user.profile.get()
 
+    @swagger_auto_schema(**SwaggerFactory()(
+        responses=[NPCIsNotScientificDirectorException]
+    ))
+    def update(self, request, *args, **kwargs) -> Response:
+        return super().update(request, *args, **kwargs)
+
+    @swagger_auto_schema(**SwaggerFactory()(
+        responses=[NPCIsNotScientificDirectorException]
+    ))
+    def partial_update(self, request, *args, **kwargs) -> Response:
+        return super().partial_update(request, *args, **kwargs)
+
 
 class ProfileStatisticsViewSet(viewsets.GenericViewSet):
     queryset = Profile.objects.all()
@@ -52,13 +68,16 @@ class ProfileStatisticsViewSet(viewsets.GenericViewSet):
 
     @decorators.action(methods=["GET"], detail=False, url_path="statistics")
     def retrieve_statistics(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
-        profile_statistics = request.user.profile.get().statistics  # TODO: select_related("statistics") ?
+        profile_statistics = request.user.profile.get().statistics
         serializer: ProfileStatisticsSerializer = self.get_serializer(instance=profile_statistics)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(**SwaggerFactory()(
+        responses=[NegativeResourcesException]
+    ))
     @decorators.action(methods=["PATCH"], detail=False, url_path="statistics/update")
     def update_statistics(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
-        profile_statistics = request.user.profile.get().statistics # TODO: select_related("statistics") ?
+        profile_statistics = request.user.profile.get().statistics
         serializer: ProfileStatisticsUpdateSerializer = self.get_serializer(
             instance=profile_statistics,
             data=request.data

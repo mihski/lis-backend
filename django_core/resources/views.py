@@ -6,8 +6,10 @@ from drf_yasg.utils import swagger_auto_schema
 from django.conf import settings
 
 from resources.exceptions import (
-    NegativeResourcesException,
-    UltimateAlreadyActivatedException
+    UltimateAlreadyActivatedException,
+    EnergyOverfillException,
+    NotEnoughMoneyException,
+    NegativeResourcesException
 )
 from resources.models import Resources
 from resources.serializers import ResourcesSerializer, ResourcesUpdateSerializer
@@ -16,6 +18,7 @@ from resources.utils import (
     check_ultimate_is_active,
     get_ultimate_finish_dt
 )
+from helpers.swagger_factory import SwaggerFactory
 
 
 class ResourcesViewSet(viewsets.GenericViewSet):
@@ -28,18 +31,18 @@ class ResourcesViewSet(viewsets.GenericViewSet):
             return ResourcesUpdateSerializer
         return ResourcesSerializer
 
-    @swagger_auto_schema(method="GET", responses={status.HTTP_200_OK: ResourcesSerializer()})
     @decorators.action(methods=["GET"], detail=False, url_path="retrieve")
     def retrieve_resources(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
-        """
-            Возвращаем ресурс, если он был.
-            Если нет, создаем дефолтный ресурс для пользователя
-        """
         profile = request.user.profile.first()
         serializer: ResourcesSerializer = self.get_serializer_class()(instance=profile.resources)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
-    @swagger_auto_schema(method="PATCH", responses={status.HTTP_200_OK: ResourcesSerializer()})
+    @swagger_auto_schema(**SwaggerFactory()(
+        responses=[
+            NegativeResourcesException,
+            EnergyOverfillException
+        ]
+    ))
     @decorators.action(methods=["PATCH"], detail=False, url_path="update")
     def update_resources(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
         profile = request.user.profile.first()
@@ -53,6 +56,12 @@ class ResourcesViewSet(viewsets.GenericViewSet):
         serialized_data = ResourcesSerializer(instance=instance).data
         return Response(data=serialized_data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(**SwaggerFactory()(
+        responses=[
+            UltimateAlreadyActivatedException,
+            NotEnoughMoneyException
+        ]
+    ))
     @decorators.action(methods=["POST"], detail=False, url_path="ultimate/activate")
     def activate_ultimate(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
         profile = request.user.profile.first()
@@ -62,7 +71,7 @@ class ResourcesViewSet(viewsets.GenericViewSet):
             raise UltimateAlreadyActivatedException("You have already activated ultimate")
 
         if (remains := resources.money_amount - settings.ULTIMATE_COST) < 0:
-            raise NegativeResourcesException("You don't have enough money to activate ultimate")
+            raise NotEnoughMoneyException("You don't have enough money to activate ultimate")
 
         resources.money_amount = remains
         resources.save()

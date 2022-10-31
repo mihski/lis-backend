@@ -32,9 +32,40 @@ class StatisticsAdmin(ImportExportModelAdmin):
     ordering = list_filter
 
 
-admin.site.register(models.UserRole)
-admin.site.register(models.Profile)
-admin.site.register(models.ScientificDirector)
+@admin.register(models.UserRole)
+class UserRoleAdmin(admin.ModelAdmin):
+    list_display = ("id", "name")
+    list_filter = ("name",)
+
+
+@admin.register(models.Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "username",
+        "user",
+        "gender",
+        "university_position",
+        "ultimate_activated",
+        "scientific_director",
+        "laboratory"
+    )
+    list_filter = (
+        "gender",
+        "university_position",
+        "ultimate_activated",
+        "scientific_director",
+        "laboratory"
+    )
+    search_fields = ("username", "user__username")
+
+
+@admin.register(models.ScientificDirector)
+class ScientificDirectorAdmin(admin.ModelAdmin):
+    list_display = ("id", "name", "description")
+    list_filter = ("name",)
+    search_fields = ("name",)
+
 admin.site.register(models.ProfileAvatarHead)
 admin.site.register(models.ProfileAvatarHair)
 admin.site.register(models.ProfileAvatarFace)

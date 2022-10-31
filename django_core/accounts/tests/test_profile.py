@@ -13,6 +13,7 @@ from accounts.models import (
     ProfileAvatarClothes
 )
 from lessons.models import NPC
+from lessons.exceptions import NPCIsNotScientificDirectorException
 from resources.models import Resources
 
 User = get_user_model()
@@ -94,7 +95,7 @@ class ProfileTestCase(TestCase):
         response = self.client.put(path=self.API_URL, data=body)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertTrue("scientific_director" in response.json())
+        self.assertTrue(response.json()["error_code"], NPCIsNotScientificDirectorException.default_code)
 
     def test_retrieve_profile(self):
         response = self.client.get(path=self.API_URL)

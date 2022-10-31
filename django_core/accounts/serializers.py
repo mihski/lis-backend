@@ -1,4 +1,4 @@
-from rest_framework import serializers, validators
+from rest_framework import serializers
 
 from accounts.models import (
     User,
@@ -11,6 +11,7 @@ from accounts.models import (
     ProfileAvatarHair
 )
 from accounts.tasks import generate_profile_images
+from lessons.exceptions import NPCIsNotScientificDirectorException
 from lessons.models import NPC
 from resources.exceptions import NegativeResourcesException
 
@@ -73,7 +74,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def validate_scientific_director(self, scientific_director: NPC) -> NPC:
         if not scientific_director.is_scientific_director:
-            raise validators.ValidationError("Is invalid NPC. Should be scientific director")
+            raise NPCIsNotScientificDirectorException("Is invalid NPC. Should be scientific director")
 
         return scientific_director
 
