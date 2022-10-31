@@ -445,6 +445,9 @@ class LessonFinishSerializer(serializers.ModelSerializer):
 
             return salary_amount
 
+        if "amount" not in lesson.profile_affect.content:
+            return salary_amount
+
         salary_amount = lesson.profile_affect.content["amount"]
 
         if not isinstance(salary_amount, int):
