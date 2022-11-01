@@ -74,7 +74,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def validate_scientific_director(self, scientific_director: NPC) -> NPC:
         if not scientific_director.is_scientific_director:
-            raise NPCIsNotScientificDirectorException("Is invalid NPC. Should be scientific director")
+            raise NPCIsNotScientificDirectorException("NPC is not scientific director")
 
         return scientific_director
 

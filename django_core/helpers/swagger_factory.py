@@ -1,3 +1,4 @@
+import json
 from collections import defaultdict
 from typing import Type, Optional
 
@@ -24,10 +25,14 @@ class SwaggerFactory:
 
         for exception in responses:
             status = exception.status_code
+            data = json.dumps({
+                "error_code": exception.default_code,
+                "detail": exception.default_detail
+            })
             if status in output:
-                output[status] += f"\n{exception.default_code}"
+                output[status] += f"\n{data}"
             else:
-                output[status] = exception.default_code
+                output[status] = data
 
         return {"responses": output}
 
