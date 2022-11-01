@@ -26,7 +26,7 @@ from lessons.models import (
     Review,
     Question,
     ProfileLessonDone,
-    Unit
+    Unit, ProfileBranchingChoice
 )
 from lessons.serializers import (
     NPCSerializer,
@@ -90,6 +90,23 @@ class BranchSelectViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mi
         if self.request.method in ["PATCH", "PUT"]:
             return BranchingSelectSerializer
         return BranchingDetailSerializer
+
+    @swagger_auto_schema(**SwaggerFactory()(
+        responses=[
+            BranchingAlreadyChosenException,
+            BlockNotFoundException,
+        ]
+    ))
+    def retrieve(self, request, *args, **kwargs):
+        branching = self.get_object()
+
+        if ProfileBranchingChoice.objects.filter(
+            branching=branching,
+            profile=self.request.user.profile.get()
+        ).exists():
+            raise BranchingAlreadyChosenException()
+
+        return super().retrieve(request, *args, **kwargs)
 
     @swagger_auto_schema(**SwaggerFactory()(
         responses=[
