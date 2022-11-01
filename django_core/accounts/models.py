@@ -258,7 +258,7 @@ class Profile(LifecycleModel):
         Таблица БД для хранения профилей персонажей
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="profile")
-    username = models.CharField(max_length=63, null=True)
+    username = models.CharField(max_length=63, null=True, blank=True)
     gender = models.CharField(max_length=6, choices=PROFILE_GENDER, null=True)  # todo: по-хорошему тоже на TextChoices
     # заменить
     university_position = models.CharField(
