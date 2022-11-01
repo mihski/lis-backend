@@ -5,11 +5,13 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from drf_yasg.utils import swagger_auto_schema
 
-from accounts.models import Profile
+from accounts.models import Profile, ProfileAvatarHair, ProfileAvatarFace, ProfileAvatarBrows, ProfileAvatarHead, \
+    ProfileAvatarClothes
 from accounts.serializers import (
     ProfileSerializer,
     ProfileStatisticsSerializer,
-    ProfileStatisticsUpdateSerializer
+    ProfileStatisticsUpdateSerializer, ProfileHairSerializer, ProfileFaceSerializer, ProfileHeadSerializer,
+    ProfileBrowsSerializer, ProfileClothesSerializer
 )
 from lessons.exceptions import NPCIsNotScientificDirectorException
 from resources.exceptions import NegativeResourcesException
@@ -86,3 +88,33 @@ class ProfileStatisticsViewSet(viewsets.GenericViewSet):
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class AvatarViewSet(viewsets.GenericViewSet):
+    serializers = [
+        ProfileHairSerializer,
+        ProfileFaceSerializer,
+        ProfileHeadSerializer,
+        ProfileBrowsSerializer,
+        ProfileClothesSerializer
+    ]
+
+    def get_queryset(self):
+        return [
+            s.Meta.model.objects.all()
+            for s in self.serializers
+        ]
+
+    def list(self, request, *args, **kwargs):
+        c2s = {s.Meta.model: s for s in self.serializers}
+        querysets = self.get_queryset()
+
+        return Response({
+            (
+                q.model.__name__.lower()
+                .replace("profileavatar", "")
+                .replace("clothes", "cloth")
+                + "_form"
+            ): c2s[q.model](q, many=True).data
+            for q in querysets
+        })

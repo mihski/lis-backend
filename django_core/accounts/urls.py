@@ -1,12 +1,13 @@
 from rest_framework.routers import SimpleRouter
 from django.urls import path
 
-from accounts.views import ProfileViewSet, ProfileStatisticsViewSet
+from accounts.views import ProfileViewSet, ProfileStatisticsViewSet, AvatarViewSet
 
 app_name = 'accounts'
 
 router = SimpleRouter()
 router.register("profile", ProfileStatisticsViewSet)
+router.register("avatars", AvatarViewSet, basename="avatars")
 
 urlpatterns = [
     path(

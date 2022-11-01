@@ -119,3 +119,33 @@ class ProfileSerializerWithoutLookForms(ProfileSerializer):
             "id", "name", "gender", "scientific_director",
             "usual_image", "angry_image", "fair_image", "happy_image",
         ]
+
+
+class ProfileHeadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfileAvatarHead
+        fields = "__all__"
+
+
+class ProfileHairSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfileAvatarHair
+        fields = "__all__"
+
+
+class ProfileFaceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfileAvatarFace
+        fields = "__all__"
+
+
+class ProfileClothesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfileAvatarClothes
+        fields = "__all__"
+
+
+class ProfileBrowsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfileAvatarBrows
+        fields = "__all__"
