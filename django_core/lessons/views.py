@@ -6,7 +6,6 @@ from rest_framework import (
     decorators,
     status,
     views,
-    validators
 )
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.request import Request
@@ -229,9 +228,13 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
 
         s_energy, s_money = self._get_scientific_bonuses(profile, lesson)
 
+        next_days_count = sum(list(map(
+            lambda x: x.content.get("value", 0),
+            Unit.objects.filter(lesson=lesson, type=217)
+        )))
         resources.energy_amount += s_energy
         resources.money_amount += salary + s_money
-        resources.time_amount += lesson.time_cost
+        resources.time_amount += lesson.time_cost + next_days_count
         resources.save()
 
     def _calculate_statistic(self, profile: Profile, lesson: Lesson, duration: int) -> None:
