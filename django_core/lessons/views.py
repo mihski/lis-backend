@@ -196,7 +196,7 @@ class QuestionViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
 class LessonActionsViewSet(viewsets.GenericViewSet):
     queryset = Lesson.objects.select_related("course", "quest")
     serializer_class = LessonFinishSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, )
     lookup_field = "local_id"
 
     def _get_scientific_bonuses(self, profile: Profile, lesson: Lesson) -> tuple[int, int]:
@@ -207,7 +207,7 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
     def _calculate_resources(self, profile: Profile, lesson: Lesson, salary: int = 0) -> None:
         resources = profile.resources
 
-        if not check_ultimate_is_active(profile):
+        if settings.CHECK_ENERGY_ON_LESSON_ENTER and not check_ultimate_is_active(profile):
             resources.energy_amount -= lesson.energy_cost
 
         s_energy, s_money = self._get_scientific_bonuses(profile, lesson)
