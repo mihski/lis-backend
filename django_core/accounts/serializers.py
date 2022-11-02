@@ -151,7 +151,7 @@ class ProfileFaceSerializer(serializers.ModelSerializer):
     brows = serializers.SerializerMethodField()
 
     def get_brows(self, obj: ProfileAvatarFace) -> dict:
-        serialized_brows = ProfileBrowsSerializer(obj.brows_list.all(), many=True).data
+        serialized_brows = ProfileBrowsSerializer(obj.brows_list.all(), context=self.context, many=True).data
         data = defaultdict(list)
         for brows in serialized_brows:
             data[brows["color"]].append(brows)
