@@ -191,10 +191,8 @@ class ProfileAvatarFace(ProfileAvatarBodyPart):
 
 
 class ProfileAvatarBrows(ProfileAvatarBodyPart):
-    face = models.ForeignKey(
+    face = models.ManyToManyField(
         ProfileAvatarFace,
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
         default=None,
         related_name="brows_list"
