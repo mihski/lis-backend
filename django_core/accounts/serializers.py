@@ -128,6 +128,8 @@ class ProfileHeadSerializer(serializers.ModelSerializer):
 
 
 class ProfileHairSerializer(serializers.ModelSerializer):
+    front_part = serializers.ImageField()
+ 
     class Meta:
         model = ProfileAvatarHair
         fields = "__all__"
