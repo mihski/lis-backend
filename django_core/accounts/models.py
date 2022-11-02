@@ -106,7 +106,6 @@ class User(AbstractBaseUser, PermissionsMixin, LifecycleModel):
         return repr(self)
 
 
-
 class ProfileAvatarBodyPart(models.Model):
     gender = models.CharField(max_length=6, choices=PROFILE_GENDER)
 
@@ -136,6 +135,8 @@ class ProfileAvatarHead(ProfileAvatarBodyPart):
 
 
 class ProfileAvatarHair(ProfileAvatarBodyPart):
+    color = models.CharField(max_length=3, default=0)
+
     front_part = models.ImageField(
         upload_to='body_part/hairs/',
         default='woman_parts/Hair/1 type/Woman-1-hair-front-red@4x.png'
@@ -190,6 +191,16 @@ class ProfileAvatarFace(ProfileAvatarBodyPart):
 
 
 class ProfileAvatarBrows(ProfileAvatarBodyPart):
+    face = models.ForeignKey(
+        ProfileAvatarFace,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        default=None,
+        related_name="brows_list"
+    )
+    color = models.CharField(max_length=3, default=0)
+
     usual_part = models.ImageField(
         upload_to='body_part/brows/',
         default='woman_parts/Brows/1 type/Woman-1-brows-usual-light@4x.png',

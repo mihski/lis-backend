@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from rest_framework import serializers
 
 from accounts.models import (
@@ -124,28 +126,38 @@ class ProfileSerializerWithoutLookForms(ProfileSerializer):
 class ProfileHeadSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProfileAvatarHead
-        fields = "__all__"
+        fields = ["id", "gender", "usual_part"]
 
 
 class ProfileHairSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProfileAvatarHair
-        fields = "__all__"
-
-
-class ProfileFaceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProfileAvatarFace
-        fields = "__all__"
+        fields = ["id", "gender", "color", "front_part", "back_part"]
 
 
 class ProfileClothesSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProfileAvatarClothes
-        fields = "__all__"
+        fields = ["id", "gender", "usual_part"]
 
 
 class ProfileBrowsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProfileAvatarBrows
-        fields = "__all__"
+        fields = ["id", "color", "gender", "usual_part"]
+
+
+class ProfileFaceSerializer(serializers.ModelSerializer):
+    brows = serializers.SerializerMethodField()
+
+    def get_brows(self, obj: ProfileAvatarFace) -> dict:
+        serialized_brows = ProfileBrowsSerializer(obj.brows_list.all(), many=True).data
+        data = defaultdict(list)
+        for brows in serialized_brows:
+            data[brows["color"]].append(brows)
+
+        return data
+
+    class Meta:
+        model = ProfileAvatarFace
+        fields = ["id", "gender", "usual_part", "brows"]
