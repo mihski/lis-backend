@@ -115,6 +115,6 @@ class AvatarViewSet(viewsets.GenericViewSet):
                 .replace("profileavatar", "")
                 .replace("clothes", "cloth")
                 + "_form"
-            ): c2s[q.model](q, context={"request": requests}, many=True).data
+            ): c2s[q.model](q, context={"request": request}, many=True).data
             for q in querysets
         })
