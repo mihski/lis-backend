@@ -103,6 +103,16 @@ class ProfileLessonsDoneAdmin(admin.ModelAdmin):
     )
 
 
+@admin.register(models.ProfileCourseDone)
+class ProfileCourseDoneAdmin(admin.ModelAdmin):
+    list_display = ("id", "profile", "course")
+    list_filter = ("profile", "course")
+    search_fields = (
+        "profile__username",
+        "course__name",
+    )
+
+
 @admin.register(models.UnitAffect)
 class UnitAffectAdmin(admin.ModelAdmin):
     list_display = ("id", "code", "content")

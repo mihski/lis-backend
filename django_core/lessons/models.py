@@ -263,3 +263,33 @@ class ProfileLessonDone(models.Model):
     profile = models.ForeignKey("accounts.Profile", on_delete=models.CASCADE)
     lesson = models.ForeignKey("Lesson", on_delete=models.CASCADE)
     finished_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = "lessons"
+        verbose_name = "ProfileLessonDone"
+        verbose_name_plural = "ProfileLessonsDone"
+        ordering = ("finished_at",)
+
+    def __repr__(self) -> str:
+        return f"[{self.lesson.name}] {self.profile.username}"
+
+    def __str__(self) -> str:
+        return repr(self)
+
+
+class ProfileCourseDone(models.Model):
+    profile = models.ForeignKey("accounts.Profile", on_delete=models.CASCADE)
+    course = models.ForeignKey("Course", on_delete=models.CASCADE)
+    finished_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = "lessons"
+        verbose_name = "ProfileCourseDone"
+        verbose_name_plural = "ProfileCoursesDone"
+        ordering = ("finished_at",)
+
+    def __repr__(self) -> str:
+        return f"[{self.course.name}] {self.profile.username}"
+
+    def __str__(self) -> str:
+        return repr(self)

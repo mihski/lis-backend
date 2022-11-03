@@ -25,7 +25,9 @@ from lessons.models import (
     Review,
     Question,
     ProfileLessonDone,
-    Unit, ProfileBranchingChoice
+    Unit,
+    ProfileBranchingChoice,
+    ProfileCourseDone
 )
 from lessons.serializers import (
     NPCSerializer,
@@ -36,7 +38,7 @@ from lessons.serializers import (
     BranchingDetailSerializer,
     QuestionSerializer,
     ReviewSerializer,
-    LessonFinishSerializer,
+    LessonFinishSerializer
 )
 from lessons.utils import process_affect
 from lessons.exceptions import (
@@ -250,6 +252,17 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
             lesson=lesson
         )
 
+    def _check_course_finished(self, profile: Profile, course: Course) -> bool:
+        course_lessons = CourseLessonsTree(course).get_map_for_profile(profile)
+        course_lessons = set(filter(lambda entity: isinstance(entity, Lesson), course_lessons))
+
+        finished_lessons = set(ProfileLessonDone.objects.select_related("lesson").filter(profile=profile))
+        finished_lessons = set([x.lesson for x in finished_lessons])
+
+        intersection = course_lessons & finished_lessons
+        return intersection == course_lessons
+
+
     @decorators.action(methods=["POST"], detail=True, url_path="finish")
     def finish_lesson(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
         lesson: Lesson = self.get_object()
@@ -264,7 +277,10 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
             self._calculate_resources(profile, lesson, salary=lesson_finish_data["salary_amount"])
             self._calculate_statistic(profile, lesson, duration=int(request.data["duration"]))
             self._create_emotion(profile, lesson, emotion=request.data["emotion"])
+
             ProfileLessonDone.objects.create(profile=profile, lesson=lesson)
+            if self._check_course_finished(profile, lesson.course):
+                ProfileCourseDone.objects.create(profile=profile, course=lesson.course)
 
         return Response(lesson_finish_data, status=status.HTTP_200_OK)
 
