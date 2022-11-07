@@ -10,7 +10,7 @@ class Command(BaseCommand):
         profiles = Profile.objects.select_related("statistics").all()
 
         for profile in profiles:
-            print(f"For profile {profile.user.username}")
+            print(f"For profile {profile.isu}")
 
             statistics = profile.statistics
             profile_lessons = Lesson.objects.filter(
