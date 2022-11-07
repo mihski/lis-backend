@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from django.conf import settings
 from rest_framework import serializers
 
 from accounts.models import (
@@ -15,7 +16,7 @@ from accounts.models import (
 from accounts.tasks import generate_profile_images
 from lessons.exceptions import NPCIsNotScientificDirectorException
 from lessons.models import NPC
-from resources.exceptions import NegativeResourcesException
+from resources.exceptions import NegativeResourcesException, NotEnoughEnergyException
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -87,8 +88,18 @@ class ProfileSerializer(serializers.ModelSerializer):
 
         return False
 
-    def update(self, instance, validated_data):
+    def _is_enough_energy_to_change_scientific_director(self, instance: Profile) -> bool:
+        return instance.resources.energy_amount >= settings.CHANGE_SCIENTIFIC_DIRECTOR_ENERGY_COST
+
+    def update(self, instance: Profile, validated_data: dict) -> Profile:
         is_avatar_updated = self._is_avatar_updated(instance, validated_data)
+        is_scientific_director_changed = "scientific_director" in validated_data
+
+        if (
+            is_scientific_director_changed
+            and not self._is_enough_energy_to_change_scientific_director(instance)
+        ):
+            raise NotEnoughEnergyException("It's not possible to change the scientific director")
 
         instance = super().update(instance, validated_data)
         instance.save()

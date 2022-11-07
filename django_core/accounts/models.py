@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -314,6 +315,11 @@ class Profile(LifecycleModel):
     def update_energy_after_new_position(self) -> None:
         max_energy = get_max_energy_by_position(self.university_position)
         self.resources.set_energy(max_energy)
+        self.resources.save()
+
+    @hook(AFTER_UPDATE, when="scientific_director", has_changed=True, was_not=None)
+    def decrease_energy_on_scientific_director_change(self) -> None:
+        self.resources.energy_amount -= settings.CHANGE_SCIENTIFIC_DIRECTOR_ENERGY_COST
         self.resources.save()
 
     class Meta:

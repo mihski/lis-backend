@@ -1,8 +1,10 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from rest_framework.test import APIClient
 from rest_framework import status
 
+from accounts.choices import UniversityPosition
 from accounts.models import (
     Profile,
     Statistics,
@@ -15,6 +17,8 @@ from accounts.models import (
 from lessons.models import NPC, Course
 from lessons.exceptions import NPCIsNotScientificDirectorException
 from resources.models import Resources
+from resources.utils import get_max_energy_by_position
+from resources.exceptions import NotEnoughEnergyException
 
 User = get_user_model()
 
@@ -34,12 +38,34 @@ class ProfileTestCase(TestCase):
         cls.sd_npc = NPC.objects.create(uid="C1", is_scientific_director=True)
         cls.not_sd_npc = NPC.objects.create(uid="C2", is_scientific_director=False)
 
+        self._create_npcs()
+
+        self.profile = self.user.profile.get()
+        self.profile.course = self.course
+        self.profile.scientific_director = self.npcs[0]
+        self.profile.save()
+
     def setUp(self):
         self.client = APIClient()
         self.client.force_authenticate(self.user)
 
+    def tearDown(self):
+        NPC.objects.all().delete()
+
+    def _create_npcs(self) -> None:
+        npcs = [
+            NPC(uid="TEST1", is_scientific_director=True),
+            NPC(uid="TEST2", is_scientific_director=True),
+            NPC(uid="TEST3", is_scientific_director=False)
+        ]
+        self.npcs = NPC.objects.bulk_create(npcs)
+
     def _get_profile(self) -> Profile:
         return self.user.profile.get(course=self.course)
+
+    def _update_university_position(self, position: UniversityPosition) -> None:
+        self.profile.university_position = position.value
+        self.profile.save()
 
     def test_profile_related_entities_created(self) -> None:
         """
@@ -86,13 +112,17 @@ class ProfileTestCase(TestCase):
             self.assertEqual(getattr(profile, key).id, value)
 
     def test_choosing_scientific_director(self):
-        body = {"scientific_director": self.sd_npc.id}
+        self._update_university_position(UniversityPosition.INTERN)
+
+        sd_npc = self.npcs[1]
+        body = {"scientific_director": sd_npc.id}
+
         response = self.client.put(path=self.API_URL, data=body)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         profile = self._get_profile()
         profile.refresh_from_db()
-        self.assertEqual(profile.scientific_director, self.sd_npc)
+        self.assertEqual(profile.scientific_director, sd_npc)
 
     def test_choosing_invalid_scientific_director(self):
         body = {"scientific_director": self.not_sd_npc.pk}
@@ -140,3 +170,29 @@ class ProfileTestCase(TestCase):
         profile_statistics = self._get_profile().statistics
         profile_statistics.refresh_from_db()
         self.assertEqual(profile_statistics.total_time_spend, body["total_time_spend"])
+
+    def test_energy_decrease_on_change_scientific_director(self) -> None:
+        self._update_university_position(UniversityPosition.INTERN)
+        max_energy = get_max_energy_by_position(UniversityPosition.INTERN)
+        npc = self.npcs[1]
+
+        response = self.client.put(
+            self.API_URL,
+            data={"scientific_director": npc.id}
+        )
+
+        self._get_profile().refresh_from_db()
+        energy_delta = max_energy - settings.CHANGE_SCIENTIFIC_DIRECTOR_ENERGY_COST
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["scientific_director"], npc.id)
+        self.assertEqual(self._get_profile().resources.energy_amount, energy_delta)
+
+    def test_not_enough_energy_on_change_scientific_director(self) -> None:
+        response = self.client.put(
+            self.API_URL,
+            data={"scientific_director": self.npcs[1].id}
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.json()["error_code"], NotEnoughEnergyException.default_code)
