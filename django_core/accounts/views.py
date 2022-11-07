@@ -1,6 +1,7 @@
 from typing import Any
 
-from rest_framework import viewsets, mixins, permissions, status, decorators
+from django.db import transaction
+from rest_framework import viewsets, mixins, permissions, status, decorators, views
 from rest_framework.response import Response
 from rest_framework.request import Request
 from drf_yasg.utils import swagger_auto_schema
@@ -121,3 +122,21 @@ class AvatarViewSet(viewsets.GenericViewSet):
             ): c2s[q.model](q, context={"request": request}, many=True).data
             for q in querysets
         })
+
+
+class ReplayAPIView(views.APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+
+        profile = user.profile.get()
+
+        with transaction.atomic():
+            profile.user = None
+            user.create_related_profile()
+            profile.save()
+
+        profile = user.profile.get()
+
+        return Response(ProfileSerializer(profile).data)

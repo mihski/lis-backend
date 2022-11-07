@@ -1,7 +1,7 @@
 from rest_framework.routers import SimpleRouter
 from django.urls import path
 
-from accounts.views import ProfileViewSet, ProfileStatisticsViewSet, AvatarViewSet
+from accounts.views import ProfileViewSet, ProfileStatisticsViewSet, AvatarViewSet, ReplayAPIView
 
 app_name = 'accounts'
 
@@ -16,6 +16,11 @@ urlpatterns = [
             {"put": "partial_update", "get": "retrieve"}
         ),
         name="profile-retrieve-update",
+    ),
+    path(
+        "replay/",
+        ReplayAPIView.as_view(),
+        name="replay-game"
     )
 ] + router.urls
 

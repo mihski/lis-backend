@@ -84,6 +84,7 @@ class User(AbstractBaseUser, PermissionsMixin, LifecycleModel):
 
         profile = Profile.objects.create(
             user=self,
+            isu=self.username,
             username=None,
             gender=None,
             head_form=ProfileAvatarHead.objects.first(),
@@ -266,8 +267,9 @@ class Profile(LifecycleModel):
     """
         Таблица БД для хранения профилей персонажей
     """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="profile")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="profile", null=True)
     username = models.CharField(max_length=63, null=True, blank=True)
+    isu = models.CharField(max_length=31, default="", editable=False)
     gender = models.CharField(max_length=6, choices=PROFILE_GENDER, null=True)
     university_position = models.CharField(
         choices=UniversityPosition.choices,
