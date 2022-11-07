@@ -83,7 +83,7 @@ DATABASES = {
         "HOST": "lis_db",
         "PORT": "5432",
         "TEST": {
-            "NAME": "d_test_4",
+            "NAME": "c_test_2",
         },
     }
 }
