@@ -241,6 +241,8 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
 
     def _calculate_statistic(self, profile: Profile, lesson: Lesson, duration: int) -> None:
         statistics = profile.statistics
+        statistics.quests_done += lesson.quest_id and lesson.next in ["", "-1"]
+        statistics.lessons_done += lesson.unit_set.filter(type__gte=300, type__lt=400).count()
         statistics.total_time_spend += duration
         statistics.save()
 
