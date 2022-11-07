@@ -24,8 +24,7 @@ from lessons.models import (
 from lessons.structures import (
     BlockType,
     BranchingType,
-    BranchingViewType,
-    LessonBlockType
+    BranchingViewType
 )
 from lessons.structures.tasks import TaskBlock
 from lessons.utils import process_affect
@@ -84,7 +83,6 @@ class UnitDetailSerializer(serializers.ModelSerializer):
 
 
 class LessonDetailSerializer(serializers.ModelSerializer):
-    # TODO: переделать
     lesson_name = serializers.CharField(source="name")
     lesson_number = serializers.IntegerField(default=0)
     quest_number = serializers.IntegerField(default=0)
@@ -116,7 +114,7 @@ class QuestChoiceSerializer(serializers.ModelSerializer):
     def get_lessons(self, obj: Course) -> dict:
         quest_tree = CourseLessonsTree(obj)
 
-        profile: Profile = self.context['request'].user.profile.get()
+        profile: Profile = self.context['request'].user.profile.get(course_id=1)
         lessons = quest_tree.get_map_for_profile(profile)
 
         return LessonChoiceSerializer(lessons, many=True).data
@@ -264,7 +262,7 @@ class BranchingSelectSerializer(serializers.ModelSerializer):
         return local_ids
 
     def validate(self, validated_data: dict) -> dict:
-        profile: Profile = self.context["request"].user.profile.get()
+        profile: Profile = self.context["request"].user.profile.get(course_id=1)
         blocks = self._get_blocks(validated_data['choose_local_id'])
 
         if self.instance.type == BranchingType.one_from_n.value:
@@ -305,7 +303,7 @@ class BranchingSelectSerializer(serializers.ModelSerializer):
         return total_lessons_price
 
     def update(self, branching: Branching, validated_data: dict) -> Branching:
-        profile: Profile = self.context["request"].user.profile.first()
+        profile: Profile = self.context["request"].user.profile.get(course_id=1)
         choose_local_id = validated_data["choose_local_id"]
 
         profile_branching = ProfileBranchingChoice.objects.filter(profile=profile, branching=branching)
@@ -347,7 +345,7 @@ class CourseMapSerializer(serializers.ModelSerializer):
             Branching: CourseMapBranchingCell,
         }
 
-        profile: Profile = self.context['request'].user.profile.get()
+        profile: Profile = self.context['request'].user.profile.get(course_id=1)
         tree = CourseLessonsTree(obj)
 
         map_list = tree.get_map_for_profile(profile)
@@ -372,7 +370,7 @@ class CourseMapSerializer(serializers.ModelSerializer):
         return serialized_map_list
 
     def get_active(self, obj: Course) -> int:
-        profile: Profile = self.context['request'].user.profile.get()
+        profile: Profile = self.context['request'].user.profile.get(course_id=1)
         tree = CourseLessonsTree(obj)
         return tree.get_active(profile)
 

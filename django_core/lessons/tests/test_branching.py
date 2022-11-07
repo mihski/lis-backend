@@ -22,45 +22,49 @@ User = get_user_model()
 class BranchingTestCase(TestCase):
     API_URL = "/api/lessons/branchings/"
 
-    def setUp(self) -> None:
-        user = User.objects.create_user(
+    @classmethod
+    def setUpClass(cls):
+        super(BranchingTestCase, cls).setUpClass()
+        cls.course = Course.objects.create(id=1, name="test")
+        cls._create_fixtures()
+        cls.user = User.objects.create_user(
             username="test",
             email="test@mail.ru",
             password="test"
         )
-        self.profile = user.profile.get()
-        self.resources = self.profile.resources
-        self.client = APIClient()
-        self.client.force_login(user)
-        self._create_fixtures()
+        cls.profile = cls.user.profile.get(course_id=cls.course)
+        cls.resources = cls.profile.resources
 
-    def _create_fixtures(self):
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    @classmethod
+    def _create_fixtures(cls):
         """
             Создает тестовые данные
         """
-        self.quest = Quest.objects.create(local_id="n_quest", name="n_quest_name")
+        cls.quest = Quest.objects.create(local_id="n_quest", name="n_quest_name")
         block = LessonBlock.objects
-        course = Course.objects.create(name="test")
         lessons = [
             Lesson(
                 local_id="n_001", name="n_001_name", time_cost=0,
                 energy_cost=0, money_cost=100, content=block.create(),
-                course=course
+                course=cls.course
             ),
             Lesson(
                 local_id="n_002", name="n_002_name", time_cost=0,
                 energy_cost=0, money_cost=200, content=block.create(),
-                course=course
+                course=cls.course
             ),
             Lesson(
                 local_id="n_003", name="n_003_name", time_cost=0,
-                energy_cost=0, money_cost=300, quest=self.quest,
-                content=block.create(), course=course
+                energy_cost=0, money_cost=300, quest=cls.quest,
+                content=block.create(), course=cls.course
             )
         ]
-        self.lessons = Lesson.objects.bulk_create(lessons)
-
-        self.branching = Branching.objects.create(
+        cls.lessons = Lesson.objects.bulk_create(lessons)
+        cls.branching = Branching.objects.create(
             local_id="n_branching",
             type=1,  # profile_parameter <-| BranchingType
             content=dict()

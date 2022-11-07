@@ -268,12 +268,17 @@ class Profile(LifecycleModel):
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="profile")
     username = models.CharField(max_length=63, null=True, blank=True)
-    gender = models.CharField(max_length=6, choices=PROFILE_GENDER, null=True)  # todo: по-хорошему тоже на TextChoices
-    # заменить
+    gender = models.CharField(max_length=6, choices=PROFILE_GENDER, null=True)
     university_position = models.CharField(
         choices=UniversityPosition.choices,
         default=UniversityPosition.STUDENT,
         max_length=40
+    )
+    course = models.ForeignKey(
+        "lessons.Course",
+        on_delete=models.CASCADE,
+        related_name="profiles",
+        default=1
     )
     scientific_director = models.ForeignKey("lessons.NPC", on_delete=models.SET_NULL, null=True, blank=True)
     laboratory = models.CharField(max_length=120, choices=LABORATORIES, default="it")

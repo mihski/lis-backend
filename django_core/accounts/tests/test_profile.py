@@ -12,7 +12,7 @@ from accounts.models import (
     ProfileAvatarBrows,
     ProfileAvatarClothes
 )
-from lessons.models import NPC
+from lessons.models import NPC, Course
 from lessons.exceptions import NPCIsNotScientificDirectorException
 from resources.models import Resources
 
@@ -22,20 +22,24 @@ User = get_user_model()
 class ProfileTestCase(TestCase):
     API_URL = "/api/profile/"
 
-    def setUp(self) -> None:
-        self.user = User.objects.create_user(
+    @classmethod
+    def setUpClass(cls) -> None:
+        super(ProfileTestCase, cls).setUpClass()
+        cls.course = Course.objects.create()
+        cls.user = User.objects.create_user(
             username="test",
             email="test@mail.ru",
             password="test"
         )
-        self.sd_npc = NPC.objects.create(uid="C1", is_scientific_director=True)
-        self.not_sd_npc = NPC.objects.create(uid="C2", is_scientific_director=False)
+        cls.sd_npc = NPC.objects.create(uid="C1", is_scientific_director=True)
+        cls.not_sd_npc = NPC.objects.create(uid="C2", is_scientific_director=False)
 
+    def setUp(self):
         self.client = APIClient()
-        self.client.force_login(self.user)
+        self.client.force_authenticate(self.user)
 
     def _get_profile(self) -> Profile:
-        return self.user.profile.get()
+        return self.user.profile.get(course=self.course)
 
     def test_profile_related_entities_created(self) -> None:
         """
@@ -44,8 +48,8 @@ class ProfileTestCase(TestCase):
             через django lifecycle
         """
         self.assertTrue(Profile.objects.filter(user=self.user).exists())
-        self.assertTrue(Statistics.objects.filter(profile=self.user.profile.get()).exists())
-        self.assertTrue(Resources.objects.filter(user=self.user.profile.get()).exists())
+        self.assertTrue(Statistics.objects.filter(profile=self.user.profile.get(course=self.course)).exists())
+        self.assertTrue(Resources.objects.filter(user=self.user.profile.get(course=self.course)).exists())
 
     def test_setting_name_and_gender(self) -> None:
         body = {"username": "test", "gender": "male"}
@@ -91,7 +95,7 @@ class ProfileTestCase(TestCase):
         self.assertEqual(profile.scientific_director, self.sd_npc)
 
     def test_choosing_invalid_scientific_director(self):
-        body = {"scientific_director": self.not_sd_npc.id}
+        body = {"scientific_director": self.not_sd_npc.pk}
         response = self.client.put(path=self.API_URL, data=body)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

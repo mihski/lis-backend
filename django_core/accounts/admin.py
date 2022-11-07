@@ -44,6 +44,7 @@ class ProfileAdmin(admin.ModelAdmin):
         "id",
         "username",
         "user",
+        "course",
         "gender",
         "university_position",
         "ultimate_activated",

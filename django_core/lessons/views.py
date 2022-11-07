@@ -103,7 +103,7 @@ class BranchSelectViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mi
 
         if ProfileBranchingChoice.objects.filter(
             branching=branching,
-            profile=self.request.user.profile.get()
+            profile=self.request.user.profile.get(course=1)
         ).exists():
             raise BranchingAlreadyChosenException()
 
@@ -154,7 +154,7 @@ class LessonDetailViewSet(
         lesson = self.get_object()
         from_unit_id = request.GET.get("from_unit_id", None)
 
-        profile: Profile = request.user.profile.get()
+        profile: Profile = request.user.profile.get(course=1)
         player = ProfileSerializerWithoutLookForms(profile, context={"request": request})
 
         if not self._check_is_enough_energy(profile, lesson):
@@ -266,7 +266,7 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
     @decorators.action(methods=["POST"], detail=True, url_path="finish")
     def finish_lesson(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
         lesson: Lesson = self.get_object()
-        profile = request.user.profile.get()
+        profile: Profile = request.user.profile.get(course_id=1)
 
         lesson_finish_data = self.serializer_class(lesson, context={"profile": profile}).data
 
@@ -298,6 +298,6 @@ class CallbackAPIView(views.APIView):
             raise UnitNotFoundException(f"Unit with id: {block.local_id} not found")
 
         affect = block.profile_affect
-        process_affect(affect, request.user.profile.first())
+        process_affect(affect, request.user.profile.get(course_id=1))
 
         return Response({"status": "ok"}, status=status.HTTP_200_OK)

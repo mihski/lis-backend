@@ -5,13 +5,16 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from drf_yasg.utils import swagger_auto_schema
 
-from accounts.models import Profile, ProfileAvatarHair, ProfileAvatarFace, ProfileAvatarBrows, ProfileAvatarHead, \
-    ProfileAvatarClothes
+from accounts.models import Profile
 from accounts.serializers import (
     ProfileSerializer,
     ProfileStatisticsSerializer,
-    ProfileStatisticsUpdateSerializer, ProfileHairSerializer, ProfileFaceSerializer, ProfileHeadSerializer,
-    ProfileBrowsSerializer, ProfileClothesSerializer
+    ProfileStatisticsUpdateSerializer,
+    ProfileHairSerializer,
+    ProfileFaceSerializer,
+    ProfileHeadSerializer,
+    ProfileBrowsSerializer,
+    ProfileClothesSerializer
 )
 from lessons.exceptions import NPCIsNotScientificDirectorException
 from resources.exceptions import NegativeResourcesException
@@ -43,7 +46,7 @@ class ProfileViewSet(
     permission_classes = (permissions.IsAuthenticated, )
 
     def get_object(self):
-        return self.request.user.profile.get()
+        return self.request.user.profile.get(course_id=1)
 
     @swagger_auto_schema(**SwaggerFactory()(
         responses=[NPCIsNotScientificDirectorException]
@@ -70,7 +73,7 @@ class ProfileStatisticsViewSet(viewsets.GenericViewSet):
 
     @decorators.action(methods=["GET"], detail=False, url_path="statistics")
     def retrieve_statistics(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
-        profile_statistics = request.user.profile.get().statistics
+        profile_statistics = request.user.profile.get(course_id=1).statistics
         serializer: ProfileStatisticsSerializer = self.get_serializer(instance=profile_statistics)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -79,7 +82,7 @@ class ProfileStatisticsViewSet(viewsets.GenericViewSet):
     ))
     @decorators.action(methods=["PATCH"], detail=False, url_path="statistics/update")
     def update_statistics(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
-        profile_statistics = request.user.profile.get().statistics
+        profile_statistics = request.user.profile.get(course_id=1).statistics
         serializer: ProfileStatisticsUpdateSerializer = self.get_serializer(
             instance=profile_statistics,
             data=request.data

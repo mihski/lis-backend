@@ -5,7 +5,8 @@ from django.conf import settings
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from accounts.models import User, Profile, UniversityPosition
+from accounts.models import User, UniversityPosition
+from lessons.models import Course
 from resources.tasks import refill_resources
 from resources.utils import get_max_energy_by_position
 
@@ -13,10 +14,15 @@ from resources.utils import get_max_energy_by_position
 class ResourcesTestCase(TestCase):
     START_COURSE_DATE = settings.START_COURSE_DATE
 
+    @classmethod
+    def setUpClass(cls):
+        super(ResourcesTestCase, cls).setUpClass()
+        cls.course = Course.objects.create()
+        cls.user = User.objects.create(username="test1", email="test1@mail.ru", password="test1")
+        cls.profile = cls.user.profile.get(course=cls.course)
+        cls.resources = cls.profile.resources
+
     def setUp(self) -> None:
-        self.user = User.objects.create(username="test1", email="test1@mail.ru", password="test1")
-        self.profile = self.user.profile.get()
-        self.resources = self.profile.resources
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 
@@ -28,7 +34,7 @@ class ResourcesTestCase(TestCase):
         response = self.client.get("/api/resources/retrieve/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["energyAmount"], 0)
-        self.assertEqual(response.json()["moneyAmount"], 500)
+        self.assertEqual(response.json()["moneyAmount"], 10000)
         self.assertEqual(response.json()["maxEnergyAmount"], 0)
         self.assertEqual(
             response.json()["timeAmount"],
@@ -49,7 +55,7 @@ class ResourcesTestCase(TestCase):
         cases = [
             # (timeDelta, moneyDelta, energyDelta), is_successful
             ((5, 10, -3), True),
-            ((0, -2000, 3), False),
+            ((0, -12000, 3), False),
             ((-1, 30, 3), False),
             ((0, -4, -2), True),
         ]
@@ -71,7 +77,7 @@ class ResourcesTestCase(TestCase):
         response = self.client.get("/api/resources/retrieve/")
         profile_timestamp = int((self.START_COURSE_DATE + timedelta(days=5)).timestamp()) * 1000
         self.assertEqual(response.json()["timeAmount"], profile_timestamp) # = 5 + 0
-        self.assertEqual(response.json()["moneyAmount"], 506)  # = 500 + 10 - 4
+        self.assertEqual(response.json()["moneyAmount"], 10006)  # = 12000 + 10 - 4
         self.assertEqual(response.json()["energyAmount"], 5)  # = 10 - 5
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPOGATES=True, BROKER_BACKEND="memory")

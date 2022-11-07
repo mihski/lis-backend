@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
 from django.conf import settings
 
+from accounts.models import Profile
 from resources.exceptions import (
     UltimateAlreadyActivatedException,
     EnergyOverfillException,
@@ -33,7 +34,7 @@ class ResourcesViewSet(viewsets.GenericViewSet):
 
     @decorators.action(methods=["GET"], detail=False, url_path="retrieve")
     def retrieve_resources(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
-        profile = request.user.profile.first()
+        profile: Profile = request.user.profile.get(course_id=1)
         serializer: ResourcesSerializer = self.get_serializer_class()(instance=profile.resources)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
@@ -45,7 +46,7 @@ class ResourcesViewSet(viewsets.GenericViewSet):
     ))
     @decorators.action(methods=["PATCH"], detail=False, url_path="update")
     def update_resources(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
-        profile = request.user.profile.first()
+        profile: Profile = request.user.profile.get(course_id=1)
 
         serializer: ResourcesUpdateSerializer = self.get_serializer_class()(
             data=request.data,
@@ -64,7 +65,7 @@ class ResourcesViewSet(viewsets.GenericViewSet):
     ))
     @decorators.action(methods=["POST"], detail=False, url_path="ultimate/activate")
     def activate_ultimate(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
-        profile = request.user.profile.first()
+        profile: Profile = request.user.profile.get(course_id=1)
         resources = profile.resources
 
         if check_ultimate_is_active(profile):

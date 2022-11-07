@@ -58,7 +58,7 @@ class ProfileStatisticsUpdateSerializer(serializers.Serializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    scientific_director = serializers.PrimaryKeyRelatedField(queryset=NPC.objects.filter(is_scientific_director=True))
+    scientific_director = serializers.PrimaryKeyRelatedField(queryset=NPC.objects.all())
     head_form = serializers.PrimaryKeyRelatedField(write_only=True, queryset=ProfileAvatarHead.objects.all())
     hair_form = serializers.PrimaryKeyRelatedField(write_only=True, queryset=ProfileAvatarHair.objects.all())
     face_form = serializers.PrimaryKeyRelatedField(write_only=True, queryset=ProfileAvatarFace.objects.all())
@@ -104,7 +104,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "id", "isu", "username", "first_name", "last_name", "middle_name",
             "gender", "scientific_director", "university_position", "laboratory",
             "head_form", "hair_form", "face_form", "brows_form", "cloth_form",
-            "usual_image", "angry_image", "fair_image", "happy_image",
+            "usual_image", "angry_image", "fair_image", "happy_image", "course"
         ]
 
 
