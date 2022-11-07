@@ -286,11 +286,11 @@ class Profile(LifecycleModel):
     scientific_director = models.ForeignKey("lessons.NPC", on_delete=models.SET_NULL, null=True, blank=True)
     laboratory = models.CharField(max_length=120, choices=LABORATORIES, default="it")
 
-    head_form = models.ForeignKey("ProfileAvatarHead", on_delete=models.CASCADE, null=True)
-    face_form = models.ForeignKey("ProfileAvatarFace", on_delete=models.CASCADE, null=True)
-    hair_form = models.ForeignKey("ProfileAvatarHair", on_delete=models.CASCADE, null=True)
-    brows_form = models.ForeignKey("ProfileAvatarBrows", on_delete=models.CASCADE, null=True)
-    cloth_form = models.ForeignKey("ProfileAvatarClothes", on_delete=models.CASCADE, null=True)
+    head_form = models.ForeignKey("ProfileAvatarHead", on_delete=models.CASCADE, null=True, blank=True)
+    face_form = models.ForeignKey("ProfileAvatarFace", on_delete=models.CASCADE, null=True, blank=True)
+    hair_form = models.ForeignKey("ProfileAvatarHair", on_delete=models.CASCADE, null=True, blank=True)
+    brows_form = models.ForeignKey("ProfileAvatarBrows", on_delete=models.CASCADE, null=True, blank=True)
+    cloth_form = models.ForeignKey("ProfileAvatarClothes", on_delete=models.CASCADE, null=True, blank=True)
 
     usual_image = models.ImageField(upload_to=_upload_avatar_image, null=True, editable=False)
     angry_image = models.ImageField(upload_to=_upload_avatar_image, null=True, editable=False)
@@ -305,14 +305,8 @@ class Profile(LifecycleModel):
         Resources.objects.create(user=self, money_amount=10000)
         Statistics.objects.create(profile=self)
 
-    @hook(AFTER_UPDATE, when="university_position", has_changed=True, was=UniversityPosition.STUDENT)
-    def update_energy_after_job_hiring(self):
-        max_energy = get_max_energy_by_position(self.university_position)
-        self.resources.set_energy(max_energy)
-        self.resources.save()
-
-    @hook(AFTER_UPDATE, when="university_position", has_changed=True, was_not=UniversityPosition.STUDENT)
-    def update_energy_after_new_position(self) -> None:
+    @hook(AFTER_UPDATE, when="university_position", has_changed=True)
+    def update_energy_on_university_position_change(self):
         max_energy = get_max_energy_by_position(self.university_position)
         self.resources.set_energy(max_energy)
         self.resources.save()
