@@ -95,6 +95,8 @@ class ProfileStatisticsViewSet(viewsets.GenericViewSet):
 
 
 class AvatarViewSet(viewsets.GenericViewSet):
+    serializer_class = ProfileSerializer
+
     serializers = [
         ProfileHairSerializer,
         ProfileFaceSerializer,
