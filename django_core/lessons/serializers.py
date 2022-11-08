@@ -374,7 +374,7 @@ class CourseMapSerializer(serializers.ModelSerializer):
         tree = CourseLessonsTree(obj)
         active_block_index = tree.get_active(profile)
 
-        return active_block_index + (CourseMapImg.objects.filter(course=obj, order__lta=active_block_index).count())
+        return active_block_index + CourseMapImg.objects.filter(course=obj, order__lte=active_block_index).count()
 
 
 class ReviewSerializer(serializers.ModelSerializer):
