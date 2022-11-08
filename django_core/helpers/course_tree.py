@@ -202,8 +202,8 @@ class CourseLessonsTree(AbstractNodeTree):
     def get_active(self, profile: Profile) -> int:
         map_list = self.get_map_for_profile(profile)
         profile_interacted = {
-            *[p.lesson.local_id for p in ProfileLessonDone.objects.select_related("lesson").all()],
-            *[b.branching.local_id for b in ProfileBranchingChoice.objects.select_related("branching").all()]
+            *[p.lesson.local_id for p in ProfileLessonDone.objects.select_related("lesson").filter(profile=profile)],
+            *[b.branching.local_id for b in ProfileBranchingChoice.objects.select_related("branching").filter(profile=profile)]
         }
 
         for i, block in enumerate(map_list):
