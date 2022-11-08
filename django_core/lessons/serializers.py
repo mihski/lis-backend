@@ -182,7 +182,7 @@ class CourseMapImgCell(CourseMapCell):
         return self._get_absolute_url(map_cell.image.url)
 
     def get_image_disabled(self, map_cell: CourseMapImg) -> str:
-        return self._get_absolute_url(map_cell.image.url)
+        return self._get_absolute_url(map_cell.image_disabled.url)
 
     class Meta:
         model = CourseMapImg
