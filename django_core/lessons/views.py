@@ -169,7 +169,7 @@ class LessonDetailViewSet(
 
         lesson_data = {}
         if not from_unit_id:
-            lesson_data = LessonDetailSerializer(lesson).data
+            lesson_data = LessonDetailSerializer(lesson, context={"request": request}).data
             lesson_name_field = lesson.name
             locales = lesson.content.locale
 

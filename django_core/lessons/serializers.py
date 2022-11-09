@@ -87,6 +87,17 @@ class LessonDetailSerializer(serializers.ModelSerializer):
     lesson_number = serializers.IntegerField(default=0)
     quest_number = serializers.IntegerField(default=0)
     tasks = serializers.IntegerField(default=0)
+    bonuses = serializers.SerializerMethodField()
+
+    def get_bonuses(self, lesson: Lesson) -> dict | None:
+        profile = self.context["request"].user.profile.get()
+
+        if not profile.scientific_director_id:
+            return
+
+        scientific_director_id = profile.scientific_director.uid[1:]
+
+        return lesson.bonuses[scientific_director_id]
 
     class Meta:
         model = Lesson
