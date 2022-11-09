@@ -131,8 +131,11 @@ class AvatarViewSet(viewsets.GenericViewSet):
         }
         parts_data["face_form"] = []
 
-        for face_data in ProfileFaceSerializer(ProfileAvatarFace.objects.all(), many=True).data:
-            for brows_data in ProfileBrowsSerializer(ProfileAvatarBrows.objects.all(), many=True).data:
+        faces_data = ProfileFaceSerializer(ProfileAvatarFace.objects.all(), context={"request": request}, many=True).data
+        brows_data = ProfileBrowsSerializer(ProfileAvatarBrows.objects.all(), context={"request": request}, many=True).data
+        
+        for face_data in faces_data:
+            for brows_data in brows_data:
                 face_data = deepcopy(face_data)
                 if brows_data["gender"] == face_data["gender"]:
                     face_data["brows"] = brows_data
