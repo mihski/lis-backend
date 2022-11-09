@@ -129,7 +129,7 @@ class ProfileSerializerWithoutLookForms(ProfileSerializer):
     class Meta:
         model = Profile
         fields = [
-            "id", "name", "gender", "scientific_director",
+            "id", "name", "gender", "scientific_director", "university_position",
             "usual_image", "angry_image", "fair_image", "happy_image",
         ]
 
