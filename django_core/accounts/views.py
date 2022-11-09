@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Any
 
 from django.db import transaction
@@ -6,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from drf_yasg.utils import swagger_auto_schema
 
-from accounts.models import Profile
+from accounts.models import Profile, ProfileAvatarFace, ProfileAvatarBrows
 from accounts.serializers import (
     ProfileSerializer,
     ProfileStatisticsSerializer,
@@ -99,9 +100,7 @@ class AvatarViewSet(viewsets.GenericViewSet):
 
     serializers = [
         ProfileHairSerializer,
-        ProfileFaceSerializer,
         ProfileHeadSerializer,
-        ProfileBrowsSerializer,
         ProfileClothesSerializer
     ]
 
@@ -111,11 +110,17 @@ class AvatarViewSet(viewsets.GenericViewSet):
             for s in self.serializers
         ]
 
+    def _filter_by_gender(self, data: dict, gender: str) -> dict:
+        for key, values in data.items():
+            data[key] = list(filter(lambda x: x["gender"] == gender, values))
+
+        return data
+
     def list(self, request, *args, **kwargs):
         c2s = {s.Meta.model: s for s in self.serializers}
         querysets = self.get_queryset()
 
-        return Response({
+        parts_data = {
             (
                 q.model.__name__.lower()
                 .replace("profileavatar", "")
@@ -123,7 +128,20 @@ class AvatarViewSet(viewsets.GenericViewSet):
                 + "_form"
             ): c2s[q.model](q, context={"request": request}, many=True).data
             for q in querysets
-        })
+        }
+        parts_data["face_form"] = []
+
+        for face_data in ProfileFaceSerializer(ProfileAvatarFace.objects.all(), many=True).data:
+            for brows_data in ProfileBrowsSerializer(ProfileAvatarBrows.objects.all(), many=True).data:
+                face_data = deepcopy(face_data)
+                if brows_data["gender"] == face_data["gender"]:
+                    face_data["brows"] = brows_data
+                    parts_data["face_form"].append(face_data)
+
+        # if request.user:
+        #     parts_data = self._filter_by_gender(parts_data, request.user.profile.get().gender)
+
+        return Response(parts_data)
 
 
 class ReplayAPIView(views.APIView):
