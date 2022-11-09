@@ -712,6 +712,10 @@ class LessonSerializer(LisEditorModelSerializer):
     bonuses = serializers.JSONField()
     content = LessonContentSerializer(required=False)
     next = serializers.CharField(allow_blank=True)
+    unit_count = serializers.SerializerMethodField()
+
+    def get_unit_count(self, lesson: Lesson) -> int:
+        return lesson.unit_set.count()
 
     @staticmethod
     def reverse_validated_data(lessons):
@@ -786,6 +790,7 @@ class LessonSerializer(LisEditorModelSerializer):
             'has_bonuses',
             'x',
             'y',
+            'unit_count',
         ]
 
         list_serializer_class = LessonListSerializer

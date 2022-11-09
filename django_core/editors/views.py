@@ -23,7 +23,7 @@ class CourseViewSet(
     authentication_classes = [authentication.SessionAuthentication]
     permission_classes = [permissions.IsAdminUser]
 
-    queryset = Course.objects.all()
+    queryset = Course.objects.prefetch_related("lessons", "quests", "lessons__unit_set")
     serializer_class = CourseSerializer
 
     @decorators.action(methods=["GET"], detail=True, url_path='locale')
