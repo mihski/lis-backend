@@ -193,7 +193,7 @@ class CourseMapImgCell(CourseMapCell):
         return self._get_absolute_url(map_cell.image.url)
 
     def get_image_disabled(self, map_cell: CourseMapImg) -> str:
-        return self._get_absolute_url(map_cell.image.url)
+        return self._get_absolute_url(map_cell.image_disabled.url)
 
     class Meta:
         model = CourseMapImg
@@ -383,7 +383,12 @@ class CourseMapSerializer(serializers.ModelSerializer):
     def get_active(self, obj: Course) -> int:
         profile: Profile = self.context['request'].user.profile.get(course_id=1)
         tree = CourseLessonsTree(obj)
-        return tree.get_active(profile)
+        active_block_index = tree.get_active(profile)
+        course_map_images = CourseMapImg.objects.filter(course=obj)
+
+        prev_images_count = course_map_images.filter(order__lte=active_block_index).count()
+
+        return active_block_index + course_map_images.filter(order__lte=active_block_index+prev_images_count).count()
 
 
 class ReviewSerializer(serializers.ModelSerializer):
