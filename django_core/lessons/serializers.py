@@ -93,7 +93,7 @@ class LessonDetailSerializer(serializers.ModelSerializer):
         profile = self.context["request"].user.profile.get()
 
         if not profile.scientific_director_id:
-            return
+            return {"energy": 0, "money": 0}
 
         scientific_director_id = profile.scientific_director.uid[1:]
 
