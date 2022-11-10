@@ -15,7 +15,9 @@ from django.conf import settings
 from django.db import transaction
 
 from accounts.models import Profile
-from accounts.serializers import ProfileSerializerWithoutLookForms
+from accounts.serializers import (
+    ProfileSerializerWithoutLookForms,
+)
 from lessons.models import (
     NPC,
     Location,
@@ -229,11 +231,11 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
             resources.energy_amount -= lesson.energy_cost
 
         s_energy, s_money = self._get_scientific_bonuses(profile, lesson)
-
         next_days_count = sum(list(map(
             lambda x: x.content.get("value", 0),
             Unit.objects.filter(lesson=lesson, type=217)
         )))
+
         resources.energy_amount += s_energy
         resources.money_amount += salary + s_money
         resources.time_amount += lesson.time_cost + next_days_count
@@ -241,8 +243,6 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
 
     def _calculate_statistic(self, profile: Profile, lesson: Lesson, duration: int) -> None:
         statistics = profile.statistics
-        statistics.quests_done += int(lesson.quest_id is None and lesson.next in ["", "-1"])
-        statistics.lessons_done += lesson.unit_set.filter(type__gte=300, type__lt=400).count()
         statistics.total_time_spend += duration
         statistics.save()
 
@@ -263,7 +263,6 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
 
         intersection = course_lessons & finished_lessons
         return intersection == course_lessons
-
 
     @decorators.action(methods=["POST"], detail=True, url_path="finish")
     def finish_lesson(self, request: Request, *args: tuple, **kwargs: dict) -> Response:

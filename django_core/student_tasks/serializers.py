@@ -22,8 +22,7 @@ class StudentTaskAnswerSerializer(serializers.ModelSerializer):
         return task_instance
 
     def _get_profile(self, task_unit: Unit) -> Profile:
-        # TODO: add course field for profile
-        profile: Profile = self.context['request'].user.profile.get()
+        profile: Profile = self.context['request'].user.profile.get(course_id=1)
         return profile
 
     def get_details(self, obj: StudentTaskAnswer) -> dict:

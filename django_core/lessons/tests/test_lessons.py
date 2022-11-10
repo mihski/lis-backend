@@ -53,31 +53,9 @@ class TestFinishingLesson(TestCase):
             },
             format="json"
         )
-        self.profile.refresh_from_db()
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(EmotionData.objects.count(), 1)
         self.assertEqual(self.profile.statistics.total_time_spend, 2)
+        self.assertEqual(self.profile.statistics.lessons_done, 1)
         self.assertEqual(self.profile.resources.money_amount, 12500)  # 10000 (init) + 2500 (salary)
-
-    def test_finishing_lesson_statistic(self):
-        [Unit.objects.create(type=290 + i, lesson=self.lesson, content={}, next="") for i in range(20)]
-
-        response = self.client.post(
-            f"/api/lessons/lessons/{self.lesson.local_id}/finish/",
-            {
-                "emotion": {
-                    "comment": "cool!",
-                    "emotion": 1,
-                },
-                "duration": 2
-            },
-            format="json"
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.profile.refresh_from_db()
-
-        statistics = self.profile.statistics
-
-        self.assertEqual(statistics.quests_done, 1)
-        self.assertEqual(statistics.lessons_done, 10)

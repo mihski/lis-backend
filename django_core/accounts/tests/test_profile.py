@@ -14,11 +14,14 @@ from accounts.models import (
     ProfileAvatarBrows,
     ProfileAvatarClothes
 )
-from lessons.models import NPC, Course
+from accounts.serializers import ProfileStatisticsSerializer
+from lessons.models import NPC, Course, Lesson, LessonBlock, Unit
 from lessons.exceptions import NPCIsNotScientificDirectorException
-from resources.models import Resources
+from resources.models import Resources, EmotionData
+from resources.serializers import EmotionDataSerializer
 from resources.utils import get_max_energy_by_position
 from resources.exceptions import NotEnoughEnergyException
+from student_tasks.models import StudentTaskAnswer
 
 User = get_user_model()
 
@@ -54,6 +57,46 @@ class ProfileTestCase(TestCase):
             NPC(uid="TEST3", is_scientific_director=False)
         ]
         cls.npcs = NPC.objects.bulk_create(npcs)
+
+    def _create_emotion_data(self) -> None:
+        profile = self._get_profile()
+
+        self.lesson = Lesson.objects.create(
+            local_id="n_001", name="n_001_name",
+            time_cost=0, energy_cost=0, money_cost=0,
+            content=LessonBlock.objects.create(),
+            course=self.course
+        )
+
+        emotions = [
+            EmotionData(profile=profile, emotion=1, comment="1", lesson=self.lesson),
+            EmotionData(profile=profile, emotion=2, comment="2", lesson=self.lesson),
+            EmotionData(profile=profile, emotion=3, comment="3", lesson=self.lesson),
+        ]
+        self.emotions = EmotionData.objects.bulk_create(emotions)
+
+    def _create_answered_tasks(self) -> None:
+        profile = self._get_profile()
+        units = [
+            Unit(
+                lesson=self.lesson,
+                type=300 + x,
+                content=dict(),
+                next=list()
+            )
+            for x in range(10)
+        ]
+        tasks = Unit.objects.bulk_create(units)
+
+        answered_tasks = [
+            StudentTaskAnswer(
+                profile=profile,
+                task=tasks[i],
+                is_correct=i % 2
+            )
+            for i in range(len(tasks))
+        ]
+        StudentTaskAnswer.objects.bulk_create(answered_tasks)
 
     def _get_profile(self) -> Profile:
         return self.user.profile.get(course=self.course)
@@ -201,3 +244,24 @@ class ProfileTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(profile.user)
         self.assertTrue(self.user.profile.exists())
+
+    def test_album_retrieve(self) -> None:
+        self._create_emotion_data()
+        self._create_answered_tasks()
+        profile = self._get_profile()
+
+        url = self.API_URL + "album/"
+        response = self.client.get(path=url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.json()["statistics"],
+            ProfileStatisticsSerializer(instance=profile.statistics).data
+        )
+        serialized_emotions = EmotionDataSerializer(data=self.emotions, many=True)
+        serialized_emotions.is_valid()
+
+        self.assertEqual(
+            response.json()["emotions"],
+            serialized_emotions.data
+        )

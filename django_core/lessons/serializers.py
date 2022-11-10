@@ -35,7 +35,7 @@ from lessons.exceptions import (
 )
 from helpers.course_tree import CourseLessonsTree
 from resources.exceptions import NotEnoughMoneyException
-from resources.models import EmotionData, Resources
+from resources.serializers import EmotionDataSerializer
 from resources.utils import get_salary_by_position
 
 User = get_user_model()
@@ -421,12 +421,6 @@ class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = ["text", "course_id", "user"]
-
-
-class EmotionDataSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = EmotionData
-        fields = ["id", "comment", "emotion"]
 
 
 class LessonFinishSerializer(serializers.ModelSerializer):

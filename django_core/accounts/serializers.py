@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 from django.conf import settings
 from rest_framework import serializers
 
@@ -15,8 +13,9 @@ from accounts.models import (
 )
 from accounts.tasks import generate_profile_images
 from lessons.exceptions import NPCIsNotScientificDirectorException
-from lessons.models import NPC
+from lessons.models import NPC, ProfileLessonDone
 from resources.exceptions import NegativeResourcesException, NotEnoughEnergyException
+from resources.serializers import EmotionDataSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -31,9 +30,25 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class ProfileStatisticsSerializer(serializers.ModelSerializer):
+    lessons_done = serializers.SerializerMethodField()
+    tasks_done = serializers.SerializerMethodField()
+    quests_done = serializers.SerializerMethodField()
+
+    def get_tasks_done(self, statistics: Statistics) -> int:
+        return statistics.profile.tasks_done.filter(is_correct=True).count()
+
+    def get_lessons_done(self, statistics: Statistics) -> int:
+        return ProfileLessonDone.objects.filter(profile=statistics.profile).count()
+
+    def get_quests_done(self, statistics: Statistics) -> int:
+        return ProfileLessonDone.objects.filter(
+            lesson__next__in=["", "-1"],
+            lesson__quest__isnull=True
+        ).count()
+
     class Meta:
         model = Statistics
-        fields = ["quests_done", "lessons_done", "total_time_spend"]
+        fields = ["lessons_done", "quests_done", "tasks_done", "total_time_spend"]
 
 
 class ProfileStatisticsUpdateSerializer(serializers.Serializer):
@@ -162,3 +177,12 @@ class ProfileFaceSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProfileAvatarFace
         fields = ["id", "gender", "usual_part"]
+
+
+class ProfileAlbumSerializer(serializers.ModelSerializer):
+    statistics = ProfileStatisticsSerializer()
+    emotions = EmotionDataSerializer(many=True)
+
+    class Meta:
+        model = Profile
+        fields = ["id", "isu", "username", "statistics", "emotions"]

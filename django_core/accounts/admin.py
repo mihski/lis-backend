@@ -43,6 +43,7 @@ class ProfileAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "username",
+        "isu",
         "user",
         "course",
         "gender",
@@ -58,7 +59,7 @@ class ProfileAdmin(admin.ModelAdmin):
         "scientific_director",
         "laboratory"
     )
-    search_fields = ("username", "user__username")
+    search_fields = ("username", "user__username", "isu")
 
 
 @admin.register(models.ScientificDirector)
