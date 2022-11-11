@@ -260,7 +260,7 @@ class Question(models.Model):
 
 
 class ProfileLessonDone(models.Model):
-    profile = models.ForeignKey("accounts.Profile", on_delete=models.CASCADE)
+    profile = models.ForeignKey("accounts.Profile", on_delete=models.CASCADE, related_name="lessons_done")
     lesson = models.ForeignKey("Lesson", on_delete=models.CASCADE)
     finished_at = models.DateTimeField(auto_now=True)
 

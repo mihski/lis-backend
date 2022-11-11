@@ -4,7 +4,7 @@ from rest_framework import serializers
 from django.conf import settings
 
 from resources.exceptions import NegativeResourcesException, EnergyOverfillException
-from resources.models import Resources
+from resources.models import Resources, EmotionData
 from resources.utils import get_max_energy_by_position
 
 
@@ -86,3 +86,9 @@ class ResourcesUpdateSerializer(serializers.Serializer):
         instance.money_amount += validated_data["moneyDelta"]
         instance.save()
         return instance
+
+
+class EmotionDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmotionData
+        fields = ["id", "comment", "emotion", "created_at"]

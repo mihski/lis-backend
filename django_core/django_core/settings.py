@@ -258,3 +258,50 @@ ULTIMATE_COST = 2500
 ULTIMATE_DURATION = 3 * 60 * 60  # секунды
 START_COURSE_DATE = datetime(day=1, month=9, year=2022)
 CHANGE_SCIENTIFIC_DIRECTOR_ENERGY_COST = 6
+
+LOGGING_ROOT = Path(BASE_DIR, "logs")
+LOGGING_ROOT.mkdir(exist_ok=True)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "debug": {
+            "format": "{levelname} | {asctime}: {module} - {message}",
+            "style": "{",
+        }
+    },
+    "handlers": {
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "debug"
+        },
+        "file": {
+            "level": "INFO",
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "formatter": "debug",
+            "filename": str(Path(LOGGING_ROOT, "lis_back.log")),
+            "when": "midnight",
+            "backupCount": 14,
+            "interval": 1
+        },
+    },
+    "loggers": {
+        "django": {
+            "level": "INFO",
+            "handlers": ["console", "file"],
+            "propagate": True,
+        },
+        "django.request": {
+            "level": "INFO",
+            "handlers": ["console", "file"],
+            "propagate": True,
+        },
+        "django_core": {
+            "level": "INFO",
+            "handlers": ["console", "file"],
+            "propagate": True,
+        }
+    }
+}

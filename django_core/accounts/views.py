@@ -16,7 +16,8 @@ from accounts.serializers import (
     ProfileFaceSerializer,
     ProfileHeadSerializer,
     ProfileBrowsSerializer,
-    ProfileClothesSerializer
+    ProfileClothesSerializer,
+    ProfileAlbumSerializer
 )
 from lessons.exceptions import NPCIsNotScientificDirectorException
 from resources.exceptions import NegativeResourcesException
@@ -163,3 +164,15 @@ class ReplayAPIView(views.APIView):
         profile = user.profile.get()
 
         return Response(ProfileSerializer(profile).data)
+
+
+class ProfileAlbumViewSet(viewsets.GenericViewSet):
+    queryset = Profile.objects.select_related("statistics", "emotions").all()
+    serializer_class = ProfileAlbumSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @decorators.action(methods=["GET"], detail=False, url_path="album")
+    def get_profile_album(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
+        profile = request.user.profile.get(course_id=1)
+        serialized_data = self.get_serializer(profile).data
+        return Response(serialized_data, status=status.HTTP_200_OK)
