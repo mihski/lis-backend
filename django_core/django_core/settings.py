@@ -205,7 +205,9 @@ ISU_MANAGER_CONFIG = {
     "redirect_uri": 'https://lis.itmo.ru/auth/',
     "scope": os.getenv("ISU_SCOPE"),
     "grant_type": "authorization_code",
-    "client_secret": os.getenv("ISU_CLIENT_SECRET")
+    "client_secret": os.getenv("ISU_CLIENT_SECRET"),
+    "logout_url": "https://id.itmo.ru/auth/realms/itmo/protocol/openid-connect/logout",
+    "post_logout_redirect_uri": "https://lis.itmo.ru/",
 }
 
 ENVIRONMENT = os.getenv("ENV", "DEV")

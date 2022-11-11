@@ -7,6 +7,13 @@ from accounts.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 
 
+class LogoutISU(APIView):
+    def get(self, request):
+        isu_manager = ISUManager()
+
+        return HttpResponseRedirect(isu_manager.obtail_logout_url())
+
+
 class RedirectISU(APIView):
     """ Вьюшка для редиректа на CAS авторизацию.
     В случае успешной авторазции возвращает нам на redirect_url код авторизации.

@@ -5,10 +5,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from accounts.models import Profile, ProfileAvatarHead, ProfileAvatarFace, ProfileAvatarBrows, ProfileAvatarClothes, \
-    ProfileAvatarHair
-from accounts.tasks import generate_profile_images
-
 User = get_user_model()
 
 
@@ -30,6 +26,13 @@ class ISUManager:
         ])
 
         return auth_url
+
+    def obtail_logout_url(self):
+        return ''.join([
+            self.logout_url,
+            f"?client_id={self.client_id}&",
+            f"post_logout_redirect_uri={self.post_logout_redirect_uri}"
+        ])
 
     def authorize(self, code):
         payload = '&'.join([
