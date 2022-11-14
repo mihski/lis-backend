@@ -94,7 +94,7 @@ class User(AbstractBaseUser, PermissionsMixin, LifecycleModel):
             cloth_form=ProfileAvatarClothes.objects.first(),
             brows_form=ProfileAvatarBrows.objects.first(),
         )
-        generate_profile_images.delay(profile.id)
+        generate_profile_images(profile.id)
 
     class Meta:
         app_label = "accounts"
