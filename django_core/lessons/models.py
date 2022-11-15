@@ -53,7 +53,7 @@ class Course(models.Model):
     description = models.TextField()
 
     entry = models.CharField(default=None, max_length=120, blank=True, null=True)
-    locale = models.JSONField(default=dict)
+    locale = models.JSONField(default={'ru': {}, 'en': {}})
 
     is_editable = models.BooleanField(default=True)
 
@@ -113,8 +113,8 @@ class LessonBlock(models.Model):
     """
         Таблица БД для хранения мета-информации уроков
     """
-    locale = models.JSONField(default={'ru': [], 'en': []})
-    markup = models.JSONField(default={'ru': [], 'en': []})
+    locale = models.JSONField(default={'ru': {}, 'en': {}})
+    markup = models.JSONField(default={'ru': {}, 'en': {}})
     entry = models.CharField(default=None, max_length=120, blank=True, null=True)  # if root -> local_id 1st unit
 
 

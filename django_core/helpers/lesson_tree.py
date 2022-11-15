@@ -62,7 +62,7 @@ class LessonUnitsTree(AbstractNodeTree):
         super().__init__()
 
         self.tree_elements["end_unit"] = LessonUnitsNode(MockUnit(
-            "",
+            hash(str(len(self.m_units))),
             LessonBlockType.lesson_end.value,
             [],
             {},
