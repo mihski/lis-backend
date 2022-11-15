@@ -9,7 +9,7 @@ def process_affect(affect: UnitAffect, profile: Profile) -> None:
         if "scientific_director" in affect.content:
             profile.resources.set_energy(6)
             profile.resources.save()
-        
+
         serializer = ProfileSerializer(
             instance=profile,
             data=affect.content,

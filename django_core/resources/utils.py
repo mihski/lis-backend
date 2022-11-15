@@ -10,8 +10,8 @@ logger = logging.Logger(__file__)
 
 POSITION_ENERGY_MAX_DATA = {
     UniversityPosition.STUDENT: 0,
-    UniversityPosition.INTERN: 10,
-    UniversityPosition.LABORATORY_ASSISTANT: 9,
+    UniversityPosition.INTERN: 12,
+    UniversityPosition.LABORATORY_ASSISTANT: 10,
     UniversityPosition.ENGINEER: 9,
     UniversityPosition.JUN_RESEARCH_ASSISTANT: 8,
 }
@@ -19,8 +19,8 @@ POSITION_ENERGY_MAX_DATA = {
 POSITION_SALARY = {
     UniversityPosition.STUDENT: 0,
     UniversityPosition.INTERN: 500,
-    UniversityPosition.LABORATORY_ASSISTANT: 750,
-    UniversityPosition.ENGINEER: 850,
+    UniversityPosition.LABORATORY_ASSISTANT: 800,
+    UniversityPosition.ENGINEER: 1000,
     UniversityPosition.JUN_RESEARCH_ASSISTANT: 1250,
 }
 
