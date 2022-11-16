@@ -1008,10 +1008,11 @@ class CourseSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
 
         representation['lessons'] = [x for x in representation['lessons'] if x['quest'] is None]
-        [x.pop("content") for x in representation['lessons'] if x['quest'] is None]
-
-        [x.pop("content") for quest in representation['quests'] for x in quest["lessons"]]
         representation['branchings'] = [x for x in representation['branchings'] if x['quest'] is None]
+
+        if not self.context["request"].GET.get("full", "false") == "true":
+            [x.pop("content") for x in representation['lessons'] if x['quest'] is None]
+            [x.pop("content") for quest in representation['quests'] for x in quest["lessons"]]
 
         return representation
 
