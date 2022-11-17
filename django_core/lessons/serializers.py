@@ -120,14 +120,15 @@ class QuestChoiceSerializer(serializers.ModelSerializer):
     money_cost = serializers.SerializerMethodField()
 
     def get_money_cost(self, quest: Quest) -> int:
-        return sum([l.money_cost for l in quest.lessons.all()])
+        quest_tree = CourseLessonsTree(quest)
+        profile = self.context['request'].user.profile.get(course_id=1)
+        map_list = quest_tree.get_map_for_profile(profile)
+        return sum([l.money_cost for l in map_list if isinstance(l, Lesson)])
 
-    def get_lessons(self, obj: Course) -> dict:
+    def get_lessons(self, obj: Quest) -> dict:
         quest_tree = CourseLessonsTree(obj)
-
-        profile: Profile = self.context['request'].user.profile.get(course_id=1)
+        profile = self.context['request'].user.profile.get(course_id=1)
         lessons = quest_tree.get_map_for_profile(profile)
-
         return LessonChoiceSerializer(lessons, many=True).data
 
     class Meta:
