@@ -170,7 +170,7 @@ class ProfileClothesSerializer(serializers.ModelSerializer):
 class ProfileBrowsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProfileAvatarBrows
-        fields = ["id", "color", "gender", "usual_part"]
+        fields = ["id", "color", "type", "gender", "usual_part"]
 
 
 class ProfileFaceSerializer(serializers.ModelSerializer):

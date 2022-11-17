@@ -193,17 +193,14 @@ class ProfileAvatarFace(ProfileAvatarBodyPart):
 
 
 class ProfileAvatarBrows(ProfileAvatarBodyPart):
-    class AvatarBrowsType(models.TextChoices):
-        CUT = "CUT"
-        ELEVATED = "ELEVATED"
-
     face = models.ManyToManyField(
         ProfileAvatarFace,
         blank=True,
         default=None,
         related_name="brows_list"
     )
-    type = models.CharField(max_length=20, choices=AvatarBrowsType.choices)
+    # TODO: make generic
+    type = models.CharField(max_length=20)
     color = models.CharField(max_length=3, default=0)
 
     usual_part = models.ImageField(
