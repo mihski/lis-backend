@@ -205,6 +205,10 @@ class BranchingDetailSerializer(serializers.ModelSerializer):
     id = serializers.CharField(source="local_id")
     choices = serializers.SerializerMethodField()
     type = serializers.SerializerMethodField()
+    locale = serializers.SerializerMethodField()
+
+    def get_locale(self, obj: Branching) -> dict:
+        return obj.course.locale
 
     def get_type(self, obj: Branching):
         if obj.type == BranchingType.profile_parameter.value:
@@ -243,7 +247,7 @@ class BranchingDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Branching
-        fields = ["id", "choices", "type"]
+        fields = ["id", "choices", "type", "locale"]
 
 
 class BranchingSelectSerializer(serializers.ModelSerializer):
@@ -256,8 +260,14 @@ class BranchingSelectSerializer(serializers.ModelSerializer):
     @lru_cache
     def _get_blocks(self, local_ids: str) -> list[Lesson | Quest]:
         blocks = [
-            *Lesson.objects.filter(quest__isnull=True, local_id__in=local_ids.split(",")),
-            *Quest.objects.filter(local_id__in=local_ids.split(",")),
+            *(
+                Lesson.objects.filter(quest__isnull=True, local_id__in=local_ids.split(","))
+                .select_related("profile_affect")
+            ),
+            *(
+                Quest.objects.filter(local_id__in=local_ids.split(","))
+                .prefetch_related("lessons", "branchings")
+            ),
         ]
         return blocks
 
@@ -283,8 +293,7 @@ class BranchingSelectSerializer(serializers.ModelSerializer):
 
         elif self.instance.type == BranchingType.six_from_n.value:
             block_counts = sum([
-                len(CourseLessonsTree(block).get_map_for_profile(profile))
-                if isinstance(block, Quest)
+                len(CourseLessonsTree(block).get_map_for_profile(profile)) if isinstance(block, Quest)
                 else 1
                 for block in blocks
             ])
@@ -294,13 +303,11 @@ class BranchingSelectSerializer(serializers.ModelSerializer):
 
         return validated_data
 
-    def _process_callbacks(self, choose_local_id: str, profile: Profile) -> None:
-        lessons = Lesson.objects.filter(local_id__in=choose_local_id.split(","))
-        for lesson in lessons:
-            process_affect(lesson.profile_affect, profile)
-
-    def _check_block_is_quest(self, block: Lesson | Quest) -> bool:
-        return Quest.objects.filter(local_id=block.local_id).exists()
+    def _process_callbacks(self, blocks: list[Lesson | Quest], profile: Profile) -> None:
+        for block in blocks:
+            if not isinstance(block, Lesson):
+                continue
+            process_affect(block.profile_affect, profile)
 
     def _collect_quest_price(self, quest: Quest) -> int:
         return quest.lessons.aggregate(total_price=Sum("money_cost"))["total_price"]
@@ -309,7 +316,7 @@ class BranchingSelectSerializer(serializers.ModelSerializer):
         total_lessons_price = 0
         for block in blocks:
             total_lessons_price += (
-                self._collect_quest_price(block) if self._check_block_is_quest(block)
+                self._collect_quest_price(block) if isinstance(block, Quest)
                 else block.money_cost
             )
         return total_lessons_price
@@ -338,7 +345,7 @@ class BranchingSelectSerializer(serializers.ModelSerializer):
             profile_branching.choose_local_id = choose_local_id
             profile_branching.save()
 
-        self._process_callbacks(profile_branching.choose_local_id, profile)
+        self._process_callbacks(blocks, profile)
         return branching
 
 
@@ -363,14 +370,11 @@ class CourseMapSerializer(serializers.ModelSerializer):
         map_list = tree.get_map_for_profile(profile)
 
         course_map_images = CourseMapImg.objects.filter(course=obj).all()
-
+        course_map_images_data = CourseMapImgCell(course_map_images, many=True, context=self.context).data
         serialized_map_list = [None] * (tree.get_max_depth() + len(course_map_images))
 
-        for course_map in course_map_images:
-            serialized_map_list[course_map.order] = CourseMapImgCell(
-                course_map,
-                context=self.context
-            ).data
+        for course_map, course_map_data in zip(course_map_images, course_map_images_data):
+            serialized_map_list[course_map.order] = course_map_data
 
         j = 0
         for obj in map_list:
@@ -386,9 +390,7 @@ class CourseMapSerializer(serializers.ModelSerializer):
         tree = CourseLessonsTree(obj)
         active_block_index = tree.get_active(profile)
         course_map_images = CourseMapImg.objects.filter(course=obj)
-
         prev_images_count = course_map_images.filter(order__lte=active_block_index).count()
-
         return active_block_index + course_map_images.filter(order__lte=active_block_index+prev_images_count).count()
 
 

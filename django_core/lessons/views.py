@@ -85,7 +85,7 @@ class CourseMapViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
 
 
 class BranchSelectViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.UpdateModelMixin):
-    queryset = Branching.objects.all()
+    queryset = Branching.objects.select_related("course")
     permission_classes = (permissions.IsAuthenticated,)
     lookup_field = "local_id"
 

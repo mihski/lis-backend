@@ -43,6 +43,7 @@ class ProfileViewSet(
         "face_form",
         "hair_form",
         "brows_form",
+        "scientific_director",
         "user",
     ).all()
     serializer_class = ProfileSerializer
@@ -154,14 +155,14 @@ class ReplayAPIView(views.APIView):
     def post(self, request, *args, **kwargs):
         user = request.user
 
-        profile = user.profile.get()
+        profile = user.profile.get(course_id=1)
 
         with transaction.atomic():
             profile.user = None
             user.create_related_profile()
             profile.save()
 
-        profile = user.profile.get()
+        profile = user.profile.get(course_id=1)
 
         return Response(ProfileSerializer(profile).data)
 

@@ -73,6 +73,12 @@ class ProfileStatisticsUpdateSerializer(serializers.Serializer):
         fields = ["quests_done", "lessons_done", "total_time_spend"]
 
 
+class SupervisorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NPC
+        fields = ["id", "uid", "ru_name", "en_name", "usual_image", "angry_image", "fair_image", "sad_image"]
+
+
 class ProfileSerializer(serializers.ModelSerializer):
     scientific_director = serializers.PrimaryKeyRelatedField(queryset=NPC.objects.all())
     head_form = serializers.PrimaryKeyRelatedField(write_only=True, queryset=ProfileAvatarHead.objects.all())
@@ -84,6 +90,8 @@ class ProfileSerializer(serializers.ModelSerializer):
     angry_image = serializers.ImageField(read_only=True)
     fair_image = serializers.ImageField(read_only=True)
     happy_image = serializers.ImageField(read_only=True)
+
+    supervisor = SupervisorSerializer(source="scientific_director")
 
     isu = serializers.ReadOnlyField(source="user.username")
     first_name = serializers.ReadOnlyField(source="user.first_name")
@@ -128,9 +136,10 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = [
             "id", "isu", "username", "first_name", "last_name", "middle_name",
-            "gender", "scientific_director", "university_position", "laboratory",
+            "gender", "supervisor", "university_position", "laboratory",
             "head_form", "hair_form", "face_form", "brows_form", "cloth_form",
-            "usual_image", "angry_image", "fair_image", "happy_image", "course"
+            "usual_image", "angry_image", "fair_image", "happy_image", "course",
+            "scientific_director"
         ]
 
 
