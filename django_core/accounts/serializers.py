@@ -12,6 +12,7 @@ from accounts.models import (
     ProfileAvatarHair
 )
 from accounts.tasks import generate_profile_images
+from resources.utils import check_ultimate_is_active
 from lessons.exceptions import NPCIsNotScientificDirectorException
 from lessons.models import NPC, ProfileLessonDone
 from resources.exceptions import NegativeResourcesException, NotEnoughEnergyException
@@ -112,7 +113,10 @@ class ProfileSerializer(serializers.ModelSerializer):
         return False
 
     def _is_enough_energy_to_change_scientific_director(self, instance: Profile) -> bool:
-        return instance.resources.energy_amount >= settings.CHANGE_SCIENTIFIC_DIRECTOR_ENERGY_COST
+        return (
+            check_ultimate_is_active(instance)
+            or instance.resources.energy_amount >= settings.CHANGE_SCIENTIFIC_DIRECTOR_ENERGY_COST
+        )
 
     def update(self, instance: Profile, validated_data: dict) -> Profile:
         is_avatar_updated = self._is_avatar_updated(instance, validated_data)

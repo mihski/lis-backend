@@ -315,6 +315,11 @@ class Profile(LifecycleModel):
 
     @hook(AFTER_UPDATE, when="scientific_director", has_changed=True, was_not=None)
     def decrease_energy_on_scientific_director_change(self) -> None:
+        from resources.utils import check_ultimate_is_active
+
+        if check_ultimate_is_active(self):
+            return
+
         self.resources.energy_amount -= settings.CHANGE_SCIENTIFIC_DIRECTOR_ENERGY_COST
         self.resources.save()
 
