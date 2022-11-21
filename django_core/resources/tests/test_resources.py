@@ -76,9 +76,10 @@ class ResourcesTestCase(TestCase):
 
         response = self.client.get("/api/resources/retrieve/")
         profile_timestamp = int((self.START_COURSE_DATE + timedelta(days=5)).timestamp()) * 1000
+        print(response.json())
         self.assertEqual(response.json()["timeAmount"], profile_timestamp) # = 5 + 0
         self.assertEqual(response.json()["moneyAmount"], 10006)  # = 12000 + 10 - 4
-        self.assertEqual(response.json()["energyAmount"], 5)  # = 10 - 5
+        self.assertEqual(response.json()["energyAmount"], 7)  # = 10 - 5
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPOGATES=True, BROKER_BACKEND="memory")
     def test_celery_refill_energy(self) -> None:

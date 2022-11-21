@@ -13,7 +13,7 @@ from accounts.models import (
 )
 from accounts.tasks import generate_profile_images
 from resources.utils import check_ultimate_is_active
-from lessons.exceptions import NPCIsNotScientificDirectorException
+from lessons.exceptions import NPCIsNotScientificDirectorException, FirstScientificDirectorIsNotDefaultException
 from lessons.models import NPC, ProfileLessonDone
 from resources.exceptions import NegativeResourcesException, NotEnoughEnergyException
 from resources.serializers import EmotionDataSerializer
@@ -118,15 +118,29 @@ class ProfileSerializer(serializers.ModelSerializer):
             or instance.resources.energy_amount >= settings.CHANGE_SCIENTIFIC_DIRECTOR_ENERGY_COST
         )
 
+    def _update_scientific_director(self, profile: Profile, data: dict) -> None:
+        """
+        Случаи смены научника:
+            1) NPC -> None -> Lily (0): admin panel only
+            2) NPC -> Lily (-6)
+            3) NPC -> NPC (-6)
+            4) None -> Lily (0)
+            5) None -> NPC: forbidden
+        """
+
+        if not profile.scientific_director and (
+            data["scientific_director"] != NPC.objects.get(uid=settings.DEFAULT_SCIENTIFIC_DIRECTOR_UID)
+        ):
+            raise FirstScientificDirectorIsNotDefaultException("First scientific director should be default")
+
+        if profile.scientific_director and not self._is_enough_energy_to_change_scientific_director(profile):
+            raise NotEnoughEnergyException("It's not possible to change the scientific director")
+
     def update(self, instance: Profile, validated_data: dict) -> Profile:
         is_avatar_updated = self._is_avatar_updated(instance, validated_data)
-        is_scientific_director_changed = "scientific_director" in validated_data
 
-        if (
-            is_scientific_director_changed
-            and not self._is_enough_energy_to_change_scientific_director(instance)
-        ):
-            raise NotEnoughEnergyException("It's not possible to change the scientific director")
+        if "scientific_director" in validated_data:
+            self._update_scientific_director(instance, validated_data)
 
         instance = super().update(instance, validated_data)
         instance.save()

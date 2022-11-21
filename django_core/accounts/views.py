@@ -19,7 +19,7 @@ from accounts.serializers import (
     ProfileClothesSerializer,
     ProfileAlbumSerializer
 )
-from lessons.exceptions import NPCIsNotScientificDirectorException
+from lessons.exceptions import NPCIsNotScientificDirectorException, FirstScientificDirectorIsNotDefaultException
 from resources.exceptions import NegativeResourcesException
 from helpers.swagger_factory import SwaggerFactory
 
@@ -53,13 +53,19 @@ class ProfileViewSet(
         return self.request.user.profile.get(course_id=1)
 
     @swagger_auto_schema(**SwaggerFactory()(
-        responses=[NPCIsNotScientificDirectorException]
+        responses=[
+            NPCIsNotScientificDirectorException,
+            FirstScientificDirectorIsNotDefaultException
+        ]
     ))
     def update(self, request, *args, **kwargs) -> Response:
         return super().update(request, *args, **kwargs)
 
     @swagger_auto_schema(**SwaggerFactory()(
-        responses=[NPCIsNotScientificDirectorException]
+        responses=[
+            NPCIsNotScientificDirectorException,
+            FirstScientificDirectorIsNotDefaultException
+        ]
     ))
     def partial_update(self, request, *args, **kwargs) -> Response:
         return super().partial_update(request, *args, **kwargs)

@@ -1,11 +1,18 @@
 from django.conf import settings
 from django.db import models
+from django.apps import apps
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
     PermissionsMixin
 )
-from django_lifecycle import LifecycleModel, AFTER_CREATE, AFTER_UPDATE, hook
+from django_lifecycle import (
+    LifecycleModel,
+    hook,
+    AFTER_CREATE,
+    AFTER_UPDATE,
+    BEFORE_UPDATE
+)
 
 from accounts.choices import UniversityPosition, PROFILE_GENDER, LABORATORIES
 from resources.models import Resources
@@ -313,7 +320,15 @@ class Profile(LifecycleModel):
         self.resources.set_energy(max_energy)
         self.resources.save()
 
-    @hook(AFTER_UPDATE, when="scientific_director", has_changed=True, was_not=None)
+    @hook(BEFORE_UPDATE, when="scientific_director", has_changed=True, is_now=None)
+    def set_scientific_director_by_default(self) -> None:
+        npc_model = apps.get_model("lessons.NPC")
+        npc_uid: str = settings.DEFAULT_SCIENTIFIC_DIRECTOR_UID
+
+        self.scientific_director = npc_model.objects.filter(uid=npc_uid).first()
+        self.scientific_director.save()
+
+    @hook(BEFORE_UPDATE, when="scientific_director", has_changed=True, was_not=None, is_not=None)
     def decrease_energy_on_scientific_director_change(self) -> None:
         from resources.utils import check_ultimate_is_active
 

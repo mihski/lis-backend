@@ -16,7 +16,7 @@ from accounts.models import (
 )
 from accounts.serializers import ProfileStatisticsSerializer
 from lessons.models import NPC, Course, Lesson, LessonBlock, Unit
-from lessons.exceptions import NPCIsNotScientificDirectorException
+from lessons.exceptions import NPCIsNotScientificDirectorException, FirstScientificDirectorIsNotDefaultException
 from resources.models import Resources, EmotionData
 from resources.serializers import EmotionDataSerializer
 from resources.utils import get_max_energy_by_position
@@ -54,9 +54,11 @@ class ProfileTestCase(TestCase):
         npcs = [
             NPC(uid="TEST1", is_scientific_director=True),
             NPC(uid="TEST2", is_scientific_director=True),
-            NPC(uid="TEST3", is_scientific_director=False)
+            NPC(uid="TEST3", is_scientific_director=False),
+            NPC(uid="C4", is_scientific_director=True)
         ]
         cls.npcs = NPC.objects.bulk_create(npcs)
+        cls.default_npc = cls.npcs[-1]
 
     def _create_emotion_data(self) -> None:
         profile = self._get_profile()
@@ -150,8 +152,10 @@ class ProfileTestCase(TestCase):
         for key, value in body.items():
             self.assertEqual(getattr(profile, key).id, value)
 
-    def test_choosing_scientific_director(self):
-        self._update_university_position(UniversityPosition.INTERN)
+    def test_update_scientific_director(self):
+        position = UniversityPosition.INTERN
+        max_energy = get_max_energy_by_position(position)
+        self._update_university_position(position)
 
         sd_npc = self.npcs[1]
         body = {"scientific_director": sd_npc.id}
@@ -162,9 +166,13 @@ class ProfileTestCase(TestCase):
         profile = self._get_profile()
         profile.refresh_from_db()
         self.assertEqual(profile.scientific_director, sd_npc)
+        self.assertEqual(
+            profile.resources.energy_amount,
+            max_energy - settings.CHANGE_SCIENTIFIC_DIRECTOR_ENERGY_COST
+        )
 
     def test_choosing_invalid_scientific_director(self):
-        body = {"scientific_director": self.npcs[-1].id}
+        body = {"scientific_director": self.npcs[2].id}
         response = self.client.put(path=self.API_URL, data=body)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -209,6 +217,27 @@ class ProfileTestCase(TestCase):
         profile_statistics = self._get_profile().statistics
         profile_statistics.refresh_from_db()
         self.assertEqual(profile_statistics.total_time_spend, body["total_time_spend"])
+
+    def test_first_scientific_director_not_decrease_energy(self) -> None:
+        """
+            По умолчанию энергии 0.
+            Если будет попытка снятия энергии,
+            тест полетит.
+        """
+        test_user = User.objects.create_user(
+            username="test2",
+            email="test2@test.com",
+            password="test123"
+        )
+        client = APIClient()
+        client.force_authenticate(test_user)
+
+        npc_id = self.default_npc.id
+        body = {"scientific_director": npc_id}
+        response = client.put(self.API_URL, body)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["scientific_director"], npc_id)
 
     def test_energy_decrease_on_change_scientific_director(self) -> None:
         self._update_university_position(UniversityPosition.LABORATORY_ASSISTANT)
@@ -265,3 +294,18 @@ class ProfileTestCase(TestCase):
             response.json()["emotions"],
             serialized_emotions.data
         )
+
+    def test_set_first_scientific_director_is_not_default_raises_exception(self):
+        user = User.objects.create_user(
+            username="test_user",
+            email="test@test.com",
+            password="123"
+        )
+        client = APIClient()
+        client.force_authenticate(user)
+
+        body = {"scientific_director": self.npcs[0].id}
+        response = client.put(self.API_URL, data=body)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.json()["error_code"], FirstScientificDirectorIsNotDefaultException.default_code)

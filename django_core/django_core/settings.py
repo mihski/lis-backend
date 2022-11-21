@@ -258,6 +258,7 @@ ULTIMATE_COST = 2500
 ULTIMATE_DURATION = 3 * 60 * 60  # секунды
 START_COURSE_DATE = datetime(day=1, month=9, year=2022)
 CHANGE_SCIENTIFIC_DIRECTOR_ENERGY_COST = 6
+DEFAULT_SCIENTIFIC_DIRECTOR_UID = "C4"  # Если не задан, то "" (пустая строка)
 
 LOGGING_ROOT = Path(BASE_DIR, "logs")
 LOGGING_ROOT.mkdir(exist_ok=True)

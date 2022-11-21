@@ -2,7 +2,14 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 
-from lessons.models import Lesson, Course, LessonBlock, UnitAffect, Quest, Unit
+from lessons.models import (
+    Lesson,
+    Course,
+    LessonBlock,
+    UnitAffect,
+    Quest,
+    ProfileLessonDone
+)
 from resources.models import EmotionData
 
 User = get_user_model()
@@ -57,5 +64,5 @@ class TestFinishingLesson(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(EmotionData.objects.count(), 1)
         self.assertEqual(self.profile.statistics.total_time_spend, 2)
-        self.assertEqual(self.profile.statistics.lessons_done, 1)
+        self.assertEqual(ProfileLessonDone.objects.filter(profile=self.profile).count(), 1)
         self.assertEqual(self.profile.resources.money_amount, 12500)  # 10000 (init) + 2500 (salary)

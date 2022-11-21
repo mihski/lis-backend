@@ -69,6 +69,8 @@ class LessonUnitsTree(AbstractNodeTree):
         ))
         self._add_end_unit()
 
+        self.tree_elements["end_unit"].local_id = hash(self)
+
     def _add_end_unit(self):
         queue = [self.tree.id]
         visited = defaultdict(bool)

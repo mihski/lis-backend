@@ -14,6 +14,12 @@ class NPCIsNotScientificDirectorException(APIException):
     default_detail = "NPC is not scientific director"
 
 
+class FirstScientificDirectorIsNotDefaultException(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_code = "first_scientific_director_is_not_default"
+    default_detail = "First scientific director should be default"
+
+
 class UnitNotFoundException(APIException):
     status_code = status.HTTP_404_NOT_FOUND
     default_code = "unit_not_found"
