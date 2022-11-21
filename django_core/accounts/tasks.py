@@ -31,7 +31,7 @@ def _generate_img(profile: Profile, state: str = "usual"):
     result_img = np.zeros_like(_get_part(profile.head_form))
 
     if profile.hair_form.back_part:
-        result_img = _get_part(profile.hair_form, "back")
+        result_img = _overlay_one_another(result_img, _get_part(profile.hair_form, "back"))
 
     result_img = _overlay_one_another(result_img, _get_part(profile.head_form))
     result_img = _overlay_one_another(result_img, _get_part(profile.hair_form, "front"))
