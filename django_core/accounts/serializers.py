@@ -128,7 +128,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         instance.save()
 
         if is_avatar_updated:
-            generate_profile_images.delay(instance.id)
+            generate_profile_images(instance.id)
 
         return instance
 
