@@ -88,13 +88,9 @@ class User(AbstractBaseUser, PermissionsMixin, LifecycleModel):
             isu=self.username,
             username=None,
             gender=None,
-            head_form=ProfileAvatarHead.objects.first(),
-            face_form=ProfileAvatarFace.objects.first(),
-            hair_form=ProfileAvatarHair.objects.first(),
-            cloth_form=ProfileAvatarClothes.objects.first(),
-            brows_form=ProfileAvatarBrows.objects.first(),
         )
         generate_profile_images(profile.id)
+        profile.save()
 
     class Meta:
         app_label = "accounts"

@@ -65,7 +65,7 @@ def _delete_previous_photos(profile: Profile) -> None:
     profile.save()
 
 
-@app.task
+# @app.task
 def generate_profile_images(profile_id: int) -> None:
     # TODO 2: delete duplicating
 
