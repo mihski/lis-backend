@@ -2,6 +2,7 @@ from functools import lru_cache
 
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.db.models import Sum
 from django.db import transaction
 
@@ -42,6 +43,8 @@ User = get_user_model()
 
 
 class NPCSerializer(serializers.ModelSerializer):
+    change_cost = serializers.IntegerField(read_only=True, default=settings.CHANGE_SCIENTIFIC_DIRECTOR_ENERGY_COST)
+
     class Meta:
         model = NPC
         fields = "__all__"
