@@ -159,7 +159,9 @@ class LessonDetailViewSet(
         profile: Profile = request.user.profile.get(course=1)
         player = ProfileSerializerWithoutLookForms(profile, context={"request": request})
 
-        if not self._check_is_enough_energy(profile, lesson):
+        is_already_finished = ProfileLessonDone.objects.filter(profile=profile, lesson=lesson).exists()
+
+        if not is_already_finished and not self._check_is_enough_energy(profile, lesson):
             raise NotEnoughEnergyException("Not enough energy to enter lesson")
 
         unit_tree = LessonUnitsTree(lesson)
@@ -171,7 +173,10 @@ class LessonDetailViewSet(
 
         lesson_data = {}
         if not from_unit_id:
-            lesson_data = LessonDetailSerializer(lesson, context={"request": request}).data
+            lesson_data = LessonDetailSerializer(lesson, context={
+                "request": request,
+                "finished": is_already_finished,
+            }).data
             lesson_name_field = lesson.name
             locales = lesson.content.locale
 

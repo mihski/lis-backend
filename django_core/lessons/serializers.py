@@ -89,7 +89,10 @@ class LessonDetailSerializer(serializers.ModelSerializer):
     tasks = serializers.IntegerField(default=0)
     bonuses = serializers.SerializerMethodField()
 
-    def get_bonuses(self, lesson: Lesson) -> dict | None:
+    def get_bonuses(self, lesson: Lesson) -> dict:
+        if self.context.get("finished", False):
+            return {"energy": 0, "money": 0}
+
         profile = self.context["request"].user.profile.get()
 
         if not profile.scientific_director_id:
