@@ -20,11 +20,14 @@ jobs:
                 sudo apt-get install rsync -y
                 mkdir "$HOME/.ssh"
                 echo "${{ secrets.vps_private_key }}" > "$HOME/.ssh/key"
+                echo "${{ secrets.APP_ENV }}" > "$HOME/app.env"
+                echo "ENV=PROD" > "$HOME/app.env"
+                echo "GUNICORN_WORKERS=24" > "$HOME/app.env"
                 chmod 600 "$HOME/.ssh/key"
             - name: Delivery
               run: |
                 rsync -e "ssh -i $HOME/.ssh/key -o StrictHostKeyChecking=no" --archive --compress --delete --exclude 'django_core/static' --exclude 'django_core/media' --exclude 'django_core/logs' . ${{ secrets.VPS_USER_NAME }}@${{ secrets.VPS_SERVER_NAME }}:~/lis-back/
-                echo "${{secrets.APP_ENV}} ENV=PROD GUNICORN_WORKERS=24" | ssh -i $HOME/.ssh/key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER_NAME }}@${{ secrets.VPS_SERVER_NAME }} -T "cat > ~/lis-back/environments/app.env"
+                rsync -e "ssh -i $HOME/.ssh/key -o StrictHostKeyChecking=no" $HOME/app.env ${{ secrets.VPS_USER_NAME }}@${{ secrets.VPS_SERVER_NAME }}:~/lis-back/environments/app.env"
             - name: Building on server
               run: |
                 ssh -i $HOME/.ssh/key ${{ secrets.VPS_USER_NAME }}@${{ secrets.VPS_SERVER_NAME }} 'cd lis-back && docker-compose up -d --build'
