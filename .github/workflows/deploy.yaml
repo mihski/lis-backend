@@ -22,7 +22,7 @@ jobs:
                 echo "${{ secrets.vps_private_key }}" > "$HOME/.ssh/key"
                 echo "${{ secrets.APP_ENV }}" > "$HOME/app.env"
                 echo "ENV=PROD" >> "$HOME/app.env"
-                echo "GUNICORN_WORKERS=24" >> "$HOME/app.env"
+                echo "GUNICORN_WORKERS=12" >> "$HOME/app.env"
                 chmod 600 "$HOME/.ssh/key"
             - name: Delivery
               run: |
