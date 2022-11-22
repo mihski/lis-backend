@@ -6,8 +6,13 @@ from datetime import timedelta, datetime
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("DJANGO_SECRET")
-DEBUG = True
-ALLOWED_HOSTS = ["*"]
+DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "t", "1")
+
+ALLOWED_HOSTS = [
+    "lis.itmo.ru",
+    "158.160.42.32",
+    "51.250.78.144",
+]
 
 # Application definition
 INSTALLED_APPS = [
