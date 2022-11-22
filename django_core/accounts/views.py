@@ -45,6 +45,8 @@ class ProfileViewSet(
         "brows_form",
         "scientific_director",
         "user",
+        "resources",
+        "course",
     ).all()
     serializer_class = ProfileSerializer
     permission_classes = (permissions.IsAuthenticated, )

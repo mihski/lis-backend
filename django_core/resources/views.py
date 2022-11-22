@@ -23,7 +23,7 @@ from helpers.swagger_factory import SwaggerFactory
 
 
 class ResourcesViewSet(viewsets.GenericViewSet):
-    queryset = Resources.objects.all()
+    queryset = Resources.objects.select_related("user").all()
     serializer_class = ResourcesSerializer
     permission_classes = (IsAuthenticated,)
 
