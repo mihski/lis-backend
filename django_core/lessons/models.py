@@ -57,6 +57,9 @@ class Course(models.Model):
 
     is_editable = models.BooleanField(default=True)
 
+    start_money = models.IntegerField(default=500)
+    start_energy = models.IntegerField(default=0)
+
     def __str__(self):
         return f"Course[{self.id}] {self.name}"
 

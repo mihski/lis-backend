@@ -68,6 +68,7 @@ class ScientificDirectorAdmin(admin.ModelAdmin):
     list_filter = ("name",)
     search_fields = ("name",)
 
+
 admin.site.register(models.ProfileAvatarHead)
 admin.site.register(models.ProfileAvatarHair)
 admin.site.register(models.ProfileAvatarFace)

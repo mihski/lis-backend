@@ -311,7 +311,11 @@ class Profile(LifecycleModel):
 
     @hook(AFTER_CREATE)
     def create_related_entities(self) -> None:
-        Resources.objects.create(user=self, money_amount=10000)
+        Resources.objects.create(
+            user=self,
+            money_amount=self.course.start_money,
+            energy_amount=self.course.start_energy
+        )
         Statistics.objects.create(profile=self)
 
     @hook(AFTER_UPDATE, when="university_position", has_changed=True)
