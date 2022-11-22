@@ -24,10 +24,6 @@ services:
         build: ./django_core
         env_file:
             environments/app.env
-        command: bash -c "
-                python3 manage.py migrate &&
-                python manage.py collectstatic --noinput &&
-                gunicorn -w 3 django_core.wsgi:application --bind 0.0.0.0:8000 --reload"
         volumes:
             - ./django_core:/django_core
         expose:

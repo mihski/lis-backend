@@ -22,3 +22,5 @@ RUN pip install -r requirements.txt
 
 # копируем проект
 COPY . .
+
+CMD ["bash", "entrypoint.sh"]
