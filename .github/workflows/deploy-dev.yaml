@@ -1,0 +1,32 @@
+name: Deploy
+
+on:
+    push:
+        branches:
+            - dev
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        env:
+          VPS_USER_NAME: ${{ secrets.VPS_DEV_USER_NAME }}
+          VPS_SERVER_NAME: ${{ secrets.VPS_DEV_SERVER_NAME }}
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/setup-node@v1
+              with:
+                node-version: 12.x
+            - name: Setup
+              run: |
+                sudo apt-get update
+                sudo apt-get install rsync -y
+                mkdir "$HOME/.ssh"
+                echo "${{ secrets.vps_private_key }}" > "$HOME/.ssh/key"
+                chmod 600 "$HOME/.ssh/key"
+            - name: Delivery
+              run: |
+                rsync -e "ssh -i $HOME/.ssh/key -o StrictHostKeyChecking=no" --archive --compress --delete --exclude 'django_core/static' --exclude 'django_core/media' --exclude 'django_core/logs' . ${{ VPS_USER_NAME }}@${{ VPS_SERVER_NAME }}:~/lis-back/
+                echo "${{secrets.APP_ENV}}" | ssh -i $HOME/.ssh/key -o StrictHostKeyChecking=no ${{ VPS_USER_NAME }}@${{ VPS_SERVER_NAME }} -T "cat > ~/lis-back/environments/app.env"
+            - name: Building on server
+              run: |
+                ssh -i $HOME/.ssh/key ${{ VPS_USER_NAME }}@${{ VPS_SERVER_NAME }} 'cd lis-back && docker-compose up -d --build'
