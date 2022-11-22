@@ -48,7 +48,7 @@ class LessonUnitsTree(AbstractNodeTree):
 
     def __init__(self, lesson: Lesson) -> None:
         self.lesson: Lesson = lesson
-        self.units = list(Unit.objects.filter(lesson=self.lesson))
+        self.units = list(lesson.unit_set.all())
         self.m_units = {unit.local_id: unit for unit in self.units}
 
         self.block_units_type = [
@@ -62,14 +62,15 @@ class LessonUnitsTree(AbstractNodeTree):
         super().__init__()
 
         self.tree_elements["end_unit"] = LessonUnitsNode(MockUnit(
-            hash(str(len(self.m_units))),
+            self.get_hash(),
             LessonBlockType.lesson_end.value,
             [],
             {},
         ))
         self._add_end_unit()
 
-        self.tree_elements["end_unit"].local_id = hash(self)
+    def get_hash(self):
+        return str(hash(str(len(self.units))))
 
     def _add_end_unit(self):
         queue = [self.tree.id]

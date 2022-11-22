@@ -47,7 +47,8 @@ from lessons.exceptions import (
     BranchingAlreadyChosenException,
     UnitNotFoundException,
     BlockNotFoundException,
-    NotEnoughBlocksToSelectBranchException
+    NotEnoughBlocksToSelectBranchException,
+    LessonForbiddenException
 )
 from helpers.lesson_tree import LessonUnitsTree
 from helpers.course_tree import CourseLessonsTree
@@ -219,7 +220,7 @@ class QuestionViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
 
 
 class LessonActionsViewSet(viewsets.GenericViewSet):
-    queryset = Lesson.objects.select_related("course", "quest")
+    queryset = Lesson.objects.select_related("course", "quest").prefetch_related("unit_set")
     serializer_class = LessonFinishSerializer
     permission_classes = (permissions.IsAuthenticated, )
     lookup_field = "local_id"
@@ -272,8 +273,14 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
     @decorators.action(methods=["POST"], detail=True, url_path="finish")
     def finish_lesson(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
         lesson: Lesson = self.get_object()
-        profile: Profile = request.user.profile.get(course_id=1)
+        lesson_tree = LessonUnitsTree(lesson)
 
+        print(request.data, request.data["lesson_key"], lesson_tree.get_hash(), type(request.data["lesson_key"]), type(lesson_tree.get_hash()))
+
+        if request.data.get("lesson_key", "0") != lesson_tree.get_hash():
+            raise LessonForbiddenException()
+
+        profile: Profile = request.user.profile.get(course_id=1)
         lesson_finish_data = self.serializer_class(lesson, context={"profile": profile}).data
 
         if ProfileLessonDone.objects.filter(lesson=lesson, profile=profile).exists():
@@ -281,8 +288,8 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
 
         with transaction.atomic():
             self._calculate_resources(profile, lesson, salary=lesson_finish_data["salary_amount"])
-            self._calculate_statistic(profile, lesson, duration=int(request.data["duration"]))
-            self._create_emotion(profile, lesson, emotion=request.data["emotion"])
+            self._calculate_statistic(profile, lesson, duration=int(request.data.get("duration", 0)))
+            self._create_emotion(profile, lesson, emotion=request.data.get("emotion", {"emotion": 0, "comment": ""}))
 
             ProfileLessonDone.objects.create(profile=profile, lesson=lesson)
             if self._check_course_finished(profile, lesson.course):
