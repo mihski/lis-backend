@@ -28,4 +28,3 @@ jobs:
             - name: Building on server
               run: |
                 ssh -i $HOME/.ssh/key ${{ secrets.VPS_USER_NAME }}@${{ secrets.VPS_SERVER_NAME }} 'cd lis-back && docker-compose up -d --build'
-g
