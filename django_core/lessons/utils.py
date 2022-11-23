@@ -22,5 +22,11 @@ def process_affect(affect: UnitAffect, profile: Profile) -> None:
 
 def check_entity_is_accessible(profile: Profile, entity: Lesson | Branching) -> bool:
     course_tree = CourseLessonsTree(entity.course)
-    available_entity_id = course_tree.get_active_local_id(profile)
-    return entity.local_id == available_entity_id
+    course_map = [block.local_id for block in course_tree.get_map_for_profile(profile)]
+
+    if entity.local_id not in course_map:
+        return False
+
+    active_id = course_tree.get_active(profile)
+
+    return course_map.index(entity.local_id) <= active_id

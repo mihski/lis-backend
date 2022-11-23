@@ -211,8 +211,3 @@ class CourseLessonsTree(AbstractNodeTree):
                 return i
 
         return len(map_list)
-
-    def get_active_local_id(self, profile) -> str:
-        map_list = self.get_map_for_profile(profile)
-        active_id = self.get_active(profile)
-        return map_list[active_id].local_id

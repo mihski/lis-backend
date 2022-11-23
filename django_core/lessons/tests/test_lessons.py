@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from accounts.serializers import ProfileStatisticsSerializer
+from helpers.lesson_tree import LessonUnitsTree
 from lessons.exceptions import BlockEntityIsUnavailableException
 from lessons.models import (
     Lesson,
@@ -15,7 +15,6 @@ from lessons.models import (
     UnitAffect,
     Quest,
     ProfileLessonDone,
-    Branching
 )
 from resources.models import EmotionData
 
@@ -30,14 +29,14 @@ class TestFinishingLesson(TestCase):
         super(TestFinishingLesson, cls).setUpClass()
 
         cls.course = Course.objects.create()
-        cls.quest = Quest.objects.create(local_id="q_000", entry="l_001")
+        cls.quest = Quest.objects.create(course=cls.course, local_id="q_000", entry="l_000")
 
         cls._create_lessons_chain()
         cls.lesson = cls.lessons[0]
         cls.lesson.profile_affect = UnitAffect.objects.create(code="salary", content={"amount": 2500})
         cls.lesson.save()
 
-        cls.course.entry = cls.lesson.local_id
+        cls.course.entry = cls.quest.local_id
         cls.course.save()
 
         cls.user = User.objects.create(username="test", email="test@mail.ru", password="test")
@@ -96,6 +95,8 @@ class TestFinishingLesson(TestCase):
         cls.course.save()
 
     def _finish_lesson(self, lesson) -> Any:
+        tree = LessonUnitsTree(lesson)
+
         return self.client.post(
             self.API_URL + f"{lesson.local_id}/finish/",
             {
@@ -103,7 +104,8 @@ class TestFinishingLesson(TestCase):
                     "comment": "cool!",
                     "emotion": 1,
                 },
-                "duration": 2
+                "duration": 2,
+                "lesson_key": tree.get_hash()
             },
             format="json"
         )
@@ -115,7 +117,7 @@ class TestFinishingLesson(TestCase):
         self.assertEqual(EmotionData.objects.count(), 1)
         self.assertEqual(self.profile.statistics.total_time_spend, 2)
         self.assertEqual(ProfileLessonDone.objects.filter(profile=self.profile).count(), 1)
-        self.assertEqual(self.profile.resources.money_amount, 12500)  # 10000 (init) + 2500 (salary)
+        self.assertEqual(self.profile.resources.money_amount, 3000)  # 500 (init) + 2500 (salary)
 
     def test_has_access_to_lesson(self) -> None:
         """ Первый урок всегда доступен """
@@ -154,7 +156,7 @@ class TestFinishingLesson(TestCase):
         self.assertEqual(response.json()["error_code"], BlockEntityIsUnavailableException.default_code)
 
     def test_quest_accessible_after_previous_completed(self) -> None:
-        new_quest = Quest.objects.create(local_id="q_002", entry="l_004")
+        new_quest = Quest.objects.create(course=self.course, local_id="q_002", entry="l_004")
         self.quest.next = "q_002"
         self.quest.save()
 
