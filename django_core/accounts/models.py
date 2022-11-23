@@ -71,9 +71,9 @@ class User(AbstractBaseUser, PermissionsMixin, LifecycleModel):
     username = models.CharField(max_length=10, unique=True)
     email = models.EmailField(max_length=255, unique=True)
     phone = models.CharField(max_length=255)
-    first_name = models.CharField(max_length=100, default="", blank=True)
-    last_name = models.CharField(max_length=100, default="", blank=True)
-    middle_name = models.CharField(max_length=100, default="", blank=True)
+    first_name = models.CharField(max_length=100, default="", blank=True, null=True)
+    last_name = models.CharField(max_length=100, default="", blank=True, null=True)
+    middle_name = models.CharField(max_length=100, default="", blank=True, null=True)
 
     is_active = models.BooleanField(default=True)
 
