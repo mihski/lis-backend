@@ -42,3 +42,9 @@ class NotEnoughBlocksToSelectBranchException(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
     default_code = "not_enough_blocks_for_branch"
     default_detail = "Not enough blocks to select branch"
+
+
+class BlockEntityIsUnavailableException(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_code = "block_entity_is_inaccessible"
+    default_detail = "Finish previous lessons to get access"

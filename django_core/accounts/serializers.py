@@ -44,7 +44,7 @@ class ProfileStatisticsSerializer(serializers.ModelSerializer):
     def get_quests_done(self, statistics: Statistics) -> int:
         return ProfileLessonDone.objects.filter(
             lesson__next__in=["", "-1"],
-            lesson__quest__isnull=True
+            lesson__quest__isnull=False
         ).count()
 
     class Meta:

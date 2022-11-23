@@ -42,13 +42,14 @@ from lessons.serializers import (
     ReviewSerializer,
     LessonFinishSerializer
 )
-from lessons.utils import process_affect
+from lessons.utils import process_affect, check_entity_is_accessible
 from lessons.exceptions import (
     BranchingAlreadyChosenException,
     UnitNotFoundException,
     BlockNotFoundException,
     NotEnoughBlocksToSelectBranchException,
-    LessonForbiddenException
+    BlockEntityIsUnavailableException,
+    LessonForbiddenException,
 )
 from helpers.lesson_tree import LessonUnitsTree
 from helpers.course_tree import CourseLessonsTree
@@ -99,10 +100,15 @@ class BranchSelectViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mi
         responses=[
             BranchingAlreadyChosenException,
             BlockNotFoundException,
+            BlockEntityIsUnavailableException
         ]
     ))
-    def retrieve(self, request, *args, **kwargs):
+    def retrieve(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
         branching = self.get_object()
+        profile: Profile = request.user.profile.get(course_id=1)
+
+        if not check_entity_is_accessible(profile, branching):
+            raise BlockEntityIsUnavailableException("Finish previous lessons to select branching")
 
         if ProfileBranchingChoice.objects.filter(
             branching=branching,
@@ -151,7 +157,10 @@ class LessonDetailViewSet(
         return profile.resources.energy_amount >= lesson.energy_cost
 
     @swagger_auto_schema(**SwaggerFactory()(
-        responses=[NotEnoughEnergyException]
+        responses=[
+            NotEnoughEnergyException,
+            BlockEntityIsUnavailableException
+        ]
     ))
     def retrieve(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
         lesson = self.get_object()
@@ -159,6 +168,9 @@ class LessonDetailViewSet(
 
         profile: Profile = request.user.profile.get(course=1)
         player = ProfileSerializerWithoutLookForms(profile, context={"request": request})
+
+        if not check_entity_is_accessible(profile, lesson):
+            raise BlockEntityIsUnavailableException("Finish previous lessons to view this lesson")
 
         is_already_finished = ProfileLessonDone.objects.filter(profile=profile, lesson=lesson).exists()
 
@@ -275,12 +287,14 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
         lesson: Lesson = self.get_object()
         lesson_tree = LessonUnitsTree(lesson)
 
-        print(request.data, request.data["lesson_key"], lesson_tree.get_hash(), type(request.data["lesson_key"]), type(lesson_tree.get_hash()))
-
         if request.data.get("lesson_key", "0") != lesson_tree.get_hash():
             raise LessonForbiddenException()
 
         profile: Profile = request.user.profile.get(course_id=1)
+
+        if not check_entity_is_accessible(profile, lesson):
+            raise BlockEntityIsUnavailableException("Finish previous lessons to get access")
+
         lesson_finish_data = self.serializer_class(lesson, context={"profile": profile}).data
 
         if ProfileLessonDone.objects.filter(lesson=lesson, profile=profile).exists():
