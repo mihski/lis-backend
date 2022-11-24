@@ -12,6 +12,7 @@ def custom_exception_handler(exception: Exception, context: dict) -> Response:
     if response is not None and isinstance(exception, APIException):
         response.data["error_code"] = exception.get_codes()
 
-    logger.warning(str(response.data))
+    if response:
+        logger.warning(str(response.data))
 
     return response
