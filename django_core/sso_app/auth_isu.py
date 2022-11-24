@@ -1,11 +1,16 @@
 import requests
+import logging
 
 import jwt
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
+
+
+logger = logging.Logger(__name__)
 
 
 class ISUManager:
@@ -53,8 +58,14 @@ class ISUManager:
             headers=headers,
             data=payload
         )
+        result = response.json()
+        token = result.get("id_token", "")
 
-        jwt_token = response.json()['id_token']
+        if not token:
+            logger.warning(f"There is no isu_token {result}")
+            raise ValidationError("Something went wrong")
+
+        jwt_token = token
 
         return self.get_or_create_user(jwt_token)
 
