@@ -22,6 +22,7 @@ def prepare_data(*, instance: Review | Question, feedback_type: Literal["review"
 
     mail_message += (
         f"{text}\n"
+        f"Номер студента: {current_user.username}"
         f"Почта студента: {current_user.email}"
     )
 
