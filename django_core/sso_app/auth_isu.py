@@ -59,13 +59,11 @@ class ISUManager:
             data=payload
         )
         result = response.json()
-        token = result.get("id_token", "")
+        jwt_token = result.get("id_token", "")
 
-        if not token:
-            logger.warning(f"There is no isu_token {result}")
+        if not jwt_token:
+            logger.warning(f"There is no isu_token on response(code={response.status_code}) {result}")
             raise ValidationError("Something went wrong")
-
-        jwt_token = token
 
         return self.get_or_create_user(jwt_token)
 
