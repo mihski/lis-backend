@@ -319,7 +319,10 @@ class BranchingSelectSerializer(serializers.ModelSerializer):
             process_affect(block.profile_affect, profile)
 
     def _collect_quest_price(self, quest: Quest) -> int:
-        return quest.lessons.aggregate(total_price=Sum("money_cost"))["total_price"]
+        quest_tree = CourseLessonsTree(quest)
+        profile = self.context['request'].user.profile.get(course_id=1)
+        map_list = quest_tree.get_map_for_profile(profile)
+        return sum([l.money_cost for l in map_list if isinstance(l, Lesson)])
 
     def _get_blocks_total_price(self, blocks: list[Quest | Lesson]) -> int:
         total_lessons_price = 0
