@@ -14,4 +14,8 @@ app.conf.beat_schedule = {
         "task": "resources.tasks.refill_resources",
         "schedule": crontab(minute="0", hour="0")
     },
+    "upload_statistics_every_night": {
+        "task": "accounts.tasks.upload_statistics",
+        "schedule": crontab(minute="0", hour="0")
+    }
 }

@@ -105,8 +105,9 @@ class ProfileLessonsDoneAdmin(admin.ModelAdmin):
 
 @admin.register(models.ProfileCourseDone)
 class ProfileCourseDoneAdmin(admin.ModelAdmin):
-    list_display = ("id", "profile", "course")
+    list_display = ("id", "profile", "course", "finished_at")
     list_filter = ("profile", "course")
+    ordering = ("-finished_at",)
     search_fields = (
         "profile__username",
         "course__name",

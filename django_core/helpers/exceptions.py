@@ -7,12 +7,11 @@ from rest_framework.exceptions import APIException
 logger = logging.Logger(__name__)
 
 
-def custom_exception_handler(exception: Exception, context: dict) -> Response:
+def custom_exception_handler(exception: APIException, context: dict) -> Response:
     response: Response = exception_handler(exception, context)
-    if response is not None and isinstance(exception, APIException):
-        response.data["error_code"] = exception.get_codes()
 
     if response:
+        response.data.update(error_code=exception.get_codes())
         logger.warning(str(response.data))
 
     return response

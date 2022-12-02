@@ -184,4 +184,5 @@ class ProfileAlbumViewSet(viewsets.GenericViewSet):
     def get_profile_album(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
         profile = request.user.profile.get(course_id=1)
         serialized_data = self.get_serializer(profile).data
+        serialized_data["statistics"]["lessons_done"] = 36  # FIXME: hardcode
         return Response(serialized_data, status=status.HTTP_200_OK)

@@ -308,6 +308,15 @@ LOGGING = {
             "level": "INFO",
             "handlers": ["console", "file"],
             "propagate": True,
+        },
+        "root": {
+            "level": "INFO",
+            "handlers": ["console", "file"],
+            "propagate": True,
         }
     }
 }
+
+# Google Integration
+GOOGLE_CREDENTIALS = Path(BASE_DIR, "gdrive_creds.json")
+GOOGLE_SPREADSHEET_ID = os.getenv("GOOGLE_SPREADSHEET_ID", "")

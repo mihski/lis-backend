@@ -1,6 +1,7 @@
 import cvzone
 import cv2
 import numpy as np
+import os
 
 from django.core.files.base import ContentFile
 from django.db.models.fields.files import ImageFieldFile
@@ -75,3 +76,8 @@ def generate_profile_images(profile_id: int) -> None:
     _set_image_field(profile, profile.fair_image, "fair")
     _set_image_field(profile, profile.happy_image, "happy")
     profile.save()
+
+
+@app.task
+def upload_statistics() -> None:
+    os.system("python manage.py upload_userdata_gsheets")

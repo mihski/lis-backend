@@ -40,7 +40,7 @@ from lessons.serializers import (
     BranchingDetailSerializer,
     QuestionSerializer,
     ReviewSerializer,
-    LessonFinishSerializer
+    LessonFinishSerializer,
 )
 from lessons.utils import process_affect, check_entity_is_accessible
 from lessons.exceptions import (
@@ -285,18 +285,16 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
     @decorators.action(methods=["POST"], detail=True, url_path="finish")
     def finish_lesson(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
         lesson: Lesson = self.get_object()
-        lesson_tree = LessonUnitsTree(lesson)
-
-        if request.data.get("lesson_key", "0") != lesson_tree.get_hash():
-            raise LessonForbiddenException()
-
         profile: Profile = request.user.profile.get(course_id=1)
 
         if not check_entity_is_accessible(profile, lesson):
             raise BlockEntityIsUnavailableException("Finish previous lessons to get access")
 
-        lesson_finish_data = self.serializer_class(lesson, context={"profile": profile}).data
+        lesson_tree = LessonUnitsTree(lesson)
+        if request.data.get("lesson_key", "0") != lesson_tree.get_hash():
+            raise LessonForbiddenException()
 
+        lesson_finish_data = self.serializer_class(lesson, context={"profile": profile}).data
         if ProfileLessonDone.objects.filter(lesson=lesson, profile=profile).exists():
             return Response(lesson_finish_data, status=status.HTTP_200_OK)
 

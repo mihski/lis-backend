@@ -1,7 +1,7 @@
 from accounts.models import Profile
 from accounts.serializers import ProfileSerializer
 from helpers.course_tree import CourseLessonsTree
-from lessons.models import UnitAffect, Lesson, Branching
+from lessons.models import UnitAffect, Lesson, Branching, ProfileCourseDone
 from resources.utils import get_max_energy_by_position
 
 
@@ -21,6 +21,9 @@ def process_affect(affect: UnitAffect, profile: Profile) -> None:
 
 
 def check_entity_is_accessible(profile: Profile, entity: Lesson | Branching) -> bool:
+    if profile.user.is_superuser:
+        return True
+
     course_tree = CourseLessonsTree(entity.course)
     course_map = [block.local_id for block in course_tree.get_map_for_profile(profile)]
 

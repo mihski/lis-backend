@@ -23,6 +23,8 @@ jobs:
                 echo "${{ secrets.APP_ENV }}" > "$HOME/app.env"
                 echo "ENV=PROD" >> "$HOME/app.env"
                 echo "GUNICORN_WORKERS=12" >> "$HOME/app.env"
+                echo "GOOGLE_SPREADSHEET_ID=${{secrets.GOOGLE_SPREADSHEET_ID}}" >> "$HOME/app.env"
+                echo "${{secrets.GDRIVE_CREDS}}" > ~/lis-back/django_core/gdrive_creds.json
                 chmod 600 "$HOME/.ssh/key"
             - name: Delivery
               run: |

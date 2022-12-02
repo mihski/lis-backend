@@ -1,3 +1,4 @@
+import datetime as dt
 from functools import lru_cache
 
 from rest_framework import serializers
@@ -20,7 +21,8 @@ from lessons.models import (
     Review,
     Question,
     UnitAffect,
-    EmailTypes
+    EmailTypes,
+    ProfileCourseDone
 )
 from lessons.structures import (
     BlockType,
@@ -503,3 +505,16 @@ class LessonFinishSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lesson
         fields = ["id", "next_id", "next_type", "salary_amount", "emotion", "duration"]
+
+
+class ProfileCourseFinishedSerializer(serializers.ModelSerializer):
+    isu = serializers.CharField(source="profile.isu", read_only=True)
+    username = serializers.CharField(source="profile.username", read_only=True)
+    finished_at = serializers.SerializerMethodField(source="finished_at")
+
+    def get_finished_at(self, instance: ProfileCourseDone) -> str:
+        return instance.finished_at.strftime("%d.%m.%Y")
+
+    class Meta:
+        model = ProfileCourseDone
+        fields = ["isu", "username", "finished_at"]

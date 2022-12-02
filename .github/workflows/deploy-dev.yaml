@@ -27,6 +27,8 @@ jobs:
               run: |
                 rsync -e "ssh -i $HOME/.ssh/key -o StrictHostKeyChecking=no" --archive --compress --delete --exclude 'django_core/static' --exclude 'django_core/media' --exclude 'django_core/logs' . $VPS_USER_NAME@$VPS_SERVER_NAME:~/lis-back/
                 echo "${{secrets.APP_ENV}}" | ssh -i $HOME/.ssh/key -o StrictHostKeyChecking=no $VPS_USER_NAME@$VPS_SERVER_NAME -T "cat > ~/lis-back/environments/app.env"
+                echo "GOOGLE_SPREADSHEET_ID=${{secrets.GOOGLE_SPREADSHEET_ID}}" | ssh -i $HOME/.ssh/key -o StrictHostKeyChecking=no $VPS_USER_NAME@$VPS_SERVER_NAME -T "cat >> ~/lis-back/environments/app.env"
+                echo "${{secrets.GDRIVE_CREDS}}" | ssh -i $HOME/.ssh/key -o StrictHostKeyChecking=no $VPS_USER_NAME@$VPS_SERVER_NAME -T "cat > ~/lis-back/django_core/gdrive_creds.json"
             - name: Building on server
               run: |
                 ssh -i $HOME/.ssh/key $VPS_USER_NAME@$VPS_SERVER_NAME 'cd lis-back && docker-compose up -d --build'

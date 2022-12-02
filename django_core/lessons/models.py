@@ -1,6 +1,9 @@
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.db import models
+from django_lifecycle import LifecycleModel, hook, AFTER_CREATE
+
+from lessons.tasks import upload_profile_course_finished_gsheets
 
 User = get_user_model()
 
@@ -280,10 +283,17 @@ class ProfileLessonDone(models.Model):
         return repr(self)
 
 
-class ProfileCourseDone(models.Model):
+class ProfileCourseDone(LifecycleModel):
     profile = models.ForeignKey("accounts.Profile", on_delete=models.CASCADE)
     course = models.ForeignKey("Course", on_delete=models.CASCADE)
     finished_at = models.DateTimeField(auto_now=True)
+
+    @hook(AFTER_CREATE)
+    def transfer_data_to_google_sheets(self):
+        from lessons.serializers import ProfileCourseFinishedSerializer
+
+        serialized_data = ProfileCourseFinishedSerializer(self).data
+        upload_profile_course_finished_gsheets.delay(serialized_data)
 
     class Meta:
         app_label = "lessons"
