@@ -24,6 +24,7 @@ jobs:
                 echo "ENV=PROD" >> "$HOME/app.env"
                 echo "GUNICORN_WORKERS=12" >> "$HOME/app.env"
                 echo "GOOGLE_SPREADSHEET_ID=${{secrets.GOOGLE_SPREADSHEET_ID}}" >> "$HOME/app.env"
+                touch ~/lis-back/django_core/gdrive_creds.json
                 echo "${{secrets.GDRIVE_CREDS}}" > ~/lis-back/django_core/gdrive_creds.json
                 chmod 600 "$HOME/.ssh/key"
             - name: Delivery
