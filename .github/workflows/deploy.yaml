@@ -24,13 +24,11 @@ jobs:
                 echo "ENV=PROD" >> "$HOME/app.env"
                 echo "GUNICORN_WORKERS=12" >> "$HOME/app.env"
                 echo "GOOGLE_SPREADSHEET_ID=${{secrets.GOOGLE_SPREADSHEET_ID}}" >> "$HOME/app.env"
-                echo "${{secrets.GDRIVE_CREDS}}" > "$HOME/gdrive_creds.json"
                 chmod 600 "$HOME/.ssh/key"
             - name: Delivery
               run: |
                 rsync -e "ssh -i $HOME/.ssh/key -o StrictHostKeyChecking=no" --archive --compress --delete --exclude 'django_core/static' --exclude 'django_core/media' --exclude 'django_core/logs' . ${{ secrets.VPS_USER_NAME }}@${{ secrets.VPS_SERVER_NAME }}:~/lis-back/
                 rsync -e "ssh -i $HOME/.ssh/key -o StrictHostKeyChecking=no" $HOME/app.env ${{ secrets.VPS_USER_NAME }}@${{ secrets.VPS_SERVER_NAME }}:~/lis-back/environments/app.env
-                rsync -e "ssh -i $HOME/.ssh/key -o StrictHostKeyChecking=no" $HOME/gdrive_creds.json ${{ secrets.VPS_USER_NAME }}@${{ secrets.VPS_SERVER_NAME }}:~/lis-back/django_core/gdrive_creds.json
             - name: Building on server
               run: |
                 ssh -i $HOME/.ssh/key ${{ secrets.VPS_USER_NAME }}@${{ secrets.VPS_SERVER_NAME }} 'cd lis-back && docker-compose up -d --build'

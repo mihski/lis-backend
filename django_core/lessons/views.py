@@ -272,15 +272,22 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
             lesson=lesson
         )
 
-    def _check_course_finished(self, profile: Profile, course: Course) -> bool:
-        course_lessons = CourseLessonsTree(course).get_map_for_profile(profile)
-        course_lessons = set(filter(lambda entity: isinstance(entity, Lesson), course_lessons))
+    def _check_course_finished(self, profile: Profile, lesson: Lesson) -> bool:
+        # course_lessons = CourseLessonsTree(course).get_map_for_profile(profile)
+        # course_lessons = set(filter(lambda entity: isinstance(entity, Lesson), course_lessons))
+        #
+        # finished_lessons = set(ProfileLessonDone.objects.select_related("lesson").filter(profile=profile))
+        # finished_lessons = set([x.lesson for x in finished_lessons])
+        #
+        # intersection = course_lessons & finished_lessons
+        # return intersection == course_lessons
 
-        finished_lessons = set(ProfileLessonDone.objects.select_related("lesson").filter(profile=profile))
-        finished_lessons = set([x.lesson for x in finished_lessons])
-
-        intersection = course_lessons & finished_lessons
-        return intersection == course_lessons
+        # FIXME: hardcode
+        last_lessons_local_ids= [
+            "n_1661254624645",
+            "n_1661254301354"
+        ]
+        return lesson.local_id in last_lessons_local_ids
 
     @decorators.action(methods=["POST"], detail=True, url_path="finish")
     def finish_lesson(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
@@ -304,7 +311,7 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
             self._create_emotion(profile, lesson, emotion=request.data.get("emotion", {"emotion": 0, "comment": ""}))
 
             ProfileLessonDone.objects.create(profile=profile, lesson=lesson)
-            if self._check_course_finished(profile, lesson.course):
+            if self._check_course_finished(profile, lesson):
                 ProfileCourseDone.objects.create(profile=profile, course=lesson.course)
 
         return Response(lesson_finish_data, status=status.HTTP_200_OK)

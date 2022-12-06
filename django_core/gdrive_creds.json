@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "life-in-science",
+  "private_key_id": "d3254772d74d214ec8c44755c050778e3c84458a",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDgC4rQWDgxMO0A\nslOr+tNzPVWCYiBXXkn55KYGjv81tmeZJzq8dU+wfX5S0PEycJSmXCYm5f3PEtdm\ngGFDmfwjkgoA0AEzH9jGEuJLxd/QChwGdcic1Z9whqp0/MTykVg4ctOxMW4NQwem\nHU0pboFQEZ6gHWLT/Rwk7Con5Y2j9meuj9L4NFhTQBMBfk/YvRHnaehKoak7odO6\nWGexCUyHU8Jb6wh++TbOiISAsUBfDrurf1suWCV+yv+UpXqzn9/wwm8rqg46F+kG\nej7BwhUNjSodbq5qdQz7bCaymP8nlBKWmO0qw4N/y9TX1Srcrl8ppqKSSFZaTRMB\nGu8S2/8/AgMBAAECggEAZ8uxIdjdH50FD9+N+A0aTTdLGD6RsShTqVwOttck0SOS\nV1ffVFQc+S0Kix+VvsJ9e50RZ9ABiB+4fxpW9VSvhWMxEzNKev70FL/G60fe6qjk\nVvHWYSJu3VjmO5CnRaGkd3JrNJor3CUDtCe7CcjSS9/91zwF/yQyF8D5vsYQmra9\nYh8tjV5RD3oIDdEbDLR7T0WoaROjxljbWcqzX4q1nRXCEyV6MwJqDsHv2x3TFh2d\nY/mUIknpxK3LGRiSe+SGCubxc5P31HM14wX3fjUlo8LeqG3sONlAgvY4aX5HyXuD\n/feISAfL9X79YCCaIfVSi9q5q+vxsXV8l2Dr0A+cQQKBgQDyZ3bx/siwNt9Da/g4\nvrxozbu46B0QsQQtNxr9ZEPyvUUCt5dK52b2y4u6fQ7M4eZ7gaIYzQcr8Gqf63a3\nSbQrz04LL4VxN/3YEVvTiNjYAgFZn4lKYcGMGYQ6XfR7yT9AeKOZAfVD0Z5Fy8m7\n9wU0hQ2rvWd1N0+wDdlwxz2PMQKBgQDsnHiDPn5FIC4XIsbjXe5yvEiwMk5BaNVi\nxIzy9QOiM5e8Pqmp/jIJXXVfYSBzfUlF3eMxuG5d67wYK5r2CHoL25laCACzIRIa\nnj2tx6K8Gf5czKRpUpD9ak5a/UBz/cMCXfD1huJ8Esrm3HCpI0iR64e75/iGXgBA\nuj7aRpk5bwKBgQCPji6nChiYIyb9qseJ84tpFc4Cp5Pu+qZakLPvNJ3495YTEd8L\ngRc9OTY67y0AsRfqNM9mmKWSpALBSpU33vJQr6isfywr7NjsSPt0vyqMYkOibBTG\ndDZHXiUs28+aL4jCCa/5QWubCl0NQK7sHlJ61AFQoA7RIDyVKt6HJ7eRQQKBgQDC\n/qiqsMPrP/v8ASMbmfu6/sSAwNSRP04sGYN3bsjR0ecIsjOs7tpZsXXbZvYRd3z9\nYUGtZis+p9nZqYYJoS7DuvSEp/e7qFN9ME/weYf5sQpZfCU6z1rCHev5PKDzdnxR\n5Q2BqunYCrzAyYbnPTa/WvX/u8qrIajfrx3BUVFRbQKBgGwDUyevGqxo1IzkARz5\n+mUUUMnYussPIlpu5Dcmf8AWzq7a+fbVza+lOKRLroJs2hhue+ZqlNqsG/EjOI/c\nyUqh4o6qV8e+NQXClN/9fYANygE/9ZZdfCE+Q5B9BnPe0FaxM7jvSL+Z+yMDlu9/\nJzuD2Y/cOb1bHi2BlkiIJMJh\n-----END PRIVATE KEY-----\n",
+  "client_email": "lis-soft-skills@life-in-science.iam.gserviceaccount.com",
+  "client_id": "107976552337613361015",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/lis-soft-skills%40life-in-science.iam.gserviceaccount.com"
+}
