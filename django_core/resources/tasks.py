@@ -1,9 +1,13 @@
+import logging
+
 from django.db.models import QuerySet
 
 from django_core.celery import app
 from resources.models import Resources
 from resources.utils import get_max_energy_by_position
 from accounts.models import UniversityPosition, Profile
+
+logger = logging.getLogger('celery')
 
 
 @app.task
@@ -14,12 +18,18 @@ def refill_resources() -> None:
     resources_qs: QuerySet[Resources] = Resources.objects.all()
     update_list = []
 
+    logger.info('Старт задачи обновления ресурсов')
     for resource in resources_qs:
+        profile = resource.user
+        logger.info(f'Пользователь: {profile.isu} - {profile.username}')
+        logger.info(f'Должность: {profile.university_position}')
+        logger.info(f'Было энергии: {resource.energy_amount}')
         university_position = resource.user.university_position
         position = UniversityPosition(university_position)
 
         energy = get_max_energy_by_position(position)
         resource.set_energy(energy)
+        logger.info(f'Стало энергии: {resource.energy_amount}')
         update_list.append(resource)
 
     Resources.objects.bulk_update(update_list, ["energy_amount"])

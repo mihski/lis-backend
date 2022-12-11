@@ -292,6 +292,15 @@ LOGGING = {
             "backupCount": 14,
             "interval": 1
         },
+        "celery": {
+            "level": "INFO",
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "formatter": "debug",
+            "filename": str(Path(LOGGING_ROOT, "celery.log")),
+            "when": "midnight",
+            "backupCount": 14,
+            "interval": 1
+        },
     },
     "loggers": {
         "django": {
@@ -313,7 +322,12 @@ LOGGING = {
             "level": "INFO",
             "handlers": ["console", "file"],
             "propagate": True,
-        }
+        },
+        "celery": {
+            "level": "INFO",
+            "handlers": ["console", "celery"],
+            "propagate": True,
+        },
     }
 }
 
