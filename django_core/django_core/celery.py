@@ -24,7 +24,7 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     "refill_resources_every_night": {
         "task": "resources.tasks.refill_resources",
-        "schedule": crontab()
+        "schedule": crontab(minute="0", hour="0")
     },
     "upload_statistics_every_night": {
         "task": "accounts.tasks.upload_statistics",
