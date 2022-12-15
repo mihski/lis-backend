@@ -5,7 +5,7 @@ from django.db.models import QuerySet
 from django_core.celery import app
 from resources.models import Resources
 from resources.utils import get_max_energy_by_position
-from accounts.models import UniversityPosition, Profile
+from accounts.models import Profile
 
 logger = logging.getLogger('celery')
 
@@ -24,10 +24,8 @@ def refill_resources() -> None:
         logger.info(f'Пользователь: {profile.isu} - {profile.username}')
         logger.info(f'Должность: {profile.university_position}')
         logger.info(f'Было энергии: {resource.energy_amount}')
-        university_position = resource.user.university_position
-        position = UniversityPosition(university_position)
 
-        energy = get_max_energy_by_position(position)
+        energy = get_max_energy_by_position(profile.university_position)
         resource.set_energy(energy)
         logger.info(f'Стало энергии: {resource.energy_amount}')
         update_list.append(resource)

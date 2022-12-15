@@ -16,4 +16,4 @@ class ResourcesAdmin(admin.ModelAdmin):
     list_display = ("id", "user", "energy_amount", "time_amount", "money_amount")
     list_filter = ("energy_amount", "time_amount", "money_amount")
     ordering = ("-energy_amount", "-time_amount", "-money_amount")
-    search_fields = ("user__username",)
+    search_fields = ("user__username", "user__isu")
