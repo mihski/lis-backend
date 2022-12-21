@@ -63,12 +63,19 @@ class CheckboxesBlock(TaskBlock):
         m_variants = {v["id"]: v for v in self.variants}
         details = {}
 
+        has_false = False
+
         for answer_item in answer:
             if answer_item not in m_variants:
                 details[answer_item] = False
+                has_false = True
                 continue
 
             details[answer_item] = answer_item in self.correct
+
+        if has_false and len(details) <= 5:
+            for key in details:
+                details[key] = False
 
         return details
 
