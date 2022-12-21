@@ -72,6 +72,7 @@ class CheckboxesBlock(TaskBlock):
                 continue
 
             details[answer_item] = answer_item in self.correct
+            has_false = has_false or (answer_item not in self.correct)
 
         if has_false and len(details) <= 5:
             for key in details:
