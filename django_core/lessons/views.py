@@ -6,6 +6,7 @@ from rest_framework import (
     decorators,
     status,
     views,
+    generics
 )
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.request import Request
@@ -87,7 +88,7 @@ class CourseMapViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
     permission_classes = (permissions.IsAuthenticated, )
 
 
-class CourseNameAPIView(views.APIView):
+class CourseNameAPIView(generics.RetrieveAPIView):
     queryset = Course.objects.all()
     serializer_class = CourseNameSerializer
 
