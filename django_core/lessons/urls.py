@@ -7,6 +7,7 @@ from lessons.views import (
     LessonDetailViewSet,
     LessonActionsViewSet,
     CourseMapViewSet,
+    CourseNameAPIView,
     BranchSelectViewSet,
     ReviewViewSet,
     QuestionViewSet,
@@ -27,5 +28,6 @@ router.register("questions", QuestionViewSet)
 
 urlpatterns = [
     *router.urls,
-    path("callbacks/<str:pk>/", CallbackAPIView.as_view())
+    path("callbacks/<str:pk>/", CallbackAPIView.as_view()),
+    path("course-name/<int:pk>/", CourseNameAPIView.as_view())
 ]

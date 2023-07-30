@@ -36,6 +36,7 @@ from lessons.serializers import (
     LocationDetailSerializer,
     LessonDetailSerializer,
     CourseMapSerializer,
+    CourseNameSerializer,
     BranchingSelectSerializer,
     BranchingDetailSerializer,
     QuestionSerializer,
@@ -84,6 +85,11 @@ class CourseMapViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
     )
     serializer_class = CourseMapSerializer
     permission_classes = (permissions.IsAuthenticated, )
+
+
+class CourseNameAPIView(views.APIView):
+    queryset = Course.objects.all()
+    serializer_class = CourseNameSerializer
 
 
 class BranchSelectViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.UpdateModelMixin):

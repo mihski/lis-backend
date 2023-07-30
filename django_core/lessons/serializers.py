@@ -408,6 +408,12 @@ class CourseMapSerializer(serializers.ModelSerializer):
         return active_block_index + course_map_images.filter(order__lte=active_block_index+prev_images_count).count()
 
 
+class CourseNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ['id', 'name']
+
+
 class ReviewSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(
         default=serializers.CurrentUserDefault(),
