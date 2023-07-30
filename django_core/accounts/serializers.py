@@ -158,7 +158,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "gender", "supervisor", "university_position", "laboratory",
             "head_form", "hair_form", "face_form", "brows_form", "cloth_form",
             "usual_image", "angry_image", "fair_image", "happy_image", "course",
-            "scientific_director"
+            "scientific_director", "language"
         ]
 
 
@@ -173,7 +173,7 @@ class ProfileSerializerWithoutLookForms(ProfileSerializer):
         model = Profile
         fields = [
             "id", "name", "gender", "scientific_director", "university_position",
-            "usual_image", "angry_image", "fair_image", "happy_image",
+            "usual_image", "angry_image", "fair_image", "happy_image", "language"
         ]
 
 
@@ -213,4 +213,4 @@ class ProfileAlbumSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ["id", "isu", "username", "statistics", "emotions"]
+        fields = ["id", "isu", "username", "statistics", "emotions", "language"]
