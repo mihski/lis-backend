@@ -14,6 +14,10 @@ LABORATORIES = (
     ("pts", "Физико-технические науки"),
 )
 
+LANGUAGES = (
+    ("ru", "RU"),
+    ("en", "EN")
+)
 
 class UniversityPosition(models.TextChoices):
     """

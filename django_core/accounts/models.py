@@ -14,7 +14,12 @@ from django_lifecycle import (
     BEFORE_UPDATE
 )
 
-from accounts.choices import UniversityPosition, PROFILE_GENDER, LABORATORIES
+from accounts.choices import (
+    UniversityPosition,
+    PROFILE_GENDER,
+    LABORATORIES,
+    LANGUAGES
+)
 from resources.models import Resources
 from resources.utils import get_max_energy_by_position
 
@@ -308,6 +313,8 @@ class Profile(LifecycleModel):
 
     ultimate_activated = models.BooleanField(default=0)
     ultimate_finish_datetime = models.DateTimeField(null=True, default=None, blank=True)
+
+    language = models.CharField(max_length=8, choices=LANGUAGES, default="ru")
 
     @hook(AFTER_CREATE)
     def create_related_entities(self) -> None:
