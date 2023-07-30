@@ -80,7 +80,8 @@ class UnitDetailSerializer(serializers.ModelSerializer):
         task_instance: TaskBlock = task_model.objects.filter(id=unit.content["id"]).only().first()
         task_instance.shuffle_content(unit.content)
         
-        if "correct" in unit.content:
+        # возвращаем correct только для T2
+        if "correct" in unit.content and unit.type != 302:
             unit.content.pop("correct")
 
         return unit.content
