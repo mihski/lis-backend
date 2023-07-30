@@ -50,14 +50,16 @@ class ProfileAdmin(admin.ModelAdmin):
         "university_position",
         "ultimate_activated",
         "scientific_director",
-        "laboratory"
+        "laboratory",
+        "language"
     )
     list_filter = (
         "gender",
         "university_position",
         "ultimate_activated",
         "scientific_director",
-        "laboratory"
+        "laboratory",
+        "language"
     )
     search_fields = ("username", "user__username", "isu")
 
