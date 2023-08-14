@@ -389,7 +389,8 @@ class CourseMapSerializer(serializers.ModelSerializer):
         serialized_map_list = [None] * (tree.get_max_depth() + len(course_map_images))
 
         for course_map, course_map_data in zip(course_map_images, course_map_images_data):
-            serialized_map_list[course_map.order] = course_map_data
+            if course_map.order in serialized_map_list:
+                serialized_map_list[course_map.order] = course_map_data
 
         j = 0
         for obj in map_list:
