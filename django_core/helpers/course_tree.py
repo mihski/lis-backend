@@ -1,7 +1,8 @@
 from functools import lru_cache
 
 from accounts.models import Profile
-from lessons.models import Lesson, Course, Quest, Branching, ProfileBranchingChoice, ProfileLessonDone
+from lessons.models import (Lesson, Course, Quest, Branching, ProfileBranchingChoice,
+                            ProfileLessonDone, CourseMapImg)
 from lessons.structures import BranchingType
 from helpers.abstract_tree import AbstractNode, AbstractNodeTree
 
@@ -205,9 +206,14 @@ class CourseLessonsTree(AbstractNodeTree):
             *[p.lesson.local_id for p in ProfileLessonDone.objects.select_related("lesson").filter(profile=profile)],
             *[b.branching.local_id for b in ProfileBranchingChoice.objects.select_related("branching").filter(profile=profile)]
         }
+        course_map_images = CourseMapImg.objects.filter(course=Course.objects.first())
 
         for i, block in enumerate(map_list):
             if block.local_id not in profile_interacted:
-                return i
-
-        return len(map_list)
+                prev_images_count = course_map_images.filter(order__lte=i).count()
+                return i + course_map_images.filter(order__lte=i + prev_images_count).count()
+        map_len = len(map_list)
+        img_count = course_map_images.filter(
+            order__lte=map_len + course_map_images.filter(
+                order__lte=map_len).count()).count()
+        return map_len + img_count

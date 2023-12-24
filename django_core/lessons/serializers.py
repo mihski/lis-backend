@@ -389,15 +389,18 @@ class CourseMapSerializer(serializers.ModelSerializer):
         serialized_map_list = [None] * (tree.get_max_depth() + len(course_map_images))
 
         for course_map, course_map_data in zip(course_map_images, course_map_images_data):
-            if course_map.order in serialized_map_list:
+            if course_map.order <= len(serialized_map_list) and not serialized_map_list[course_map.order]:
                 serialized_map_list[course_map.order] = course_map_data
 
         j = 0
         for obj in map_list:
             while j < len(serialized_map_list) and serialized_map_list[j] is not None:
                 j += 1
-
-            serialized_map_list[j] = model_to_serializer[obj.__class__](obj).data
+            # FIXME: Почему-то иногда j выходит за пределы массива
+            try:
+                serialized_map_list[j] = model_to_serializer[obj.__class__](obj).data
+            except IndexError:
+                serialized_map_list.append(model_to_serializer[obj.__class__](obj).data)
 
         return serialized_map_list
 
@@ -405,9 +408,7 @@ class CourseMapSerializer(serializers.ModelSerializer):
         profile: Profile = self.context['request'].user.profile.get(course_id=1)
         tree = CourseLessonsTree(obj)
         active_block_index = tree.get_active(profile)
-        course_map_images = CourseMapImg.objects.filter(course=obj)
-        prev_images_count = course_map_images.filter(order__lte=active_block_index).count()
-        return active_block_index + course_map_images.filter(order__lte=active_block_index+prev_images_count).count()
+        return active_block_index
 
 
 class CourseNameSerializer(serializers.ModelSerializer):
