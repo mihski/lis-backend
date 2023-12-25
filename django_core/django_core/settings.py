@@ -12,6 +12,7 @@ ALLOWED_HOSTS = [
     "lis.itmo.ru",
     "158.160.42.32",
     "51.250.78.144",
+    "158.160.63.230",
 ]
 
 # Application definition
