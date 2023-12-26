@@ -7,9 +7,12 @@ from datetime import timedelta, datetime
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("DJANGO_SECRET")
 DEBUG = True
+HOST = os.getenv("HOST", "lis.itmo.ru")
 
 ALLOWED_HOSTS = [
+    HOST,
     "lis.itmo.ru",
+    "dev.lis.itmo.ru",
     "158.160.42.32",
     "51.250.78.144",
     "158.160.63.230",
@@ -208,12 +211,12 @@ ISU_MANAGER_CONFIG = {
     "client_id": os.getenv("ISU_CLIENT_ID"),
     "response_type": "code",
     "base_uri": "https://id.itmo.ru/auth/realms/itmo/protocol/openid-connect/",
-    "redirect_uri": 'https://lis.itmo.ru/auth/',
+    "redirect_uri": f'https://{HOST}/auth/',
     "scope": os.getenv("ISU_SCOPE"),
     "grant_type": "authorization_code",
     "client_secret": os.getenv("ISU_CLIENT_SECRET"),
     "logout_url": "https://id.itmo.ru/auth/realms/itmo/protocol/openid-connect/logout",
-    "post_logout_redirect_uri": "https://lis.itmo.ru/",
+    "post_logout_redirect_uri": f"https://{HOST}/",
 }
 
 ENVIRONMENT = os.getenv("ENV", "DEV")
