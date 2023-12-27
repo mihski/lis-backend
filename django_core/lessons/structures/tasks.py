@@ -17,7 +17,6 @@ class TaskBlock(models.Model, ChildAccessMixin):
     def check_answer(self, answer):
         pass
 
-    @abstractmethod
     def get_details(self, answer):
         pass
 
@@ -109,10 +108,11 @@ class SelectsBlock(TaskBlock):
 class InputBlock(TaskBlock):
     type = LessonBlockType.input
 
-    correct = models.JSONField(default={'ru': [], 'en': []})
+    correct = models.JSONField(default=lambda _: {'ru': [], 'en': []})
 
     def check_answer(self, answer):
-        return answer.lower() in [v.lower() for v in self.correct['ru']]
+        return (answer.lower() in
+                [v.lower() for v in (*self.correct['ru'], *self.correct['en'])])
 
 
 class NumberBlock(TaskBlock):
