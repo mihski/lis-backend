@@ -6,7 +6,11 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.db.models import Sum
 from django.db import transaction
-
+from editors.serializers import (
+    LessonSerializer,
+    QuestSerializer,
+    BranchingSerializer,
+)
 from accounts.models import Profile
 from lessons.models import (
     NPC,
@@ -79,7 +83,7 @@ class UnitDetailSerializer(serializers.ModelSerializer):
 
         task_instance: TaskBlock = task_model.objects.filter(id=unit.content["id"]).only().first()
         task_instance.shuffle_content(unit.content)
-        
+
         # возвращаем correct только для T2
         if "correct" in unit.content and unit.type != 302:
             unit.content.pop("correct")
@@ -527,3 +531,31 @@ class ProfileCourseFinishedSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProfileCourseDone
         fields = ["isu", "username", "finished_at"]
+
+
+class NewCourseMapSerializer(serializers.ModelSerializer):
+    lessons = LessonSerializer(required=False, many=True)
+    quests = QuestSerializer(required=False, many=True)
+    branchings = BranchingSerializer(required=False, many=True)
+
+    name = serializers.CharField()
+    description = serializers.CharField()
+    entry = serializers.CharField(required=False, allow_blank=True)
+    locale = serializers.JSONField(required=False)
+
+    class Meta:
+        model = Course
+        fields = ['id', 'lessons', 'quests', 'branchings', 'name', 'description', 'entry', 'locale', 'is_editable']
+
+    def to_representation(self, instance):
+        """ Filter lessons and branchings inside quests """
+        representation = super().to_representation(instance)
+
+        representation['lessons'] = [x for x in representation['lessons'] if x['quest'] is None]
+        representation['branchings'] = [x for x in representation['branchings'] if x['quest'] is None]
+
+        if not self.context["request"].GET.get("full", "false") == "true":
+            [x.pop("content") for x in representation['lessons'] if x['quest'] is None]
+            [x.pop("content") for quest in representation['quests'] for x in quest["lessons"]]
+
+        return representation

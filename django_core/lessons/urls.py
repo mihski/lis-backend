@@ -11,12 +11,14 @@ from lessons.views import (
     BranchSelectViewSet,
     ReviewViewSet,
     QuestionViewSet,
-    CallbackAPIView
+    CallbackAPIView,
+    NewCourseMapViewSet
 )
 
 app_name = "lessons"
 
 router = routers.SimpleRouter()
+router.register("map", NewCourseMapViewSet)
 router.register("lessons", LessonDetailViewSet)
 router.register("lessons", LessonActionsViewSet)
 router.register("npc", NPCViewSet)

@@ -43,6 +43,7 @@ from lessons.serializers import (
     QuestionSerializer,
     ReviewSerializer,
     LessonFinishSerializer,
+    NewCourseMapSerializer,
 )
 from lessons.utils import process_affect, check_entity_is_accessible
 from lessons.exceptions import (
@@ -85,7 +86,7 @@ class CourseMapViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
         "quests__lessons", "quests__branchings",
     )
     serializer_class = CourseMapSerializer
-    permission_classes = (permissions.IsAuthenticated, )
+    permission_classes = (permissions.IsAuthenticated,)
 
 
 class CourseNameAPIView(generics.RetrieveAPIView):
@@ -118,8 +119,8 @@ class BranchSelectViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mi
             raise BlockEntityIsUnavailableException("Finish previous lessons to select branching")
 
         if ProfileBranchingChoice.objects.filter(
-            branching=branching,
-            profile=self.request.user.profile.get(course=1)
+                branching=branching,
+                profile=self.request.user.profile.get(course=1)
         ).exists():
             raise BranchingAlreadyChosenException()
 
@@ -157,8 +158,8 @@ class LessonDetailViewSet(
 
     def _check_is_enough_energy(self, profile: Profile, lesson: Lesson) -> bool:
         if (
-            check_ultimate_is_active(profile)
-            or not settings.CHECK_ENERGY_ON_LESSON_ENTER
+                check_ultimate_is_active(profile)
+                or not settings.CHECK_ENERGY_ON_LESSON_ENTER
         ):
             return True
         return profile.resources.energy_amount >= lesson.energy_cost
@@ -241,7 +242,7 @@ class QuestionViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
 class LessonActionsViewSet(viewsets.GenericViewSet):
     queryset = Lesson.objects.select_related("course", "quest").prefetch_related("unit_set")
     serializer_class = LessonFinishSerializer
-    permission_classes = (permissions.IsAuthenticated, )
+    permission_classes = (permissions.IsAuthenticated,)
     lookup_field = "local_id"
 
     def _get_scientific_bonuses(self, profile: Profile, lesson: Lesson) -> tuple[int, int]:
@@ -290,7 +291,7 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
         # return intersection == course_lessons
 
         # FIXME: hardcode
-        last_lessons_local_ids= [
+        last_lessons_local_ids = [
             "n_1661254624645",
             "n_1661254301354"
         ]
@@ -340,3 +341,14 @@ class CallbackAPIView(views.APIView):
         process_affect(affect, request.user.profile.get(course_id=1))
 
         return Response({"status": "ok"}, status=status.HTTP_200_OK)
+
+
+class NewCourseMapViewSet(
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    queryset = Course.objects.prefetch_related("lessons", "quests", "lessons__unit_set")
+    serializer_class = NewCourseMapSerializer
+
