@@ -11,6 +11,7 @@ HOST = os.getenv("HOST", "lis.itmo.ru")
 
 ALLOWED_HOSTS = [
     HOST,
+    "127.0.0.1",
     "lis.itmo.ru",
     "dev.lis.itmo.ru",
     "158.160.42.32",

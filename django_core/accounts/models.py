@@ -315,6 +315,7 @@ class Profile(LifecycleModel):
     ultimate_finish_datetime = models.DateTimeField(null=True, default=None, blank=True)
 
     language = models.CharField(max_length=8, choices=LANGUAGES, default="ru")
+    all_tasks_correct = models.BooleanField(default=False)
 
     @hook(AFTER_CREATE)
     def create_related_entities(self) -> None:

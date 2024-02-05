@@ -51,7 +51,8 @@ class ProfileAdmin(admin.ModelAdmin):
         "ultimate_activated",
         "scientific_director",
         "laboratory",
-        "language"
+        "language",
+        "all_tasks_correct"
     )
     list_filter = (
         "gender",
