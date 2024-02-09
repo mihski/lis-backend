@@ -6,11 +6,7 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.db.models import Sum
 from django.db import transaction
-from editors.serializers import (
-    LessonSerializer,
-    QuestSerializer,
-    BranchingSerializer,
-)
+
 from accounts.models import Profile
 from lessons.models import (
     NPC,
@@ -26,7 +22,8 @@ from lessons.models import (
     Question,
     UnitAffect,
     EmailTypes,
-    ProfileCourseDone
+    ProfileCourseDone,
+    ProfileLessonDone
 )
 from lessons.structures import (
     BlockType,
@@ -533,10 +530,118 @@ class ProfileCourseFinishedSerializer(serializers.ModelSerializer):
         fields = ["isu", "username", "finished_at"]
 
 
+class ProfileLessonSerializer(serializers.ModelSerializer):
+    local_id = serializers.CharField()
+
+    name = serializers.CharField()
+    course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
+    timeCost = serializers.IntegerField(source='time_cost')
+    moneyCost = serializers.IntegerField(source='money_cost')
+    energyCost = serializers.IntegerField(source='energy_cost')
+    has_bonuses = serializers.BooleanField(default=False)
+    bonuses = serializers.JSONField()
+
+    next = serializers.CharField(allow_blank=True)
+    unit_count = serializers.SerializerMethodField()
+
+    done = serializers.SerializerMethodField()
+
+    def get_unit_count(self, lesson: Lesson) -> int:
+        return lesson.unit_set.count()
+
+    def get_bonuses(self, lesson: Lesson) -> dict:
+        if self.context.get("finished", False):
+            return {"energy": 0, "money": 0}
+
+        profile = self.context["request"].user.profile.get()
+
+        if not profile.scientific_director_id:
+            return {"energy": 0, "money": 0}
+
+        scientific_director_id = profile.scientific_director.uid[1:]
+
+        return lesson.bonuses[scientific_director_id]
+
+    def get_done(self, lesson: Lesson) -> bool:
+
+        profile = self.context['request'].user.profile.get()
+        lesson_done = ProfileLessonDone.objects.filter(profile=profile, lesson=lesson).first()
+        if lesson_done:
+            return True
+        return False
+
+    class Meta:
+        model = Lesson
+        fields = [
+            'id',
+            'local_id',
+            'course',
+            'quest',
+            'name',
+            'timeCost',
+            'moneyCost',
+            'energyCost',
+            'bonuses',
+            'next',
+            'has_bonuses',
+            'x',
+            'y',
+            'unit_count',
+            'done'
+        ]
+
+
+class ProfileBranchingSerializer(serializers.ModelSerializer):
+    local_id = serializers.CharField()
+    selected = serializers.SerializerMethodField()
+
+    # TODO: добавить два типа бранчей
+
+    def get_selected(self, lesson: Lesson) -> bool:
+        profile = self.context['request'].user.profile.get()
+        lesson_done = ProfileBranchingChoice.objects.filter(profile=profile, branching=lesson).first()
+        if lesson_done:
+            return True
+        return False
+
+    class Meta:
+        model = Branching
+        fields = ['id', 'local_id', 'course', 'quest', 'x', 'y', 'type', 'content', 'selected']
+
+
+class ProfileQuestSerializer(serializers.ModelSerializer):
+    local_id = serializers.CharField()
+
+    course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
+
+    lessons = ProfileLessonSerializer(many=True)
+    branchings = ProfileBranchingSerializer(required=False, many=True)
+
+    description = serializers.CharField()
+    entry = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    next = serializers.CharField(allow_blank=True)
+
+    class Meta:
+        model = Quest
+        fields = [
+            'id',
+            'local_id',
+            'name',
+            'course',
+            'lessons',
+            'branchings',
+            'description',
+            'entry',
+            'next',
+            'x',
+            'y',
+        ]
+
+
 class NewCourseMapSerializer(serializers.ModelSerializer):
-    lessons = LessonSerializer(required=False, many=True)
-    quests = QuestSerializer(required=False, many=True)
-    branchings = BranchingSerializer(required=False, many=True)
+    lessons = ProfileLessonSerializer(required=False, many=True)
+    quests = ProfileQuestSerializer(required=False, many=True)
+    branchings = ProfileBranchingSerializer(required=False, many=True)
 
     name = serializers.CharField()
     description = serializers.CharField()
@@ -547,15 +652,4 @@ class NewCourseMapSerializer(serializers.ModelSerializer):
         model = Course
         fields = ['id', 'lessons', 'quests', 'branchings', 'name', 'description', 'entry', 'locale', 'is_editable']
 
-    def to_representation(self, instance):
-        """ Filter lessons and branchings inside quests """
-        representation = super().to_representation(instance)
 
-        representation['lessons'] = [x for x in representation['lessons'] if x['quest'] is None]
-        representation['branchings'] = [x for x in representation['branchings'] if x['quest'] is None]
-
-        if not self.context["request"].GET.get("full", "false") == "true":
-            [x.pop("content") for x in representation['lessons'] if x['quest'] is None]
-            [x.pop("content") for quest in representation['quests'] for x in quest["lessons"]]
-
-        return representation
