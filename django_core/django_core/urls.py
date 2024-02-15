@@ -13,7 +13,7 @@ schema_view = get_schema_view(
     ),
     public=True,
     url=f"https://{settings.HOST}/api",
-    permission_classes=(permissions.IsAdminUser,),
+    permission_classes=(permissions.AllowAny,),
 )
 
 urlpatterns = [
