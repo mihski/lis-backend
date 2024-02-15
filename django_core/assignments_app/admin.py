@@ -9,11 +9,11 @@ class AssignmentAdmin(admin.ModelAdmin):
 
 @admin.register(StudentAssignment)
 class StudentAssignmentAdmin(admin.ModelAdmin):
-    list_display = ('assignment', 'profile', 'completed_date', 'accepted', 'score')
-    list_filter = ('assignment', 'profile', 'accepted')
+    list_display = ('assignment', 'profile', 'reviewed', 'score', 'accepted')
+    list_filter = ('assignment', 'profile', 'accepted', 'reviewed')
     search_fields = ('assignment', 'profile')
     date_hierarchy = 'completed_date'
-    ordering = ('-completed_date', 'profile')
+    ordering = ('accepted', '-completed_date')
     actions = ['accept_student_assignment', 'reject_student_assignment']
 
     def accept_student_assignment(self, request, queryset):
