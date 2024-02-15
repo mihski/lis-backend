@@ -92,7 +92,7 @@ DATABASES = {
         "NAME": "maindb",
         "USER": "maindb",
         "PASSWORD": "maindb",
-        "HOST": "localhost",
+        "HOST": "lis_db",
         "PORT": "5432",
         "TEST": {
             "NAME": "c_test_3",
