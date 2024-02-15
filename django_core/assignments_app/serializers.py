@@ -13,6 +13,7 @@ class StudentAssignmentSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         attrs['profile'] = self.context['request'].user.profile.first()
+        attrs['reviewed'] = False
         return attrs
 
     class Meta:
