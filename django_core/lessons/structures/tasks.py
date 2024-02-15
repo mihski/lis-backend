@@ -5,6 +5,7 @@ from collections import defaultdict
 from django.db import models
 from lessons.structures import LessonBlockType
 from helpers.mixins import ChildAccessMixin
+from lessons.models import default_locale
 
 
 class TaskBlock(models.Model, ChildAccessMixin):
@@ -108,7 +109,7 @@ class SelectsBlock(TaskBlock):
 class InputBlock(TaskBlock):
     type = LessonBlockType.input
 
-    correct = models.JSONField(default=lambda _: {'ru': [], 'en': []})
+    correct = models.JSONField(default=default_locale)
 
     def check_answer(self, answer):
         return (answer.lower() in

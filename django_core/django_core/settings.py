@@ -11,6 +11,7 @@ HOST = os.getenv("HOST", "lis.itmo.ru")
 
 ALLOWED_HOSTS = [
     HOST,
+    "localhost",
     "127.0.0.1",
     "lis.itmo.ru",
     "dev.lis.itmo.ru",
@@ -48,6 +49,7 @@ INSTALLED_APPS = [
     "resources",
     "editors",
     "student_tasks",
+    "assignments_app"
 ]
 
 MIDDLEWARE = [
@@ -90,7 +92,7 @@ DATABASES = {
         "NAME": "maindb",
         "USER": "maindb",
         "PASSWORD": "maindb",
-        "HOST": "lis_db",
+        "HOST": "localhost",
         "PORT": "5432",
         "TEST": {
             "NAME": "c_test_3",
