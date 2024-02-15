@@ -92,7 +92,7 @@ DATABASES = {
         "NAME": "maindb",
         "USER": "maindb",
         "PASSWORD": "maindb",
-        "HOST": "lis_db",
+        "HOST": "localhost",
         "PORT": "5432",
         "TEST": {
             "NAME": "c_test_3",
@@ -341,3 +341,16 @@ LOGGING = {
 # Google Integration
 GOOGLE_CREDENTIALS = Path(BASE_DIR, "gdrive_creds.json")
 GOOGLE_SPREADSHEET_ID = os.getenv("GOOGLE_SPREADSHEET_ID", "")
+
+SWAGGER_SETTINGS = {
+   'SECURITY_DEFINITIONS': {
+      'Basic': {
+            'type': 'basic'
+      },
+      'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+      }
+   }
+}
