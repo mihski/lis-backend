@@ -10,7 +10,7 @@ class AssignmentAdmin(admin.ModelAdmin):
 @admin.register(StudentAssignment)
 class StudentAssignmentAdmin(admin.ModelAdmin):
     list_display = ('assignment', 'profile', 'reviewed', 'score', 'accepted')
-    list_filter = ('assignment', 'profile', 'accepted', 'reviewed')
+    list_filter = ('assignment', 'accepted', 'reviewed')
     search_fields = ('assignment', 'profile')
     date_hierarchy = 'completed_date'
     ordering = ('accepted', '-completed_date')
