@@ -17,5 +17,5 @@ class StudentAssignmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StudentAssignment
-        exclude = ('id', 'profile')
+        exclude = ('profile',)
         read_only_fields = ('reviewe', 'reviewed', 'accepted', 'completed_date', 'score')
