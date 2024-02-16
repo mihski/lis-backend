@@ -66,13 +66,13 @@ class UserManager(BaseUserManager):
 
         user.is_superuser = True
         user.save(using=self._db)
-        
+
         return user
 
 
 class User(AbstractBaseUser, PermissionsMixin, LifecycleModel):
     role = models.ForeignKey(UserRole, on_delete=models.SET_NULL, null=True)
-    
+
     username = models.CharField(max_length=10, unique=True)
     email = models.EmailField(max_length=255, unique=True)
     phone = models.CharField(max_length=255)
@@ -86,6 +86,9 @@ class User(AbstractBaseUser, PermissionsMixin, LifecycleModel):
 
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS = ["email"]
+
+    def get_full_name(self):
+        return f'{self.last_name} {self.first_name} {self.middle_name}'
 
     @property
     def is_staff(self):

@@ -15,23 +15,24 @@ class Assignment(models.Model):
 
 
 class StudentAssignment(models.Model):
-    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE)
-    answer = models.TextField()
-    completed_date = models.DateTimeField(null=True, blank=True, auto_now=True)
+    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, verbose_name='задание')
+    answer = models.TextField(verbose_name='ответ')
+    completed_date = models.DateTimeField(null=True, blank=True, auto_now=True, verbose_name='дата выполнения')
     profile = models.ForeignKey(
         "accounts.Profile",
         on_delete=models.CASCADE,
-        related_name="assignments"
+        related_name="assignments",
+        verbose_name='профиль'
     )
-    score = models.IntegerField(null=True, blank=True)
-    reviewe = models.TextField(null=True, blank=True)
-    reviewed = models.BooleanField(default=False)
-    accepted = models.BooleanField(default=False)
+    score = models.IntegerField(null=True, blank=True, verbose_name='балл')
+    reviewe = models.TextField(null=True, blank=True, verbose_name='отзыв')
+    reviewed = models.BooleanField(default=False, verbose_name='проверено')
+    accepted = models.BooleanField(default=False, verbose_name='принято')
 
     def __str__(self):
         return f'{self.profile} - {self.assignment}'
 
     class Meta:
         unique_together = ('assignment', 'profile')
-        verbose_name = 'Student assignment'
+        verbose_name = 'Студенческое задание'
         verbose_name_plural = 'Student assignments'
