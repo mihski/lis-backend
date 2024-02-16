@@ -2,16 +2,16 @@ from django.db import models
 
 
 class Assignment(models.Model):
-    title = models.CharField(max_length=100)
-    description = models.TextField()
-    max_score = models.IntegerField(null=False, blank=False)
+    title = models.CharField(max_length=100,  verbose_name='название')
+    description = models.TextField( verbose_name='описание')
+    max_score = models.IntegerField(null=False, blank=False,  verbose_name='максимальный балл')
 
     def __str__(self):
         return self.title
 
     class Meta:
-        verbose_name = 'Assignment'
-        verbose_name_plural = 'Assignments'
+        verbose_name = 'Итоговое задание'
+        verbose_name_plural = 'Итоговые задания'
 
 
 class StudentAssignment(models.Model):
