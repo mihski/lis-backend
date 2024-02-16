@@ -24,9 +24,9 @@ class StudentAssignmentAdmin(admin.ModelAdmin):
     def accept_student_assignment(self, request, queryset):
         queryset.update(accepted=True)
 
-    accept_student_assignment.short_description = 'Accept selected student assignments'
+    accept_student_assignment.short_description = 'Принять выбранные студенческие задания'
 
     def reject_student_assignment(self, request, queryset):
         queryset.update(accepted=False)
 
-    reject_student_assignment.short_description = 'Reject selected student assignments'
+    reject_student_assignment.short_description = 'Отклонить выбранные студенческие задания'
