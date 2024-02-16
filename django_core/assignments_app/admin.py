@@ -20,7 +20,7 @@ class StudentAssignmentAdmin(admin.ModelAdmin):
     def full_name(self, obj):
         return obj.profile.user.get_full_name()
 
-    full_name.short_description = 'ФИО'
+    full_name.short_description = 'Профиль'
 
     def accept_student_assignment(self, request, queryset):
         queryset.update(accepted=True)
