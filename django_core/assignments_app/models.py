@@ -35,4 +35,4 @@ class StudentAssignment(models.Model):
     class Meta:
         unique_together = ('assignment', 'profile')
         verbose_name = 'Студенческое задание'
-        verbose_name_plural = 'Student assignments'
+        verbose_name_plural = 'Студенческие задания'
