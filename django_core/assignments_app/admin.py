@@ -5,6 +5,7 @@ from .models import Assignment, StudentAssignment
 @admin.register(Assignment)
 class AssignmentAdmin(admin.ModelAdmin):
     list_display = ('title', 'description')
+    search_fields = ('title',)
 
 
 @admin.register(StudentAssignment)
