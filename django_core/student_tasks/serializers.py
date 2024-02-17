@@ -1,5 +1,5 @@
 from rest_framework import serializers
-
+from lessons.models import ProfileLessonChunk
 from lessons.structures.tasks import TaskBlock
 from accounts.models import Profile
 from lessons.models import Unit
@@ -40,5 +40,16 @@ class StudentTaskAnswerSerializer(serializers.ModelSerializer):
         instance.profile = profile
         instance.is_correct = is_correct or profile.all_tasks_correct
         instance.save()
+
+        ############
+
+        profile_lesson_chunk = ProfileLessonChunk.objects.filter(local_id=instance.task.local_id).first()
+        if profile_lesson_chunk is not None:
+            content = profile_lesson_chunk.content
+            content['answer'] = validated_data['answer']
+            profile_lesson_chunk.content = content
+            profile_lesson_chunk.save()
+
+        ###########
 
         return instance
