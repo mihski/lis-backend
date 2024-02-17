@@ -43,7 +43,7 @@ class StudentTaskAnswerSerializer(serializers.ModelSerializer):
 
         ############
 
-        profile_lesson_chunk = ProfileLessonChunk.objects.filter(local_id=instance.task.local_id).first()
+        profile_lesson_chunk = ProfileLessonChunk.objects.filter(unit_id=instance.task.local_id).first()
         if profile_lesson_chunk is not None:
             content = profile_lesson_chunk.content
             content['answer'] = validated_data['answer']

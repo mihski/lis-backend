@@ -21,7 +21,7 @@ app_name = "lessons"
 router = routers.SimpleRouter()
 router.register("map", NewCourseMapViewSet)
 router.register("lessons", LessonDetailViewSet)
-router.register("saved_lesson", ProfileLessonViewSet)
+#router.register("saved_lesson", ProfileLessonViewSet)
 router.register("lessons", LessonActionsViewSet)
 router.register("npc", NPCViewSet)
 router.register("locations", LocationViewSet)
@@ -33,5 +33,6 @@ router.register("questions", QuestionViewSet)
 urlpatterns = [
     *router.urls,
     path("callbacks/<str:pk>/", CallbackAPIView.as_view()),
+    path("saved-lesson/<str:pk>/", ProfileLessonViewSet.as_view()),
     path("course-name/<int:pk>/", CourseNameAPIView.as_view())
 ]

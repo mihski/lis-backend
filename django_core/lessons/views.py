@@ -8,13 +8,14 @@ from rest_framework import (
     views,
     generics
 )
+from django.shortcuts import get_object_or_404
+
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.request import Request
 from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
 from django.conf import settings
 from django.db import transaction
-
 from django.forms.models import model_to_dict
 from accounts.models import Profile
 from accounts.serializers import (
@@ -229,15 +230,15 @@ class LessonDetailViewSet(
         except Exception:
             profile_lesson = ProfileLesson.objects.create(player=profile, lesson_name=lesson.name,
                                                           locales=lesson.content.locale, location=first_location_id,
-                                                          npc=first_npc_id, local_id=lesson.local_id)
+                                                          npc=first_npc_id, lesson_id=lesson.local_id)
 
-        if from_unit_id and ProfileLessonChunk.objects.filter(local_id=from_unit_id).first() is None:
+        if from_unit_id and ProfileLessonChunk.objects.filter(unit_id=from_unit_id).first() is None:
             unit = Unit.objects.get(local_id=from_unit_id)
-            ProfileLessonChunk.objects.create(lesson=profile_lesson, content=model_to_dict(unit), local_id=from_unit_id)
+            ProfileLessonChunk.objects.create(lesson=profile_lesson, content=model_to_dict(unit), unit_id=from_unit_id, type=unit.type)
         for unit in unit_chunk:
-            if unit['type'] != 218 and ProfileLessonChunk.objects.filter(local_id=unit['id']).first() is None:
+            if unit['type'] != 218 and ProfileLessonChunk.objects.filter(unit_id=unit['id']).first() is None:
                 ProfileLessonChunk.objects.create(lesson=profile_lesson, content=unit, type=unit['type'],
-                                                  local_id=unit['id'])
+                                                  unit_id=unit['id'])
 
                 ###############################
 
@@ -377,17 +378,16 @@ class NewCourseMapViewSet(
     serializer_class = NewCourseMapSerializer
 
 
-class ProfileLessonViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class = SavedProfileLessonSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    queryset = ProfileLesson.objects.prefetch_related('chunk')
-    lookup_field = "local_id"
 
-    def get_queryset(self):
-        profile = self.request.user.profile
+class ProfileLessonViewSet(views.APIView):
+    def get(self, request, pk):
+        try:
+            profile = request.user.profile.get(course=1)
+            lesson = ProfileLesson.objects.filter(player=profile,lesson_id=pk).first()
+            serializer = SavedProfileLessonSerializer(lesson)
+            return Response(serializer.data)
+        except ProfileLesson.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        local_id = self.kwargs.get("local_id")
-
-        queryset = ProfileLesson.objects.filter(player=profile, local_id=local_id)
-
-        return queryset

@@ -658,7 +658,7 @@ class NewCourseMapSerializer(serializers.ModelSerializer):
 class SavedProfileLessonChunkSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProfileLessonChunk
-        fields = ['id', 'type', 'content', 'local_id']
+        fields = ['unit_id','type', 'content']
 
 
 class SavedProfileLessonSerializer(serializers.ModelSerializer):
@@ -666,4 +666,6 @@ class SavedProfileLessonSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProfileLesson
-        fields = ['id', 'player', 'location', 'npc', 'lesson_name', 'lesson_number', 'quest_number', 'locales', 'chunk']
+        fields = ['id',  'location', 'npc', 'lesson_name', 'lesson_number', 'quest_number', 'locales', 'chunk']
+
+
