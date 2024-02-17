@@ -315,8 +315,8 @@ class ProfileCourseDone(LifecycleModel):
 
 class ProfileLesson(models.Model):
     player = models.ForeignKey("accounts.Profile", on_delete=models.CASCADE)
-    location = models.ForeignKey(Location, on_delete=models.CASCADE)
-    npc = models.ForeignKey(NPC, on_delete=models.CASCADE)
+    location = models.IntegerField(default=1)
+    npc = models.IntegerField(default=1)
     lesson_name = models.CharField(max_length=32, default="")
     lesson_number = models.IntegerField(default=0)
     quest_number = models.IntegerField(default=0)
