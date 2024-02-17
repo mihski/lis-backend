@@ -34,6 +34,7 @@ from lessons.models import (
     ProfileCourseDone,
     ProfileLesson,
     ProfileLessonChunk
+
 )
 from lessons.serializers import (
     NPCSerializer,
@@ -47,6 +48,7 @@ from lessons.serializers import (
     ReviewSerializer,
     LessonFinishSerializer,
     NewCourseMapSerializer,
+    SavedProfileLessonSerializer
 )
 from lessons.utils import process_affect, check_entity_is_accessible
 from lessons.exceptions import (
@@ -227,7 +229,7 @@ class LessonDetailViewSet(
         except Exception:
             profile_lesson = ProfileLesson.objects.create(player=profile, lesson_name=lesson.name,
                                                           locales=lesson.content.locale, location=first_location_id,
-                                                          npc=first_npc_id)
+                                                          npc=first_npc_id, local_id=lesson.local_id)
 
         if from_unit_id and ProfileLessonChunk.objects.filter(local_id=from_unit_id).first() is None:
             unit = Unit.objects.get(local_id=from_unit_id)
@@ -236,8 +238,6 @@ class LessonDetailViewSet(
             if unit['type'] != 218 and ProfileLessonChunk.objects.filter(local_id=unit['id']).first() is None:
                 ProfileLessonChunk.objects.create(lesson=profile_lesson, content=unit, type=unit['type'],
                                                   local_id=unit['id'])
-
-
 
                 ###############################
 
@@ -375,3 +375,19 @@ class NewCourseMapViewSet(
 
     queryset = Course.objects.prefetch_related("lessons", "quests", "lessons__unit_set")
     serializer_class = NewCourseMapSerializer
+
+
+class ProfileLessonViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = SavedProfileLessonSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = ProfileLesson.objects.prefetch_related('chunk')
+    lookup_field = "id"
+
+    def get_queryset(self):
+        profile = self.request.user.profile
+
+        local_id = self.kwargs.get("local_id")
+
+        queryset = ProfileLesson.objects.filter(player=profile, local_id=local_id)
+
+        return queryset

@@ -23,7 +23,9 @@ from lessons.models import (
     UnitAffect,
     EmailTypes,
     ProfileCourseDone,
-    ProfileLessonDone
+    ProfileLessonDone,
+    ProfileLesson,
+    ProfileLessonChunk
 )
 from lessons.structures import (
     BlockType,
@@ -653,3 +655,15 @@ class NewCourseMapSerializer(serializers.ModelSerializer):
         fields = ['id', 'lessons', 'quests', 'branchings', 'name', 'description', 'entry', 'locale', 'is_editable']
 
 
+class SavedProfileLessonChunkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfileLessonChunk
+        fields = ['id', 'type', 'content', 'local_id']
+
+
+class SavedProfileLessonSerializer(serializers.ModelSerializer):
+    chunk = SavedProfileLessonChunkSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ProfileLesson
+        fields = ['id', 'player', 'location', 'npc', 'lesson_name', 'lesson_number', 'quest_number', 'locales', 'chunk']

@@ -12,7 +12,8 @@ from lessons.views import (
     ReviewViewSet,
     QuestionViewSet,
     CallbackAPIView,
-    NewCourseMapViewSet
+    NewCourseMapViewSet,
+    ProfileLessonViewSet
 )
 
 app_name = "lessons"
@@ -20,6 +21,7 @@ app_name = "lessons"
 router = routers.SimpleRouter()
 router.register("map", NewCourseMapViewSet)
 router.register("lessons", LessonDetailViewSet)
+router.register("saved_lesson", ProfileLessonViewSet)
 router.register("lessons", LessonActionsViewSet)
 router.register("npc", NPCViewSet)
 router.register("locations", LocationViewSet)

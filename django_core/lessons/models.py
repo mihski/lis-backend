@@ -321,10 +321,11 @@ class ProfileLesson(models.Model):
     lesson_number = models.IntegerField(default=0)
     quest_number = models.IntegerField(default=0)
     locales = models.JSONField(default=default_locale)
+    local_id = models.CharField(max_length=64, default="", blank=True)  # lesson id
 
 
 class ProfileLessonChunk(models.Model):
-    lesson = models.ForeignKey(ProfileLesson, on_delete=models.CASCADE)
+    lesson = models.ForeignKey(ProfileLesson, on_delete=models.CASCADE, related_name='chunk')
     type = models.IntegerField(default=0)
     content = models.JSONField(default={})
-    local_id = models.CharField(max_length=64, default="", blank=True)
+    local_id = models.CharField(max_length=64, default="", blank=True)  # unit id
