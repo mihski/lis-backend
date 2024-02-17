@@ -379,7 +379,7 @@ class NewCourseMapViewSet(
 
 
 
-class ProfileLessonViewSet(views.APIView):
+class ProfileLessonAPIView(views.APIView):
     def get(self, request, pk):
         try:
             profile = request.user.profile.get(course=1)

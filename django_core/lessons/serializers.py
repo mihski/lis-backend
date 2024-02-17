@@ -658,6 +658,7 @@ class NewCourseMapSerializer(serializers.ModelSerializer):
 class SavedProfileLessonChunkSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProfileLessonChunk
+        ordering = ['id']
         fields = ['unit_id','type', 'content']
 
 
