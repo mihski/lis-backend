@@ -7,7 +7,6 @@ from lessons.tasks import upload_profile_course_finished_gsheets
 
 User = get_user_model()
 
-
 GENDERS = (
     ("any", "Любой"),
     ("male", "Мужской"),
@@ -94,7 +93,8 @@ class Branching(EditorBlockModel):
         Ветвление бывает: OneToMany и ManyToOne
     """
     course = models.ForeignKey(Course, null=True, on_delete=models.SET_NULL, related_name="branchings")
-    quest = models.ForeignKey(Quest, default=None, null=True, blank=True, on_delete=models.SET_NULL, related_name="branchings")
+    quest = models.ForeignKey(Quest, default=None, null=True, blank=True, on_delete=models.SET_NULL,
+                              related_name="branchings")
     type = models.IntegerField()
     content = models.JSONField()
 
@@ -174,6 +174,7 @@ class NPC(models.Model):
     """
         Таблица БД для хранения информации об NPC
     """
+
     class NPCGenders(models.TextChoices):
         MALE = "male"
         FEMALE = "female"
@@ -310,3 +311,20 @@ class ProfileCourseDone(LifecycleModel):
 
     def __str__(self) -> str:
         return repr(self)
+
+
+class ProfileLesson(models.Model):
+    player = models.ForeignKey("accounts.Profile", on_delete=models.CASCADE)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE)
+    npc = models.ForeignKey(NPC, on_delete=models.CASCADE)
+    lesson_name = models.CharField(max_length=32, default="")
+    lesson_number = models.IntegerField(default=0)
+    quest_number = models.IntegerField(default=0)
+    locales = models.JSONField(default=default_locale)
+    local_id = models.CharField(max_length=64, default="", blank=True)
+
+
+class ProfileLessonChunk(models.Model):
+    lesson = models.ForeignKey(ProfileLesson, on_delete=models.CASCADE)
+    type = models.IntegerField(default=0)
+    content = models.JSONField(default={})

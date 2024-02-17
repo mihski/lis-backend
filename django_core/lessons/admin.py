@@ -46,7 +46,7 @@ class ReviewAdmin(admin.ModelAdmin):
 
 @admin.register(models.Branching)
 class BranchingAdmin(admin.ModelAdmin):
-    list_display = ("id","local_id", "course", "quest", "type", "content")
+    list_display = ("id", "local_id", "course", "quest", "type", "content")
     list_filter = ("course", "quest", "type")
     search_fields = (
         "local_id",
@@ -143,3 +143,13 @@ class LessonBlockAdmin(admin.ModelAdmin):
     inlines = [LessonInline]
     list_display = ("id", "entry")
     search_fields = ("id", "entry")
+
+
+@admin.register(models.ProfileLessonChunk)
+class LessonBlockAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(models.ProfileLesson)
+class LessonBlockAdmin(admin.ModelAdmin):
+    pass

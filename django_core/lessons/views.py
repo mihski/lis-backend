@@ -15,6 +15,7 @@ from drf_yasg.utils import swagger_auto_schema
 from django.conf import settings
 from django.db import transaction
 
+from django.forms.models import model_to_dict
 from accounts.models import Profile
 from accounts.serializers import (
     ProfileSerializerWithoutLookForms,
@@ -30,7 +31,9 @@ from lessons.models import (
     ProfileLessonDone,
     Unit,
     ProfileBranchingChoice,
-    ProfileCourseDone
+    ProfileCourseDone,
+    ProfileLesson,
+    ProfileLessonChunk
 )
 from lessons.serializers import (
     NPCSerializer,
@@ -85,7 +88,7 @@ class CourseMapViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
         "quests__lessons", "quests__branchings",
     )
     serializer_class = CourseMapSerializer
-    permission_classes = (permissions.IsAuthenticated, )
+    permission_classes = (permissions.IsAuthenticated,)
 
 
 class CourseNameAPIView(generics.RetrieveAPIView):
@@ -118,8 +121,8 @@ class BranchSelectViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mi
             raise BlockEntityIsUnavailableException("Finish previous lessons to select branching")
 
         if ProfileBranchingChoice.objects.filter(
-            branching=branching,
-            profile=self.request.user.profile.get(course=1)
+                branching=branching,
+                profile=self.request.user.profile.get(course=1)
         ).exists():
             raise BranchingAlreadyChosenException()
 
@@ -157,8 +160,8 @@ class LessonDetailViewSet(
 
     def _check_is_enough_energy(self, profile: Profile, lesson: Lesson) -> bool:
         if (
-            check_ultimate_is_active(profile)
-            or not settings.CHECK_ENERGY_ON_LESSON_ENTER
+                check_ultimate_is_active(profile)
+                or not settings.CHECK_ENERGY_ON_LESSON_ENTER
         ):
             return True
         return profile.resources.energy_amount >= lesson.energy_cost
@@ -216,6 +219,23 @@ class LessonDetailViewSet(
                 "lesson_number": course_tree.get_lesson_number(profile, lesson) - 1,
             })
 
+        ##########################
+        try:
+            profile_lesson = ProfileLesson.objects.get(player=profile, lesson_name=lesson.name)
+        except Exception:
+            profile_lesson = ProfileLesson.objects.create(player=profile, lesson_name=lesson.name,
+                                                          locales=lesson.content.locale, location=first_location_id,
+                                                          npc=first_npc_id)
+        if from_unit_id:
+            unit = Unit.objects.get(local_id=from_unit_id)
+            ProfileLessonChunk.objects.create(lesson=profile_lesson, content=model_to_dict(unit), local_id=from_unit_id)
+        for unit in unit_chunk:
+            if unit['type'] != 218 and ProfileLessonChunk.objects.filter(local_id=unit['id']).first() is None:
+                ProfileLessonChunk.objects.create(lesson=profile_lesson, content=unit, type=unit['type'],
+                                                  local_id=unit['id'])
+
+        ###############################
+
         data = {**lesson_data, "player": player.data, "chunk": unit_chunk}
         return Response(data, status=status.HTTP_200_OK)
 
@@ -241,7 +261,7 @@ class QuestionViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
 class LessonActionsViewSet(viewsets.GenericViewSet):
     queryset = Lesson.objects.select_related("course", "quest").prefetch_related("unit_set")
     serializer_class = LessonFinishSerializer
-    permission_classes = (permissions.IsAuthenticated, )
+    permission_classes = (permissions.IsAuthenticated,)
     lookup_field = "local_id"
 
     def _get_scientific_bonuses(self, profile: Profile, lesson: Lesson) -> tuple[int, int]:
@@ -290,7 +310,7 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
         # return intersection == course_lessons
 
         # FIXME: hardcode
-        last_lessons_local_ids= [
+        last_lessons_local_ids = [
             "n_1661254624645",
             "n_1661254301354"
         ]
