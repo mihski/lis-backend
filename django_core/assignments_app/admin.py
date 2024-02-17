@@ -18,7 +18,10 @@ class StudentAssignmentAdmin(admin.ModelAdmin):
     actions = ['accept_student_assignment', 'reject_student_assignment']
 
     def full_name(self, obj):
-        return obj.profile.user.get_full_name()
+        try:
+            return obj.profile.user.get_full_name()
+        except Exception:
+            return
 
     full_name.short_description = 'Профиль'
 

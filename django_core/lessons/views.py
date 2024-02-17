@@ -46,6 +46,7 @@ from lessons.serializers import (
     QuestionSerializer,
     ReviewSerializer,
     LessonFinishSerializer,
+    NewCourseMapSerializer,
 )
 from lessons.utils import process_affect, check_entity_is_accessible
 from lessons.exceptions import (
@@ -360,3 +361,14 @@ class CallbackAPIView(views.APIView):
         process_affect(affect, request.user.profile.get(course_id=1))
 
         return Response({"status": "ok"}, status=status.HTTP_200_OK)
+
+
+class NewCourseMapViewSet(
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    queryset = Course.objects.prefetch_related("lessons", "quests", "lessons__unit_set")
+    serializer_class = NewCourseMapSerializer
+
