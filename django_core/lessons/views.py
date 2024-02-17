@@ -381,7 +381,7 @@ class ProfileLessonViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = SavedProfileLessonSerializer
     permission_classes = [permissions.IsAuthenticated]
     queryset = ProfileLesson.objects.prefetch_related('chunk')
-    lookup_field = "id"
+    lookup_field = "local_id"
 
     def get_queryset(self):
         profile = self.request.user.profile
