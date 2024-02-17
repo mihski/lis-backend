@@ -66,6 +66,7 @@ from resources.exceptions import (
 )
 from resources.models import EmotionData
 from resources.utils import check_ultimate_is_active
+from student_tasks.models import StudentTaskAnswer
 
 
 class NPCViewSet(viewsets.ReadOnlyModelViewSet):
@@ -236,7 +237,9 @@ class LessonDetailViewSet(
                 ProfileLessonChunk.objects.create(lesson=profile_lesson, content=unit, type=unit['type'],
                                                   local_id=unit['id'])
 
-        ###############################
+
+
+                ###############################
 
         data = {**lesson_data, "player": player.data, "chunk": unit_chunk}
         return Response(data, status=status.HTTP_200_OK)
@@ -372,4 +375,3 @@ class NewCourseMapViewSet(
 
     queryset = Course.objects.prefetch_related("lessons", "quests", "lessons__unit_set")
     serializer_class = NewCourseMapSerializer
-
