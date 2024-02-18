@@ -234,7 +234,8 @@ class LessonDetailViewSet(
 
         if from_unit_id and ProfileLessonChunk.objects.filter(unit_id=from_unit_id).first() is None:
             unit = Unit.objects.get(local_id=from_unit_id)
-            ProfileLessonChunk.objects.create(lesson=profile_lesson, content=model_to_dict(unit), unit_id=from_unit_id, type=unit.type)
+            ProfileLessonChunk.objects.create(lesson=profile_lesson, content=model_to_dict(unit), unit_id=from_unit_id,
+                                              type=unit.type)
         for unit in unit_chunk:
             if unit['type'] != 218 and ProfileLessonChunk.objects.filter(unit_id=unit['id']).first() is None:
                 ProfileLessonChunk.objects.create(lesson=profile_lesson, content=unit, type=unit['type'],
@@ -378,16 +379,17 @@ class NewCourseMapViewSet(
     serializer_class = NewCourseMapSerializer
 
 
-
 class ProfileLessonAPIView(views.APIView):
+    @swagger_auto_schema(
+        responses={200: SavedProfileLessonSerializer()}
+    )
     def get(self, request, pk):
         try:
             profile = request.user.profile.get(course=1)
-            lesson = ProfileLesson.objects.filter(player=profile,lesson_id=pk).first()
+            lesson = ProfileLesson.objects.filter(player=profile, lesson_id=pk).first()
             serializer = SavedProfileLessonSerializer(lesson)
             return Response(serializer.data)
         except ProfileLesson.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
