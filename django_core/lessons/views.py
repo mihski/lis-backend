@@ -235,7 +235,7 @@ class LessonDetailViewSet(
                                                           locales=lesson.content.locale, location=first_location_id,
                                                           npc=first_npc_id, lesson_id=lesson.local_id)
 
-        if from_unit_id and ProfileLessonChunk.objects.filter(unit_id=from_unit_id).first() is None:
+        if from_unit_id and ProfileLessonChunk.objects.filter(unit_id=from_unit_id, lesson=profile_lesson).first() is None:
             unit = Unit.objects.get(local_id=from_unit_id)
             ProfileLessonChunk.objects.create(lesson=profile_lesson, content=model_to_dict(unit), unit_id=from_unit_id,
                                               type=unit.type)
