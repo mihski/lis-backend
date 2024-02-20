@@ -251,6 +251,8 @@ class LessonDetailViewSet(
             if energy:
                 resource.energy_amount += int(energy)
 
+            resource.save()
+
         for unit in unit_chunk:
             if unit['type'] != 218 and ProfileLessonChunk.objects.filter(unit_id=unit['id']).first() is None:
                 ProfileLessonChunk.objects.create(lesson=profile_lesson, content=unit, type=unit['type'],
