@@ -573,6 +573,7 @@ class ProfileLessonSerializer(serializers.ModelSerializer):
         return False
 
     class Meta:
+
         model = Lesson
         fields = [
             'id',
@@ -607,6 +608,7 @@ class ProfileBranchingSerializer(serializers.ModelSerializer):
         return False
 
     class Meta:
+        ordering = ['id']
         model = Branching
         fields = ['id', 'local_id', 'course', 'quest', 'x', 'y', 'type', 'content', 'selected']
 
@@ -659,14 +661,18 @@ class SavedProfileLessonChunkSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProfileLessonChunk
         ordering = ['id']
-        fields = ['unit_id','type', 'content']
+        fields = ['unit_id', 'type', 'content']
 
 
 class SavedProfileLessonSerializer(serializers.ModelSerializer):
-    chunk = SavedProfileLessonChunkSerializer(many=True, read_only=True)
+    chunk = serializers.SerializerMethodField()
 
     class Meta:
         model = ProfileLesson
-        fields = ['id',  'location', 'npc', 'lesson_name', 'lesson_number', 'quest_number', 'locales', 'chunk']
+        fields = ['id', 'location', 'npc', 'lesson_name', 'lesson_number', 'quest_number', 'locales', 'chunk']
 
+    def get_chunk(self, obj):
+        sorted_chunks = obj.chunk.order_by('id')
+        serializer = SavedProfileLessonChunkSerializer(sorted_chunks, many=True)
 
+        return serializer.data
