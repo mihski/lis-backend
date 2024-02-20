@@ -22,6 +22,7 @@ from accounts.models import Profile
 from accounts.serializers import (
     ProfileSerializerWithoutLookForms,
 )
+from resources.models import Resources
 from lessons.models import (
     NPC,
     Location,
@@ -238,6 +239,18 @@ class LessonDetailViewSet(
             unit = Unit.objects.get(local_id=from_unit_id)
             ProfileLessonChunk.objects.create(lesson=profile_lesson, content=model_to_dict(unit), unit_id=from_unit_id,
                                               type=unit.type)
+
+            # increase/decrease money and energy
+
+            resource = Resources.objects.get(user=profile)
+
+            money = unit.content.get("money")
+            energy = unit.content.get("energy")
+            if money:
+                resource.money_amount += int(money)
+            if energy:
+                resource.energy_amount += int(energy)
+
         for unit in unit_chunk:
             if unit['type'] != 218 and ProfileLessonChunk.objects.filter(unit_id=unit['id']).first() is None:
                 ProfileLessonChunk.objects.create(lesson=profile_lesson, content=unit, type=unit['type'],
