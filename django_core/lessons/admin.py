@@ -147,7 +147,7 @@ class LessonBlockAdmin(admin.ModelAdmin):
 
 @admin.register(models.ProfileLessonChunk)
 class LessonBlockAdmin(admin.ModelAdmin):
-    pass
+    search_fields = ("id", "unit_id")
 
 
 @admin.register(models.ProfileLesson)
