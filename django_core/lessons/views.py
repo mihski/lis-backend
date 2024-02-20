@@ -9,6 +9,7 @@ from rest_framework import (
     generics
 )
 from django.shortcuts import get_object_or_404
+from django.db.models import Prefetch
 
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.request import Request
@@ -25,6 +26,7 @@ from lessons.models import (
     NPC,
     Location,
     Lesson,
+    Quest,
     Course,
     Branching,
     Review,
@@ -375,7 +377,12 @@ class NewCourseMapViewSet(
 ):
     permission_classes = (permissions.IsAuthenticated,)
 
-    queryset = Course.objects.prefetch_related("lessons", "quests", "lessons__unit_set")
+    queryset = Course.objects.prefetch_related(
+        Prefetch('lessons', queryset=Lesson.objects.order_by('id')),
+        Prefetch('quests', queryset=Quest.objects.order_by('id')),
+        Prefetch('branchings', queryset=Branching.objects.order_by('id')),
+        "lessons__unit_set", "quests__lessons", "quests__branchings",
+    )
     serializer_class = NewCourseMapSerializer
 
 
