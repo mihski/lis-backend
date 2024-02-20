@@ -243,15 +243,18 @@ class LessonDetailViewSet(
             # increase/decrease money and energy
 
             resource = Resources.objects.get(user=profile)
+            print(resource)
 
-            money = unit.content.get("money")
-            energy = unit.content.get("energy")
-            if money:
-                resource.money_amount += int(money)
-            if energy:
-                resource.energy_amount += int(energy)
+            money = unit.content.get("money", 0)
+            energy = unit.content.get("energy", 0)
+            print(money, energy)
+            resource.money_amount += int(money)
+
+            resource.energy_amount += int(energy)
 
             resource.save()
+
+            print(resource.money_amount, resource.energy_amount)
 
         for unit in unit_chunk:
             if unit['type'] != 218 and ProfileLessonChunk.objects.filter(unit_id=unit['id']).first() is None:
