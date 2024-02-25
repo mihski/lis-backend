@@ -600,12 +600,22 @@ class ProfileBranchingSerializer(serializers.ModelSerializer):
 
     # TODO: добавить два типа бранчей
 
-    def get_selected(self, lesson: Lesson) -> bool:
+    def get_selected(self, branching: Branching) -> bool:
         profile = self.context['request'].user.profile.get()
-        lesson_done = ProfileBranchingChoice.objects.filter(profile=profile, branching=lesson).first()
-        if lesson_done:
-            return True
-        return False
+
+        if branching.type in (2, 3):
+            branching_choice = ProfileBranchingChoice.objects.filter(profile=profile, branching=branching).first()
+            if branching_choice:
+                return branching_choice.choose_local_id
+
+            return False
+
+        if branching.content['parameter'] == 2:
+
+            return branching.content['next'][profile.gender]
+        if branching.content['parameter'] == 1:
+            return branching.content['next'][profile.laboratory]
+
 
     class Meta:
         ordering = ['id']
