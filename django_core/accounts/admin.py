@@ -7,6 +7,7 @@ from accounts import models
 
 @admin.register(models.User)
 class UserAdmin(BaseUserAdmin):
+    change_form_template = 'loginas/change_form.html'
     fieldsets = (
         (None, {'fields': ('email', 'password', 'username')}),
         ('Permissions', {'fields': ('is_active', 'is_superuser',

@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 from datetime import timedelta, datetime
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("DJANGO_SECRET")
@@ -41,6 +40,7 @@ INSTALLED_APPS = [
     "constance",
     "drf_yasg",
     "import_export",
+    "loginas",
 
     # custom apps
     "accounts",
@@ -112,12 +112,10 @@ EMAIL_USE_SSL = False
 EMAIL_RECIPIENTS = os.getenv("EMAIL_RECIPIENTS", "").split(",")
 EMAIL_TECH = os.getenv("EMAIL_TECH", "").split(",")
 
-
 # Celery configurations
 CELERY_BROKER_URL = "redis://redis:6379/0"
 CELERY_RESULT_BACKEND = "redis://redis:6379/0"
 CELERY_TIMEZONE = "Europe/Moscow"
-
 
 # Django caches configurations
 CACHES = {
@@ -132,7 +130,6 @@ CACHES = {
     }
 }
 
-
 # Constance configurations
 CONSTANCE_REDIS_CONNECTION = {
     "host": "redis",
@@ -140,10 +137,8 @@ CONSTANCE_REDIS_CONNECTION = {
     "db": 2,
 }
 
-
 # Authorizations configs
 AUTH_USER_MODEL = "accounts.User"
-
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -205,7 +200,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 # Jazzmin configuration
 JAZZMIN_SETTINGS = {
     "topmenu_links": [
-        {"name": "Редактор курсов",  "url": "/editor/"},
+        {"name": "Редактор курсов", "url": "/editor/"},
     ]
 }
 
@@ -343,16 +338,17 @@ GOOGLE_CREDENTIALS = Path(BASE_DIR, "gdrive_creds.json")
 GOOGLE_SPREADSHEET_ID = os.getenv("GOOGLE_SPREADSHEET_ID", "")
 
 SWAGGER_SETTINGS = {
-   'SECURITY_DEFINITIONS': {
-      'Basic': {
+    'SECURITY_DEFINITIONS': {
+        'Basic': {
             'type': 'basic'
-      },
-      'Bearer': {
+        },
+        'Bearer': {
             'type': 'apiKey',
             'name': 'Authorization',
             'in': 'header'
-      }
-   }
+        }
+    }
 }
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+LOGINAS_REDIRECT_URL = '/api/swagger'

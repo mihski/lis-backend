@@ -17,6 +17,7 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    path('admin/', include('loginas.urls')),
     path("admin/", admin.site.urls),
     path("api/", include("accounts.urls", namespace="accounts")),
     path("api/", include("resources.urls", namespace="resources")),
