@@ -1,8 +1,8 @@
 from rest_framework import viewsets, mixins, permissions
-from rest_framework.exceptions import APIException
 from accounts.models import Profile
 from .models import Assignment, StudentAssignment
 from .serializers import AssignmentSerializer, StudentAssignmentSerializer
+from .exceptions import AssignmentNotFoundException
 
 
 class AssignmentListViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
@@ -32,5 +32,5 @@ class StudentAssignmentViewSet(
         try:
             obj = self.get_queryset().get(pk=pk)
         except StudentAssignment.DoesNotExist:
-            raise APIException(detail="StudentAssignment does not exist", code="not_found")
+            raise AssignmentNotFoundException(f" Assignment with id: {pk} not found")
         return obj
