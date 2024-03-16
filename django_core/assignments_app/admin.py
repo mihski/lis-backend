@@ -12,7 +12,7 @@ class AssignmentAdmin(admin.ModelAdmin):
 class StudentAssignmentAdmin(admin.ModelAdmin):
     list_display = ('assignment', 'username', 'reviewed', 'score', 'accepted')
     list_filter = ('assignment', 'accepted', 'reviewed')
-    search_fields = ('profile__user__username')
+    search_fields = ('profile__user__username',)
 
     date_hierarchy = 'completed_date'
     ordering = ('accepted', '-completed_date')
