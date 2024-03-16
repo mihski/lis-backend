@@ -10,20 +10,21 @@ class AssignmentAdmin(admin.ModelAdmin):
 
 @admin.register(StudentAssignment)
 class StudentAssignmentAdmin(admin.ModelAdmin):
-    list_display = ('assignment', 'full_name', 'reviewed', 'score', 'accepted')
+    list_display = ('assignment', 'username', 'reviewed', 'score', 'accepted')
     list_filter = ('assignment', 'accepted', 'reviewed')
-    search_fields = ('profile__user__last_name', 'profile__user__first_name', 'profile__user__middle_name')
+    search_fields = ('profile__user__username')
+
     date_hierarchy = 'completed_date'
     ordering = ('accepted', '-completed_date')
     actions = ['accept_student_assignment', 'reject_student_assignment']
 
-    def full_name(self, obj):
+    def username(self, obj):
         try:
-            return obj.profile.user.get_full_name()
+            return obj.profile.user.username
         except Exception:
             return
 
-    full_name.short_description = 'Профиль'
+    username.short_description = 'Профиль'
 
     def accept_student_assignment(self, request, queryset):
         queryset.update(accepted=True)
