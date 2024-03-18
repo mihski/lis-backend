@@ -329,19 +329,11 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
         )
 
     def _check_course_finished(self, profile: Profile, lesson: Lesson) -> bool:
-        # course_lessons = CourseLessonsTree(course).get_map_for_profile(profile)
-        # course_lessons = set(filter(lambda entity: isinstance(entity, Lesson), course_lessons))
-        #
-        # finished_lessons = set(ProfileLessonDone.objects.select_related("lesson").filter(profile=profile))
-        # finished_lessons = set([x.lesson for x in finished_lessons])
-        #
-        # intersection = course_lessons & finished_lessons
-        # return intersection == course_lessons
-
         # FIXME: hardcode
         last_lessons_local_ids = [
             "n_1661254624645",
-            "n_1661254301354"
+            "n_1661254301354",
+            "n_1702404198399"
         ]
         return lesson.local_id in last_lessons_local_ids
 

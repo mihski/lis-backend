@@ -1,7 +1,7 @@
 from accounts.models import Profile
 from accounts.serializers import ProfileSerializer
 from helpers.course_tree import CourseLessonsTree
-from lessons.models import UnitAffect, Lesson, Branching, ProfileCourseDone
+from lessons.models import UnitAffect, Lesson, Branching
 from resources.utils import get_max_energy_by_position
 
 
