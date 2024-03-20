@@ -51,7 +51,7 @@ class BranchingAdmin(admin.ModelAdmin):
     search_fields = (
         "local_id",
         "quest__name",
-        "quest__local_id"
+        "quest__local_id",
         "course__name",
         "type"
     )

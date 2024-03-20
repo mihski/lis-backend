@@ -171,7 +171,16 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:1337",
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+#CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:3000',  # for localhost (REACT Default)
+    'http://localhost:8080',  # for localhost (Developlem
+    'https://dev.lis.itmo.ru',
+    'http://127.0.0.1:3000',
+    'http://localhost:5000',
+    'http://localhost:1337'
+]
 
 CORS_ALLOW_METHODS = [
     "DELETE",
