@@ -256,6 +256,9 @@ class LessonDetailViewSet(
             resource.energy_amount += int(energy)
 
             resource.save()
+        saved_chunks = list(ProfileLessonChunk.objects.filter(lesson=profile_lesson).values())
+        chunk = [*saved_chunks, *unit_chunk]
+
 
         for unit in unit_chunk:
             if unit['type'] != 218 and ProfileLessonChunk.objects.filter(unit_id=unit['id']).first() is None:
@@ -264,11 +267,8 @@ class LessonDetailViewSet(
 
                 ###############################
 
-        # add saved chunks
-        saved_chunks = ProfileLessonChunk.objects.filter(lesson=lesson, profile=profile).all()
-        unit_chunk = [saved_chunks, *unit_chunk]
 
-        data = {**lesson_data, "player": player.data, "chunk": unit_chunk}
+        data = {**lesson_data, "player": player.data, "chunk": chunk}
         return Response(data, status=status.HTTP_200_OK)
 
 
