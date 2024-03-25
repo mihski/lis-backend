@@ -222,7 +222,7 @@ class LessonDetailViewSet(
 
             lesson_data.update({
                 "finished": ProfileLessonDone.objects.filter(lesson=lesson, profile=profile).exists(),
-                "skipped" : ProfileLesson.objects.filter(player=profile, lesson_name=lesson.name).skipped,
+                "skipped" : ProfileLesson.objects.filter(player=profile, lesson_name=lesson.name).first().skipped,
                 "location": first_location_id or 1,
                 "npc": first_npc_id or -1,
                 "locales": locales,
@@ -381,7 +381,7 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
 
         resources.can_skip_lesson = False
         ProfileLesson.objects.get(player=profile, lesson_name=lesson.name).skipped = True
-        return Response(self.serializer_class(lesson).data)
+        return Response(status.HTTP_200_OK)
 
 
 class CallbackAPIView(views.APIView):
