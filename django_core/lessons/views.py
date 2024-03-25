@@ -247,18 +247,15 @@ class LessonDetailViewSet(
             # increase/decrease money and energy
 
             resource = Resources.objects.get(user=profile)
-            print(resource)
 
             money = unit.content.get("money", 0)
             energy = unit.content.get("energy", 0)
-            print(money, energy)
+
             resource.money_amount += int(money)
 
             resource.energy_amount += int(energy)
 
             resource.save()
-
-            print(resource.money_amount, resource.energy_amount)
 
         for unit in unit_chunk:
             if unit['type'] != 218 and ProfileLessonChunk.objects.filter(unit_id=unit['id']).first() is None:
@@ -266,6 +263,10 @@ class LessonDetailViewSet(
                                                   unit_id=unit['id'])
 
                 ###############################
+
+        # add saved chunks
+        saved_chunks = ProfileLessonChunk.objects.filter(lesson=lesson, profile=profile).all()
+        unit_chunk = [saved_chunks, *unit_chunk]
 
         data = {**lesson_data, "player": player.data, "chunk": unit_chunk}
         return Response(data, status=status.HTTP_200_OK)
