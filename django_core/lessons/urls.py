@@ -13,7 +13,9 @@ from lessons.views import (
     QuestionViewSet,
     CallbackAPIView,
     NewCourseMapViewSet,
-    ProfileLessonAPIView
+    ProfileLessonAPIView,
+    ValidateSkipTaskAPIView,
+    FirstSkippedTaskAPIView
 )
 
 app_name = "lessons"
@@ -34,5 +36,7 @@ urlpatterns = [
     *router.urls,
     path("callbacks/<str:pk>/", CallbackAPIView.as_view()),
     path("saved-lesson/<str:pk>/", ProfileLessonAPIView.as_view()),
-    path("course-name/<int:pk>/", CourseNameAPIView.as_view())
+    path("course-name/<int:pk>/", CourseNameAPIView.as_view()),
+    path("validate-skip-task/<int:pk>", ValidateSkipTaskAPIView.as_view()),
+    path("first-undone-task/<int:pk>", FirstSkippedTaskAPIView.as_view())
 ]

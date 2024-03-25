@@ -48,3 +48,9 @@ class BlockEntityIsUnavailableException(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
     default_code = "block_entity_is_inaccessible"
     default_detail = "Finish previous lessons to get access"
+
+
+class NotAllTasksDoneException(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_code = "not_all_tasks_done"
+    default_detail = "Finish undone tasks"

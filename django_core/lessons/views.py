@@ -10,7 +10,7 @@ from rest_framework import (
 )
 from django.shortcuts import get_object_or_404
 from django.db.models import Prefetch
-
+from django.forms.models import model_to_dict
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -54,7 +54,7 @@ from lessons.serializers import (
     NewCourseMapSerializer,
     SavedProfileLessonSerializer
 )
-from lessons.utils import process_affect, check_entity_is_accessible
+from lessons.utils import process_affect, check_entity_is_accessible, check_all_tasks_are_done
 from lessons.exceptions import (
     BranchingAlreadyChosenException,
     UnitNotFoundException,
@@ -62,6 +62,7 @@ from lessons.exceptions import (
     NotEnoughBlocksToSelectBranchException,
     BlockEntityIsUnavailableException,
     LessonForbiddenException,
+    NotAllTasksDoneException
 )
 from helpers.lesson_tree import LessonUnitsTree
 from helpers.course_tree import CourseLessonsTree
@@ -73,6 +74,7 @@ from resources.exceptions import (
 from resources.models import EmotionData
 from resources.utils import check_ultimate_is_active
 from student_tasks.models import StudentTaskAnswer
+from student_tasks.serializers import StudentTaskAnswerSerializer
 
 
 class NPCViewSet(viewsets.ReadOnlyModelViewSet):
@@ -352,6 +354,8 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
 
         if not check_entity_is_accessible(profile, lesson):
             raise BlockEntityIsUnavailableException("Finish previous lessons to get access")
+        if not check_all_tasks_are_done(profile, lesson):
+            raise NotAllTasksDoneException()
 
         lesson_tree = LessonUnitsTree(lesson)
         if request.data.get("lesson_key", "0") != lesson_tree.get_hash():
@@ -412,7 +416,7 @@ class ProfileLessonAPIView(views.APIView):
     )
     def get(self, request, pk):
         try:
-            profile = request.user.profile.get(course=1)
+            profile = request.user.profile.get()
             lesson = ProfileLesson.objects.filter(player=profile, lesson_id=pk).first()
             serializer = SavedProfileLessonSerializer(lesson)
             return Response(serializer.data)
@@ -420,3 +424,33 @@ class ProfileLessonAPIView(views.APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ValidateSkipTaskAPIView(views.APIView):
+
+    def get(self, request, pk):
+        try:
+            lesson = Lesson.objects.get(pk=pk)
+        except ProfileLesson.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        profile = request.user.profile.get()
+        undone_tasks = StudentTaskAnswer.objects.filter(profile=profile, task__lesson=lesson, is_correct=False).count()
+        if undone_tasks >= 3:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_200_OK)
+
+
+class FirstSkippedTaskAPIView(views.APIView):
+
+    def get(self, request, pk):
+        try:
+            lesson = Lesson.objects.get(pk=pk)
+        except ProfileLesson.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        profile = request.user.profile.get()
+        first_undone_task = StudentTaskAnswer.objects.filter(profile=profile, task__lesson=lesson,
+                                                             is_correct=False).first()
+
+        return Response(model_to_dict(first_undone_task), status=status.HTTP_200_OK)

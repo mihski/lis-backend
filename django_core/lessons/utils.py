@@ -3,6 +3,7 @@ from accounts.serializers import ProfileSerializer
 from helpers.course_tree import CourseLessonsTree
 from lessons.models import UnitAffect, Lesson, Branching, ProfileCourseDone
 from resources.utils import get_max_energy_by_position
+from student_tasks.models import StudentTaskAnswer
 
 
 def process_affect(affect: UnitAffect, profile: Profile) -> None:
@@ -33,3 +34,11 @@ def check_entity_is_accessible(profile: Profile, entity: Lesson | Branching) -> 
     active_id = course_tree.get_active(profile)
 
     return course_map.index(entity.local_id) <= active_id
+
+
+def check_all_tasks_are_done(profile: Profile, lesson: Lesson) -> bool:
+    undone_tasks = StudentTaskAnswer.objects.filter(profile=profile, task__lesson=lesson,
+                                                    is_correct=False).first()
+    if undone_tasks:
+        return False
+    return True
