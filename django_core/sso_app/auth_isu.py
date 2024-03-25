@@ -68,7 +68,7 @@ class ISUManager:
         return self.get_or_create_user(jwt_token)
 
     def create_user(self, user_data):
-        username = user_data.get('isu')
+        username = user_data.get('isu', user_data.get('email'))
 
         email = user_data.get('corp_email', user_data.get('email'))
 
@@ -94,7 +94,7 @@ class ISUManager:
     def get_or_create_user(self, id_token):
         user_data = jwt.decode(id_token, options={"verify_signature": False})
         user = User.objects.filter(
-            username=user_data.get('isu')
+            username=user_data.get('isu', user_data.get('email'))
         ).first()
 
         if not user:

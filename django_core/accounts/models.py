@@ -73,7 +73,7 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin, LifecycleModel):
     role = models.ForeignKey(UserRole, on_delete=models.SET_NULL, null=True)
 
-    username = models.CharField(max_length=10, unique=True)
+    username = models.CharField(max_length=255, unique=True)
     email = models.EmailField(max_length=255, unique=True)
     phone = models.CharField(max_length=255)
     first_name = models.CharField(max_length=100, default="", blank=True, null=True)
