@@ -15,6 +15,7 @@ class ResourcesSerializer(serializers.ModelSerializer):
     timeAmount = serializers.SerializerMethodField(method_name="get_time_amount_timestamp")
     moneyAmount = serializers.ReadOnlyField(source="money_amount", default=0)
     energyAmount = serializers.ReadOnlyField(source="energy_amount", default=0)
+    canSkipLesson = serializers.ReadOnlyField(source="can_skip_lesson")
     maxEnergyAmount = serializers.SerializerMethodField(method_name="get_max_energy")
     ultimateCost = serializers.IntegerField(default=2500)
     ultimateEnd = serializers.SerializerMethodField(method_name="get_ultimate_end")
@@ -46,7 +47,8 @@ class ResourcesSerializer(serializers.ModelSerializer):
             "energyAmount",
             "maxEnergyAmount",
             "ultimateCost",
-            "ultimateEnd"
+            "ultimateEnd",
+            "canSkipLesson"
         ]
 
 

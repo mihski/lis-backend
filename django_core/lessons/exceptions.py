@@ -54,3 +54,9 @@ class NotAllTasksDoneException(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
     default_code = "not_all_tasks_done"
     default_detail = "Finish undone tasks"
+
+
+class CanNotSkipLessonException(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_code = "can_not_skip_lesson"
+    default_detail = "You can skip only once per course"

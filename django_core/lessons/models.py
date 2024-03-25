@@ -321,11 +321,18 @@ class ProfileLesson(models.Model):
     lesson_number = models.IntegerField(default=0)
     quest_number = models.IntegerField(default=0)
     locales = models.JSONField(default=default_locale)
-    lesson_id = models.CharField(max_length=64, default="", blank=True)  # lesson id
+    lesson_id = models.CharField(max_length=64, default="", blank=True)
+    skipped = models.BooleanField(default=False)
 
 
 class ProfileLessonChunk(models.Model):
     lesson = models.ForeignKey(ProfileLesson, on_delete=models.CASCADE, related_name='chunk')
     type = models.IntegerField(default=0)
     content = models.JSONField(default={})
-    unit_id = models.CharField(max_length=64, default="", blank=True)  # unit id
+    unit_id = models.CharField(max_length=64, default="", blank=True)
+
+    def __repr__(self) -> str:
+        return f"[{self.lesson.lesson_name}] {self.lesson.player}"
+
+    def __str__(self) -> str:
+        return repr(self)

@@ -62,7 +62,8 @@ from lessons.exceptions import (
     NotEnoughBlocksToSelectBranchException,
     BlockEntityIsUnavailableException,
     LessonForbiddenException,
-    NotAllTasksDoneException
+    NotAllTasksDoneException,
+    CanNotSkipLessonException
 )
 from helpers.lesson_tree import LessonUnitsTree
 from helpers.course_tree import CourseLessonsTree
@@ -221,6 +222,7 @@ class LessonDetailViewSet(
 
             lesson_data.update({
                 "finished": ProfileLessonDone.objects.filter(lesson=lesson, profile=profile).exists(),
+                "skipped" : ProfileLesson.objects.filter(player=profile, lesson_name=lesson.name).skipped,
                 "location": first_location_id or 1,
                 "npc": first_npc_id or -1,
                 "locales": locales,
@@ -263,10 +265,6 @@ class LessonDetailViewSet(
                                                   unit_id=unit['id'])
 
                 ###############################
-
-        # add saved chunks
-        saved_chunks = ProfileLessonChunk.objects.filter(lesson=lesson, profile=profile).all()
-        unit_chunk = [saved_chunks, *unit_chunk]
 
         data = {**lesson_data, "player": player.data, "chunk": unit_chunk}
         return Response(data, status=status.HTTP_200_OK)
@@ -368,6 +366,18 @@ class LessonActionsViewSet(viewsets.GenericViewSet):
                 ProfileCourseDone.objects.create(profile=profile, course=lesson.course)
 
         return Response(lesson_finish_data, status=status.HTTP_200_OK)
+
+    @decorators.action(methods=["GET"], detail=False, url_path="lesson/(?P<local_id>[^/.]+)/skip")
+    def skip_lesson(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
+        lesson: Lesson = self.get_object()
+        profile: Profile = request.user.profile.get()
+        resources = profile.resources
+        if not resources.can_skip_lesson:
+            raise CanNotSkipLessonException()
+
+        resources.can_skip_lesson = False
+        ProfileLesson.objects.get(player=profile, lesson_name=lesson.name).skipped = True
+        return Response(self.serializer_class(lesson).data)
 
 
 class CallbackAPIView(views.APIView):

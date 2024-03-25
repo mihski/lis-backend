@@ -31,6 +31,7 @@ class Resources(models.Model):
     time_amount = models.PositiveIntegerField(default=0)
     money_amount = models.PositiveIntegerField(default=0)
     energy_amount = models.PositiveIntegerField(default=0)
+    can_skip_lesson = models.BooleanField(default=True)
 
     class Meta:
         app_label = "resources"
