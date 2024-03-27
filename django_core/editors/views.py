@@ -1,7 +1,7 @@
 from rest_framework import mixins, viewsets, authentication, permissions, decorators, response, exceptions
 from django_filters import rest_framework as filters
 
-from lessons.models import Lesson, Unit, Quest, Course
+from lessons.models import Lesson, Unit, Quest, Course, LessonBlock
 from editors.filters import EditorSessionFilter
 from editors.serializers import (
     LessonSerializer,
@@ -38,10 +38,10 @@ class CourseViewSet(
             raise exceptions.NotAcceptable("Курс нельзя редактировать")
 
         if not EditorSession.objects.filter(
-            user=request.user,
-            course__id=course.id,
-            local_id='',
-            is_closed=False
+                user=request.user,
+                course__id=course.id,
+                local_id='',
+                is_closed=False
         ).exists():
             raise exceptions.PermissionDenied()
 
@@ -84,10 +84,10 @@ class LessonEditorViewSet(
         lesson = self.get_object()
 
         if not EditorSession.objects.filter(
-            user=request.user,
-            course__id=lesson.course.id,
-            local_id=lesson.local_id,
-            is_closed=False
+                user=request.user,
+                course__id=lesson.course.id,
+                local_id=lesson.local_id,
+                is_closed=False
         ).exists():
             raise exceptions.PermissionDenied()
 
@@ -107,7 +107,7 @@ class UnitEditorViewSet(
     queryset = Unit.objects.all()
     serializer_class = UnitSerializer
 
-    
+
 class EditorSessionViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
@@ -173,4 +173,33 @@ class EditorSessionViewSet(
 
         return response.Response({
             'sessions': EditorSessionSerializer(user_sessions, many=True).data
+        })
+
+    @decorators.action(methods=["POST"], detail=False, url_path='lesson/copy/(?P<pk>[^/.]+)')
+    def copy_lesson(self, request, pk=None):
+        original_lesson = Lesson.objects.get(pk=pk)
+        original_lesson_block = LessonBlock.objects.get(pk=original_lesson.content.pk)
+        new_lesson_block = LessonBlock.objects.create(
+            entry=original_lesson_block.entry,
+            markup=original_lesson_block.markup,
+            locale=original_lesson_block.locale
+        )
+        new_lesson = Lesson.objects.create(
+            course=original_lesson.course,
+            quest=original_lesson.quest,
+            laboratory=original_lesson.laboratory,
+            name=original_lesson.name,
+            description=original_lesson.description,
+            for_gender=original_lesson.for_gender,
+            time_cost=original_lesson.time_cost,
+            money_cost=original_lesson.money_cost,
+            energy_cost=original_lesson.energy_cost,
+            has_bonuses=original_lesson.has_bonuses,
+            bonuses=original_lesson.bonuses,
+            content=new_lesson_block,
+            next=original_lesson.next,
+            profile_affect=original_lesson.profile_affect,
+        )
+        return response.Response({
+            'lesson': LessonSerializer(new_lesson).data
         })
