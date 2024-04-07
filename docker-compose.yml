@@ -26,25 +26,25 @@ services:
             environments/app.env
         volumes:
             - ./django_core:/django_core
-        expose:
-            - 8000
+        ports:
+            - 8000:8000
         depends_on:
             - lis_db
             - redis
     
-    nginx:
-        container_name: lis_nginx
-        build: ./nginx
-        ports:
-            - 1337:80
-        depends_on:
-            - backend
-        volumes:
-            - ./django_core/static:/static
-            - ./django_core/media:/media
-            - ./nginx:/etc/nginx/conf.d
-            - ../lis-front/editor/build:/var/www/html/editor
-            - ../lis-front/app/build:/var/www/html/app
+#    nginx:
+#        container_name: lis_nginx
+#        build: ./nginx
+#        ports:
+#            - 1337:80
+#        depends_on:
+#            - backend
+#        volumes:
+#            - ./django_core/static:/static
+#            - ./django_core/media:/media
+#            - ./nginx:/etc/nginx/conf.d
+#            - ../lis-front/editor/build:/var/www/html/editor
+#            - ../lis-front/app/build:/var/www/html/app
 
     celery:
         build: ./django_core
