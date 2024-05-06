@@ -19,7 +19,7 @@ services:
         image: redis:alpine
 
     backend:
-        restart: always
+      #  restart: always
         container_name: lis_back
         build: ./django_core
         env_file:

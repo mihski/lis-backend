@@ -6,7 +6,8 @@ from accounts.views import (
     ProfileStatisticsViewSet,
     AvatarViewSet,
     ReplayAPIView,
-    ProfileAlbumViewSet
+    ProfileAlbumViewSet,
+    ProfileCourseListApiView
 )
 
 app_name = "accounts"
@@ -15,6 +16,8 @@ router = SimpleRouter()
 router.register("profile", ProfileStatisticsViewSet)
 router.register("profile", ProfileAlbumViewSet)
 router.register("avatars", AvatarViewSet, basename="avatars")
+
+
 
 urlpatterns = [
     path(
@@ -28,7 +31,14 @@ urlpatterns = [
         "replay/",
         ReplayAPIView.as_view(),
         name="replay-game"
+    ),
+
+    path(
+        "profile/course/",
+         ProfileCourseListApiView.as_view(),
+         name = "profile_cources"
     )
+
 ] + router.urls
 
 

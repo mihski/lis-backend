@@ -294,12 +294,7 @@ class Profile(LifecycleModel):
         default=UniversityPosition.STUDENT,
         max_length=40
     )
-    course = models.ForeignKey(
-        "lessons.Course",
-        on_delete=models.CASCADE,
-        related_name="profiles",
-        default=1
-    )
+    course = models.ForeignKey( "lessons.Course", on_delete=models.CASCADE,  related_name="profiles", default=1)
     scientific_director = models.ForeignKey("lessons.NPC", on_delete=models.SET_NULL, null=True, blank=True)
     laboratory = models.CharField(max_length=120, choices=LABORATORIES, default="it")
 

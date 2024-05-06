@@ -5,6 +5,8 @@ from django.conf import settings
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
+from lessons.views import (CreatCourseViewSet,CourseDetailView)
+
 schema_view = get_schema_view(
     openapi.Info(
         title="Life-in-Science API",
@@ -30,4 +32,7 @@ urlpatterns = [
          name="schema-swagger-ui"),
     path("api/auth/", include("djoser.urls")),
     path("api/auth/", include("djoser.urls.jwt")),
+    path("api/courseadd/",CreatCourseViewSet.as_view({"post":"create"})),
+ #   path("api/courselist/",CreatCourseViewSet.as_view({"get":"list"})),
+       
 ]

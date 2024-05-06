@@ -19,10 +19,13 @@ from accounts.serializers import (
     ProfileClothesSerializer,
     ProfileAlbumSerializer
 )
+
+
+from lessons.models import Course
 from lessons.exceptions import NPCIsNotScientificDirectorException, FirstScientificDirectorIsNotDefaultException
 from resources.exceptions import NegativeResourcesException
 from helpers.swagger_factory import SwaggerFactory
-
+from lessons.serializers import CourseNameSerializer
 
 class ProfileViewSet(
     viewsets.GenericViewSet,
@@ -50,6 +53,14 @@ class ProfileViewSet(
     ).all()
     serializer_class = ProfileSerializer
     permission_classes = (permissions.IsAuthenticated, )
+
+    @swagger_auto_schema(**SwaggerFactory()(
+        responses=[NegativeResourcesException]
+    ))
+    @decorators.action(methods=["GET"], detail=False, url_path="profile/courses")
+    def get_cources(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
+       
+        return Response( status=status.HTTP_200_OK)
 
     def get_object(self):
         return self.request.user.profile.get(course_id=1)
@@ -162,16 +173,12 @@ class ReplayAPIView(views.APIView):
 
     def post(self, request, *args, **kwargs):
         user = request.user
-
         profile = user.profile.get(course_id=1)
-
         with transaction.atomic():
             profile.user = None
             user.create_related_profile()
             profile.save()
-
         profile = user.profile.get(course_id=1)
-
         return Response(ProfileSerializer(profile).data)
 
 
@@ -186,3 +193,15 @@ class ProfileAlbumViewSet(viewsets.GenericViewSet):
         serialized_data = self.get_serializer(profile).data
         serialized_data["statistics"]["lessons_done"] = 36  # FIXME: hardcode
         return Response(serialized_data, status=status.HTTP_200_OK)
+
+
+class ProfileCourseListApiView(views.APIView):
+     def get(self, request):
+         profile = request.user.profile.get()
+         course = profile.course
+         return Response(CourseNameSerializer(course).data)
+     
+     
+     
+
+

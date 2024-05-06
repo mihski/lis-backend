@@ -417,7 +417,7 @@ class CourseMapSerializer(serializers.ModelSerializer):
 class CourseNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
-        fields = ['id', 'name']
+        fields = "__all__"
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -686,3 +686,20 @@ class SavedProfileLessonSerializer(serializers.ModelSerializer):
         serializer = SavedProfileLessonChunkSerializer(sorted_chunks, many=True)
 
         return serializer.data
+    
+class CourselistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+     #   fields  = "__all__"
+        exclude =[ "locale"]
+
+
+class CourseDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model =Course
+        fields = "__all__"
+                
+
+    
+
+

@@ -214,3 +214,9 @@ class ProfileAlbumSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ["id", "isu", "username", "statistics", "emotions", "language"]
+
+class GetCourselistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model= Profile
+        fields =["course"]
+

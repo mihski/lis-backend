@@ -20,6 +20,7 @@ from django.db import transaction
 from django.forms.models import model_to_dict
 from accounts.models import Profile
 from accounts.serializers import (
+    GetCourselistSerializer,
     ProfileSerializerWithoutLookForms,
 )
 from resources.models import Resources
@@ -41,6 +42,7 @@ from lessons.models import (
 
 )
 from lessons.serializers import (
+    CourselistSerializer,
     NPCSerializer,
     LocationDetailSerializer,
     LessonDetailSerializer,
@@ -52,7 +54,8 @@ from lessons.serializers import (
     ReviewSerializer,
     LessonFinishSerializer,
     NewCourseMapSerializer,
-    SavedProfileLessonSerializer
+    SavedProfileLessonSerializer,
+    CourseDetailSerializer,
 )
 from lessons.utils import process_affect, check_entity_is_accessible, check_all_tasks_are_done
 from lessons.exceptions import (
@@ -461,3 +464,22 @@ class FirstSkippedTaskAPIView(views.APIView):
                                                              is_correct=False).first()
 
         return Response(model_to_dict(first_undone_task), status=status.HTTP_200_OK)
+    
+
+# class CreatCourseViewSet(viewsets.ModelViewSet):
+#     queryset= Course.objects.all()
+#     serializer_class = CourselistSerializer
+
+class CreatCourseViewSet (viewsets.GenericViewSet, mixins.CreateModelMixin,mixins.ListModelMixin):
+    queryset= Course.objects.all()
+    serializer_class = CourselistSerializer
+
+
+
+class CourseDetailView(generics.RetrieveAPIView):    
+    queryset= Course.objects.all()
+    serializer_class = CourseDetailSerializer
+        
+        
+    
+
